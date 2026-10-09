@@ -1,0 +1,6 @@
+import React, { useState, useEffect } from "react";
+import type { ArenaProps } from "./shared";
+import type { WordwallItem } from "../../data/wordwallModes";
+import { shuffle, itemAt } from "./shared";
+
+export function MissingWord({ payload, addScore }: ArenaProps) { const [answers,setAnswers]=useState<Record<string,string>>({}); const words=shuffle(payload.items.map(i=>i.missingWord)); const submit=()=>{let good=0; payload.items.slice(0,4).forEach(i=>{if(answers[i.id]===i.missingWord)good++;}); addScore(good*8,`${good} gaps correct.`,good===4);}; return <div><div className="premium-panel p-6 text-xl leading-loose mb-4">{payload.items.slice(0,4).map(it=><p key={it.id}>{it.sentence.replace("___","")} <button onClick={()=>setAnswers(a=>({...a,[it.id]:""}))} className={`px-4 py-1 rounded-xl ${answers[it.id]?"bg-emerald-400 text-black":"bg-white/20"}`}>{answers[it.id]||"_____"}</button></p>)}</div><div className="flex flex-wrap gap-2 mb-4">{words.map(w=><button key={w} onClick={()=>{const empty=payload.items.slice(0,4).find(i=>!answers[i.id]); if(empty)setAnswers(a=>({...a,[empty.id]:w}));}} className="px-4 py-3 rounded-2xl bg-lime-400 text-black font-black">{w}</button>)}</div><button onClick={submit} className="px-5 py-3 rounded-2xl bg-emerald-400 text-black font-black">Submit</button></div>; }
