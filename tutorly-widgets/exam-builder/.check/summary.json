@@ -1,0 +1,269 @@
+[
+  {
+    "id": "ielts",
+    "name": "IELTS Academic / General",
+    "sections": 4,
+    "questions": 44,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 165,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "listening",
+      "matching",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "speaking",
+      "tableCompletion",
+      "writing"
+    ],
+    "bytes": 215291,
+    "file": "exam-builder\\.check\\ielts.html"
+  },
+  {
+    "id": "toefl",
+    "name": "TOEFL iBT 2026",
+    "sections": 4,
+    "questions": 56,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 116,
+    "hasReadingPassages": true,
+    "types": [
+      "completeWords",
+      "essay",
+      "multipleChoice",
+      "noteCompletion",
+      "speaking",
+      "tableCompletion",
+      "writing"
+    ],
+    "bytes": 231522,
+    "file": "exam-builder\\.check\\toefl.html"
+  },
+  {
+    "id": "pte",
+    "name": "PTE Academic",
+    "sections": 3,
+    "questions": 51,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 120,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "gapFill",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "summaryCompletion",
+      "tableCompletion"
+    ],
+    "bytes": 223606,
+    "file": "exam-builder\\.check\\pte.html"
+  },
+  {
+    "id": "duolingo",
+    "name": "Duolingo English Test",
+    "sections": 3,
+    "questions": 45,
+    "declaredTimerMode": "total",
+    "declaredMinutes": 60,
+    "hasReadingPassages": false,
+    "types": [
+      "completeWords",
+      "essay",
+      "gapFill",
+      "listening",
+      "multipleChoice",
+      "speaking",
+      "writing"
+    ],
+    "bytes": 207082,
+    "file": "exam-builder\\.check\\duolingo.html"
+  },
+  {
+    "id": "ket",
+    "name": "Cambridge A2 Key (KET)",
+    "sections": 3,
+    "questions": 39,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 110,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "gapFill",
+      "multipleChoice",
+      "sentenceCompletion",
+      "speaking",
+      "tableCompletion"
+    ],
+    "bytes": 213054,
+    "file": "exam-builder\\.check\\ket.html"
+  },
+  {
+    "id": "pet",
+    "name": "Cambridge B1 Preliminary (PET)",
+    "sections": 4,
+    "questions": 44,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 140,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "matching",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "speaking",
+      "writing"
+    ],
+    "bytes": 216490,
+    "file": "exam-builder\\.check\\pet.html"
+  },
+  {
+    "id": "fce",
+    "name": "Cambridge B2 First (FCE)",
+    "sections": 4,
+    "questions": 72,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 209,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "gapFill",
+      "matching",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "speaking",
+      "tableCompletion",
+      "writing"
+    ],
+    "bytes": 241968,
+    "file": "exam-builder\\.check\\fce.html"
+  },
+  {
+    "id": "cae",
+    "name": "Cambridge C1 Advanced (CAE)",
+    "sections": 4,
+    "questions": 76,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 235,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "gapFill",
+      "matching",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "speaking",
+      "summaryCompletion",
+      "tableCompletion",
+      "writing"
+    ],
+    "bytes": 245612,
+    "file": "exam-builder\\.check\\cae.html"
+  },
+  {
+    "id": "cpe",
+    "name": "Cambridge C2 Proficiency (CPE)",
+    "sections": 4,
+    "questions": 76,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 236,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "gapFill",
+      "matching",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "speaking",
+      "summaryCompletion",
+      "tableCompletion",
+      "writing"
+    ],
+    "bytes": 245652,
+    "file": "exam-builder\\.check\\cpe.html"
+  },
+  {
+    "id": "celpip",
+    "name": "CELPIP General",
+    "sections": 4,
+    "questions": 48,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 180,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "speaking",
+      "tableCompletion",
+      "writing"
+    ],
+    "bytes": 224113,
+    "file": "exam-builder\\.check\\celpip.html"
+  },
+  {
+    "id": "oet",
+    "name": "OET Healthcare English",
+    "sections": 4,
+    "questions": 52,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 180,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "multipleChoice",
+      "noteCompletion",
+      "sentenceCompletion",
+      "speaking",
+      "tableCompletion",
+      "writing"
+    ],
+    "bytes": 227680,
+    "file": "exam-builder\\.check\\oet.html"
+  },
+  {
+    "id": "english-placement",
+    "name": "English Placement Test",
+    "sections": 5,
+    "questions": 15,
+    "declaredTimerMode": "section",
+    "declaredMinutes": 150,
+    "hasReadingPassages": true,
+    "types": [
+      "essay",
+      "fillInBlank",
+      "matching",
+      "multipleChoice",
+      "multipleSelect",
+      "ordering",
+      "speaking",
+      "writing"
+    ],
+    "bytes": 181061,
+    "file": "exam-builder\\.check\\english-placement.html"
+  },
+  {
+    "id": "custom",
+    "name": "Custom Exam Blueprint",
+    "sections": 2,
+    "questions": 20,
+    "declaredTimerMode": "total",
+    "declaredMinutes": 60,
+    "hasReadingPassages": false,
+    "types": [
+      "essay",
+      "multipleChoice",
+      "noteCompletion",
+      "speaking"
+    ],
+    "bytes": 188479,
+    "file": "exam-builder\\.check\\custom.html"
+  }
+]

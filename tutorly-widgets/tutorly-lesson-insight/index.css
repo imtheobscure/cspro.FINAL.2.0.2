@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/*
+ * Dark mode is CLASS-based, matching the rest of the platform (see the root
+ * `index.css` and `pages/video_app/videoApp.css`).
+ *
+ * Tailwind v4 defaults `dark:` to the `prefers-color-scheme` media query, but this
+ * app toggles a `.dark` class on <html> — so without this line the toggle changed
+ * nothing and every `dark:` style stayed dark-on-dark for a light-OS user, or
+ * simply never applied. The button worked; the CSS was listening to the wrong
+ * signal.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}

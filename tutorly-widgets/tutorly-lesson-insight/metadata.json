@@ -1,0 +1,10 @@
+{
+  "name": "Tutorly Lesson Insight",
+  "description": "A high-fidelity premium language teacher's assistant providing comprehensive speaking, grammar, vocabulary, pronunciation, and homework insight reports.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
