@@ -1,0 +1,2272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Digital Age: Navigating Modern Technology — Daily Lesson</title>
+<style>
+:root{
+  --bg:#0a0a12; --panel:#15151f; --panel2:#1c1c2a; --border:#262636;
+  --text:#e8e8f0; --muted:#8b8ba0; --purple:#8b5cf6; --pink:#ec4899;
+  --indigo:#6366f1; --green:#22c55e; --red:#ef4444; --amber:#f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh; font-size:15px;
+}
+body.light{ --bg:#f3f4f6; --panel:#ffffff; --panel2:#f9fafb; --border:#e5e7eb; --text:#111827; --muted:#6b7280; }
+img{max-width:100%}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button:disabled{cursor:not-allowed;opacity:.4}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--purple);border-radius:999px}
+.hidden{display:none!important}
+.no-scrollbar::-webkit-scrollbar{display:none}
+.no-scrollbar{scrollbar-width:none}
+
+/* gradient helpers */
+.grad{background:linear-gradient(135deg,#8b5cf6 0%,#ec4899 100%)}
+.grad-btn{
+  background:linear-gradient(135deg,#8b5cf6 0%,#ec4899 100%);
+  color:#fff; border-radius:16px; padding:14px 18px; font-size:16px; font-weight:700;
+  width:100%; box-shadow:0 10px 24px rgba(139,92,246,.3); transition:transform .15s, box-shadow .15s;
+}
+.grad-btn:hover:not(:disabled){transform:scale(1.02)}
+.grad-btn:active:not(:disabled){transform:scale(.98)}
+.grad-sm{
+  background:linear-gradient(135deg,#8b5cf6 0%,#ec4899 100%); color:#fff; border-radius:12px;
+  padding:9px 16px; font-weight:700; font-size:14px;
+}
+
+/* header */
+.app-header{
+  position:sticky; top:0; z-index:40; backdrop-filter:blur(20px);
+  background:rgba(10,10,18,.85); border-bottom:1px solid var(--border); padding:12px 16px;
+}
+body.light .app-header{background:rgba(255,255,255,.85)}
+.header-row{max-width:896px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.avatar-box{
+  width:48px;height:48px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:24px; box-shadow:0 4px 16px rgba(139,92,246,.35), inset 0 1px 0 rgba(255,255,255,.3);
+  border:2px solid var(--border); background:linear-gradient(135deg,#8b5cf6,#ec4899); position:relative; overflow:hidden;
+}
+.avatar-box::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.25),transparent 60%)}
+.header-info{flex:1;min-width:0}
+.header-name{font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress-track{height:8px;background:var(--border);border-radius:999px;margin-top:6px;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#3b82f6,#22c55e);transition:width .7s;position:relative;overflow:hidden}
+.progress-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);animation:shimmer 2s infinite;transform:translateX(-100%)}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.streak-pill{display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:12px;background:rgba(249,115,22,.15);font-weight:700;font-size:13px;color:#fb923c}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;background:var(--panel2);display:flex;align-items:center;
+  justify-content:center;font-size:17px;transition:background .15s; flex-shrink:0;
+}
+.icon-btn:hover{background:var(--border)}
+
+/* module tabs */
+.module-tabs{
+  position:sticky; top:73px; z-index:30; backdrop-filter:blur(20px);
+  background:rgba(10,10,18,.85); border-bottom:1px solid var(--border); padding:8px 16px;
+}
+body.light .module-tabs{background:rgba(255,255,255,.85)}
+.tabs-row{max-width:896px;margin:0 auto;display:flex;gap:8px;overflow-x:auto}
+.tab-btn{
+  flex:1;min-width:80px;padding:10px 12px;border-radius:14px;text-align:center;transition:all .2s;
+  background:var(--panel2);color:var(--muted);
+}
+.tab-btn.active{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;box-shadow:0 8px 20px rgba(139,92,246,.35)}
+.tab-btn .t-icon{font-size:18px}
+.tab-btn .t-label{font-size:11px;font-weight:700;margin-top:2px;white-space:nowrap}
+.tab-done{font-size:10px;color:#4ade80;margin-top:2px}
+
+main{max-width:896px;margin:0 auto;padding:20px 16px 120px}
+.step-enter{animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* sticky footer */
+.app-footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;backdrop-filter:blur(20px);
+  background:rgba(10,10,18,.9);border-top:1px solid var(--border);padding:10px 16px;
+}
+body.light .app-footer{background:rgba(255,255,255,.9)}
+.footer-row{max-width:896px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.footer-meta{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap}
+.badge-chip{
+  width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;border:1px solid var(--border);background:var(--panel2);opacity:.4;
+}
+.badge-chip.on{opacity:1;background:rgba(34,197,94,.15);border-color:#22c55e}
+.secret-pill{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:rgba(234,179,8,.12);border:1px solid #b45309;font-size:12px;font-weight:700;color:#fbbf24}
+
+/* step rail */
+.step-rail{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
+.step-chip{
+  flex-direction:column;align-items:center;gap:4px;padding:10px 12px;border-radius:16px;min-width:72px;
+  background:var(--panel);border:2px solid var(--border);color:var(--muted);transition:all .2s;text-align:center;
+}
+.step-chip:hover{border-color:var(--purple)}
+.step-chip.current{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;transform:scale(1.05);border-color:transparent;box-shadow:0 8px 20px rgba(139,92,246,.35)}
+.step-chip.done{background:rgba(34,197,94,.12);border-color:#22c55e;color:#4ade80}
+.step-chip.locked{opacity:.45;cursor:not-allowed}
+.step-chip .s-icon{font-size:20px}
+.step-chip .s-label{font-size:11px;font-weight:700;line-height:1.1}
+.step-chip .s-num{font-size:10px;opacity:.6}
+
+/* step header card */
+.step-head{display:flex;align-items:center;gap:12px;padding:14px;background:var(--panel);border:1px solid var(--border);border-radius:18px;margin-bottom:16px}
+.step-head-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#8b5cf6,#ec4899);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.step-head-label{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.08em}
+.step-head-title{font-weight:900;font-size:17px}
+.step-head-desc{font-size:12px;color:var(--muted)}
+.step-done-pill{margin-left:auto;padding:6px 12px;border-radius:999px;background:rgba(34,197,94,.15);color:#4ade80;font-size:12px;font-weight:700;white-space:nowrap}
+
+/* shared card */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.card-pad{padding:18px}
+
+.section-head{text-align:center;margin-bottom:16px}
+.section-head .sh-icon{font-size:38px}
+.section-head h2{font-size:22px;font-weight:900;margin-top:4px}
+.section-head p{color:var(--muted);font-size:13px;margin-top:4px}
+
+/* warmup */
+.warm-nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.warm-dot{
+  width:40px;height:40px;border-radius:999px;font-weight:700;font-size:14px;
+  background:var(--panel2);color:var(--muted);border:2px solid var(--border);transition:all .2s;
+}
+.warm-dot.current{background:var(--purple);color:#fff;transform:scale(1.1);border-color:transparent}
+.warm-dot.revealed{background:#22c55e;color:#fff;border-color:transparent}
+.warm-card{overflow:hidden}
+.warm-q{padding:32px;background:linear-gradient(135deg,#7c3aed,#4f46e5)}
+.warm-q .w-emoji{font-size:48px;margin-bottom:14px}
+.warm-q p{color:#fff;font-size:19px;font-weight:600;line-height:1.5}
+.warm-a{padding:32px}
+.reveal-btn{
+  display:block;margin:0 auto;padding:12px 28px;border-radius:16px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 8px 20px rgba(139,92,246,.35);
+}
+.reveal-btn:hover{transform:scale(1.03)}
+.warm-nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.warm-prev,.warm-next{padding:10px 20px;border-radius:12px;background:var(--panel2);font-weight:600;color:var(--muted)}
+.warm-next{background:var(--purple);color:#fff}
+.warm-count{font-size:13px;color:var(--muted)}
+.warm-hint{text-align:center;font-size:13px;color:var(--muted);margin-top:10px}
+
+/* keywords */
+.kw-toggle{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.kw-toggle button{padding:8px 16px;border-radius:12px;font-weight:700;font-size:13px;background:var(--panel2);color:var(--muted)}
+.kw-toggle button.on{background:var(--purple);color:#fff}
+.kw-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.fc-wrap{position:relative;width:100%;max-width:448px;height:280px;margin:0 auto;perspective:1000px}
+.fc-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .45s;cursor:pointer}
+.fc-inner.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;border-radius:22px;padding:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;backface-visibility:hidden;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.fc-front{background:linear-gradient(135deg,#8b5cf6,#6366f1)}
+.fc-back{background:var(--panel);border:1px solid var(--border);transform:rotateY(180deg)}
+.fc-level{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.25);margin-bottom:12px}
+.fc-term{font-size:28px;font-weight:900;color:#fff;margin-bottom:8px}
+.fc-trans{font-size:16px;font-style:italic;color:rgba(255,255,255,.65);margin-bottom:10px}
+.fc-listen{padding:8px 16px;border-radius:12px;background:rgba(255,255,255,.2);color:#fff;font-size:13px}
+.fc-tap{font-size:11px;color:rgba(255,255,255,.5);margin-top:12px}
+.fc-back-scroll{overflow-y:auto;flex:1;width:100%}
+.fc-def-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 6px}
+.fc-back .fc-def{font-size:15px;margin-bottom:8px}
+.fc-ex{font-style:italic;color:var(--muted);border-left:3px solid var(--purple);padding-left:10px;font-size:13px;margin-bottom:8px}
+.fc-dots{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+.fc-dot{width:10px;height:10px;border-radius:999px;background:var(--border)}
+.fc-dot.cur{background:var(--purple);transform:scale(1.25)}
+.fc-dot.mastered{background:#22c55e}
+.fc-nav-row{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:14px}
+.fc-arr{width:44px;height:44px;border-radius:999px;background:var(--panel2);font-weight:700;font-size:18px}
+.fc-master{padding:11px 22px;border-radius:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#22c55e,#10b981)}
+.kw-list-search{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.kw-search{flex:1;min-width:180px;padding:10px 12px 10px 34px;border-radius:12px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-size:14px;outline:none}
+.kw-search:focus{border-color:var(--purple)}
+.kw-level-btn{padding:9px 16px;border-radius:12px;font-weight:600;font-size:13px;background:var(--panel2);color:var(--muted)}
+.kw-level-btn.on{background:var(--purple);color:#fff}
+.kw-list{max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.kw-item{display:flex;align-items:center;gap:10px;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--panel)}
+.kw-item.mastered{background:rgba(34,197,94,.08);border-color:#22c55e}
+.kw-check{
+  width:28px;height:28px;border-radius:999px;border:2px solid var(--border);display:flex;align-items:center;
+  justify-content:center;font-size:13px;flex-shrink:0;color:transparent;
+}
+.kw-item.mastered .kw-check{background:#22c55e;border-color:#22c55e;color:#fff}
+.kw-main{flex:1;min-width:0}
+.kw-term{font-weight:700;font-size:14px}
+.kw-def{font-size:12px;color:var(--muted);margin-top:2px}
+.kw-sound{width:32px;height:32px;border-radius:999px;background:rgba(59,130,246,.15);color:#60a5fa;font-size:13px;flex-shrink:0}
+
+/* dialogue / drama */
+.voice-setup{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px}
+.vs-title{font-weight:700;font-size:15px;margin-bottom:12px}
+.vs-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.vs-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.vs-select{flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-size:12px}
+.vs-skip{width:100%;padding:8px;color:var(--purple);font-size:13px;font-weight:500;border-radius:10px}
+.vs-skip:hover{background:rgba(139,92,246,.1)}
+.speaker-cards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.speaker-card{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--border)}
+.speaker-card .s-name{font-weight:700;font-size:13px}
+.speaker-card .s-voice{font-size:11px;color:var(--muted)}
+.play-row{display:flex;justify-content:center;gap:10px;margin-bottom:12px}
+.play-btn{
+  display:flex;align-items:center;gap:10px;padding:15px 30px;border-radius:16px;color:#fff;font-weight:700;font-size:17px;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 10px 24px rgba(139,92,246,.35);
+}
+.play-btn.stop{background:linear-gradient(135deg,#ef4444,#f97316)}
+.play-btn:disabled{opacity:.5}
+.msg-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.msg-row.reverse{flex-direction:row-reverse}
+.msg-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.msg-body{max-width:80%;display:flex;flex-direction:column;gap:4px}
+.msg-row.reverse .msg-body{align-items:flex-end}
+.msg-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.msg-speaker{font-size:12px;font-weight:700;color:var(--muted)}
+.vs-inline{
+  font-size:11px;padding:2px 6px;border-radius:8px;border:1px solid var(--border);
+  background:var(--panel2);color:var(--muted);max-width:130px;cursor:pointer;outline:none;
+}
+.vs-inline:hover{border-color:var(--purple)}
+.vs-inline option{color:var(--text);background:var(--panel)}
+.msg-play{
+  font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(139,92,246,.15);
+  color:#c4b5fd;font-weight:700;cursor:pointer;border:1px solid rgba(139,92,246,.3);
+}
+.msg-play:hover{background:rgba(139,92,246,.3)}
+.msg-play.is-playing{background:var(--purple);color:#fff;animation:pulse 1s infinite}
+.msg-emotion{font-size:10px;padding:2px 8px;border-radius:999px}
+.msg-bubble{padding:12px 16px;border-radius:16px;background:var(--panel);border:1px solid var(--border);font-size:14px;line-height:1.5}
+.msg-row.reverse .msg-bubble{border-top-right-radius:4px}
+.msg-row:not(.reverse) .msg-bubble{border-top-left-radius:4px}
+.msg-bubble.active{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(139,92,246,.35)}
+.transcript{max-height:420px;overflow-y:auto;padding-right:4px}
+.script-box{max-height:380px;overflow-y:auto;padding-right:4px}
+.narr-line{text-align:center;padding:10px 14px;font-style:italic;font-size:13px;color:var(--muted);border-radius:12px;margin-bottom:8px}
+.narr-line.active{background:rgba(139,92,246,.15);color:#c4b5fd}
+.cast-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(min-width:560px){.cast-grid{grid-template-columns:repeat(4,1fr)}}
+.cast-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--panel2);transition:all .2s}
+.cast-card.active{border-color:var(--purple);box-shadow:0 8px 20px rgba(139,92,246,.3);transform:translateY(-4px)}
+.cast-emoji{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.cast-card.active .cast-emoji{outline:3px solid var(--purple);outline-offset:2px}
+.cast-name{font-size:11px;font-weight:700;text-align:center;line-height:1.2}
+.eq{display:flex;gap:3px;align-items:flex-end;height:12px}
+.eq span{width:4px;background:var(--purple);border-radius:2px;animation:eqb 0.6s infinite alternate}
+.eq span:nth-child(2){animation-delay:.15s}.eq span:nth-child(3){animation-delay:.3s}
+@keyframes eqb{from{height:3px}to{height:12px}}
+.ambient-pill{display:flex;justify-content:center;margin-bottom:12px}
+.ambient-pill div{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:12px;background:rgba(245,158,11,.12);border:1px solid #b45309;color:#fbbf24;font-size:13px}
+
+/* reading */
+.read-tabs{display:flex;gap:8px;margin-bottom:12px}
+.read-tab{flex:1;padding:12px;border-radius:16px;font-weight:700;font-size:13px;background:var(--panel2);color:var(--muted);position:relative;transition:all .2s}
+.read-tab.on{color:#fff;background:linear-gradient(135deg,#8b5cf6,#ec4899);transform:scale(1.04);box-shadow:0 8px 20px rgba(139,92,246,.35)}
+.read-badge-bar{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:rgba(139,92,246,.08);margin-bottom:12px}
+.read-art{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:22px;max-height:520px;overflow-y:auto}
+.read-art h3{font-size:18px;font-weight:900;color:var(--purple);margin-bottom:12px}
+.read-art p{color:var(--text);line-height:1.7;margin-bottom:12px;font-size:15px}
+.read-art b{color:var(--purple)}
+.read-listen{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel);font-size:13px;font-weight:500;margin-left:auto}
+
+/* grammar */
+.gram-progress{display:flex;align-items:center;gap:10px;padding:14px;background:var(--panel2);border-radius:16px;margin-bottom:12px}
+.gram-group{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.gram-lvl-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;width:fit-content;margin-bottom:4px}
+.gram-card{border-radius:16px;border:1px solid var(--border);background:var(--panel);cursor:pointer;overflow:hidden;transition:all .2s}
+.gram-card:hover{border-color:var(--purple)}
+.gram-card.open{border-color:var(--purple);box-shadow:0 8px 20px rgba(139,92,246,.2)}
+.gram-head{display:flex;align-items:center;gap:12px;padding:14px}
+.gram-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--panel2);flex-shrink:0}
+.gram-title{font-weight:700;font-size:14px}
+.gram-meaning{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gram-caret{margin-left:auto;color:var(--muted);transition:transform .2s}
+.gram-card.open .gram-caret{transform:rotate(180deg)}
+.gram-body{padding:0 16px 16px;display:none}
+.gram-card.open .gram-body{display:block;animation:fadeUp .25s ease}
+.gram-ex{padding:12px;border-radius:12px;margin-bottom:12px;font-size:13px;font-style:italic}
+.gram-sec-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.gram-mistake{padding:12px;border-radius:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);font-size:13px;color:#fca5a5;margin-bottom:12px}
+.gram-alts{display:flex;flex-wrap:wrap;gap:8px}
+.gram-alt{padding:6px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);font-size:12px;font-family:ui-monospace,monospace}
+.gram-listen{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);font-size:13px;margin-top:12px}
+
+/* karaoke */
+.kara-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.kara-stat{border-radius:16px;padding:14px;text-align:center;border:1px solid var(--border)}
+.kara-stat .v{font-size:24px;font-weight:900}
+.kara-words{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:20px;max-height:260px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;line-height:1.6}
+.kw-word{font-size:16px;color:var(--muted);transition:all .15s}
+.kw-word.correct{color:#4ade80;font-weight:600}
+.kw-word.current{background:var(--purple);color:#fff;border-radius:4px;padding:0 4px;font-weight:700;animation:pulse 1s infinite}
+.kw-word.missed{color:#f87171;text-decoration:line-through}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.4)}50%{box-shadow:0 0 0 6px rgba(139,92,246,0)}}
+.listen-dot{width:12px;height:12px;border-radius:999px;background:#ef4444;animation:blink 0.8s infinite}
+@keyframes blink{50%{opacity:.3;transform:scale(1.4)}}
+
+/* dictation */
+.dict-track{display:flex;gap:8px;margin-bottom:10px}
+.dict-seg{flex:1;height:8px;border-radius:999px;background:var(--border);transition:background .3s}
+.dict-seg.past-g{background:#22c55e}.dict-seg.past-b{background:#f87171}
+.dict-seg.cur{background:var(--purple)}
+.dict-player{padding:22px;text-align:center}
+.dict-acc{text-align:center;padding:16px;border-radius:16px;border:2px solid var(--border);margin-bottom:12px}
+.dict-acc .big{font-size:30px;font-weight:900}
+.word-tags{display:flex;flex-wrap:wrap;gap:8px}
+.word-tag{padding:6px 10px;border-radius:10px;font-size:13px;font-family:ui-monospace,monospace}
+.word-tag.good{background:rgba(34,197,94,.15);color:#4ade80}
+.word-tag.bad{background:rgba(239,68,68,.15);color:#f87171}
+.dict-correct{padding:14px;border-radius:16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);font-size:14px;font-style:italic;color:#93c5fd;margin-bottom:12px}
+
+/* discussion */
+.post-card{padding:18px;margin-bottom:14px}
+.post-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.post-avatar{width:40px;height:40px;border-radius:999px;background:linear-gradient(135deg,#60a5fa,#6366f1);display:flex;align-items:center;justify-content:center;font-size:18px}
+.post-name{font-weight:700;font-size:13px}
+.post-handle{font-size:11px;color:var(--muted)}
+.post-tag{margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(59,130,246,.15);color:#60a5fa;font-size:11px;font-weight:500}
+.post-text{font-size:14px;line-height:1.6;font-weight:500}
+.post-stats{display:flex;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.divider-row{display:flex;align-items:center;gap:10px;margin:14px 0}
+.divider-row .line{flex:1;height:1px;background:var(--border)}
+.comment-card{padding:14px;border:2px solid var(--border);border-radius:16px;cursor:pointer;margin-bottom:10px;transition:all .2s;background:var(--panel)}
+.comment-card:hover{border-color:var(--purple)}
+.comment-card.selected{border-color:var(--purple);background:rgba(139,92,246,.08)}
+.comment-card.correct-ans{border-color:#22c55e;background:rgba(34,197,94,.08)}
+.comment-card.wrong-ans{border-color:#ef4444;background:rgba(239,68,68,.08)}
+.comment-row{display:flex;gap:12px;align-items:flex-start}
+.comment-avatar{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#a78bfa,#6366f1);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.comment-mark{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:999px;background:#22c55e;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+.comment-mark.x{background:#ef4444}
+.comment-main{flex:1;min-width:0}
+.comment-name{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+.comment-text{font-size:13px;color:var(--text);line-height:1.55;margin-top:2px}
+.comment-fb{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px}
+.comment-fb.good{color:#4ade80}
+.comment-fb.neutral{color:var(--muted)}
+.radio-dot{width:22px;height:22px;border-radius:999px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.comment-card.selected .radio-dot{background:var(--purple);border-color:var(--purple)}
+
+/* quiz */
+.quiz-track{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.quiz-dot{width:26px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:12px;background:var(--border);color:#fff}
+.quiz-dot.good{background:#22c55e}.quiz-dot.bad{background:#f87171}
+.quiz-q-card{padding:22px}
+.q-letter{width:26px;height:26px;border-radius:999px;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.quiz-opt{
+  width:100%;text-align:left;padding:14px 18px;border-radius:16px;border:2px solid var(--border);
+  background:var(--panel2);font-size:14px;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:12px;transition:all .2s;
+}
+.quiz-opt:hover{border-color:var(--purple)}
+.quiz-opt.correct{background:rgba(34,197,94,.15);border-color:#22c55e;color:#bbf7d0}
+.quiz-opt.wrong{background:rgba(239,68,68,.15);border-color:#ef4444;color:#fecaca}
+.quiz-opt.dim{opacity:.5}
+.quiz-expl{padding:14px;border-radius:16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);font-size:13px;color:#93c5fd;margin-top:12px}
+.results-hero{text-align:center;padding:34px 22px;border-radius:22px;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;box-shadow:0 16px 40px rgba(139,92,246,.4)}
+.results-hero .big{font-size:64px;font-weight:900;margin:10px 0}
+.secret-box{
+  position:relative;overflow:hidden;text-align:center;padding:22px;border-radius:20px;margin-top:14px;
+  background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+}
+.secret-code{display:inline-block;padding:12px 22px;background:#facc15;color:#111827;font-weight:900;font-size:18px;border-radius:14px;letter-spacing:.1em;box-shadow:0 8px 24px rgba(250,204,21,.3)}
+.sparkle{position:absolute;font-size:20px;animation:floaty 1.6s infinite}
+@keyframes floaty{0%,100%{transform:translateY(0);opacity:.8}50%{transform:translateY(-16px);opacity:1}}
+.review-row{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;margin-bottom:8px}
+.review-row.good{background:rgba(34,197,94,.1)}.review-row.bad{background:rgba(239,68,68,.1)}
+
+/* conversation game */
+.cg-chars{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
+.cg-char{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--border)}
+.cg-char .c-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.cg-dialogue{padding:22px;margin-bottom:14px;text-align:center}
+.cg-speaker{font-weight:700;font-size:15px;margin-bottom:6px}
+.cg-text{font-size:16px;line-height:1.6;color:var(--text);font-weight:500}
+.cg-choice{
+  width:100%;text-align:left;padding:14px 16px;border-radius:14px;border:2px solid var(--border);
+  background:var(--panel);font-size:14px;margin-bottom:10px;transition:all .2s;display:block;
+}
+.cg-choice:hover{border-color:var(--purple);background:rgba(139,92,246,.06)}
+.cg-cat-note{font-size:12px;color:#c4b5fd;font-style:italic;margin-top:4px;opacity:0;transition:opacity .3s}
+.cg-choice.picked{border-color:var(--purple)}
+.cg-choice.picked .cg-cat-note{opacity:1}
+.cg-end{padding:22px;text-align:center;border-radius:18px}
+.cg-end.win{background:rgba(34,197,94,.1);border:2px solid #22c55e}
+.cg-end.lose{background:rgba(239,68,68,.1);border:2px solid #ef4444}
+.cg-discuss{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;margin-top:14px}
+.cg-discuss ul{padding-left:20px;color:var(--muted);font-size:13px;line-height:1.7}
+
+/* guess the place */
+.gp-clue{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:20px;line-height:1.8;font-size:15px;max-height:340px;overflow-y:auto;margin-bottom:12px}
+.gp-word{cursor:pointer;border-bottom:2px dotted var(--purple);position:relative}
+.gp-tip{
+  position:fixed;z-index:70;max-width:240px;padding:10px 12px;border-radius:12px;background:#1e1b4b;
+  border:1px solid var(--purple);color:#ddd6fe;font-size:12px;line-height:1.5;box-shadow:0 12px 28px rgba(0,0,0,.5);pointer-events:none;
+}
+.gp-hint-btn{display:block;width:100%;text-align:left;padding:12px 16px;border-radius:12px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);font-size:13px;margin-bottom:8px}
+.gp-hint-btn .hint{color:var(--text);display:block;margin-top:4px}
+.gp-imgs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media(min-width:560px){.gp-imgs{grid-template-columns:repeat(4,1fr)}}
+.gp-img{padding:14px;text-align:center;border-radius:16px;background:var(--panel);border:1px solid var(--border)}
+.gp-img .e{font-size:34px;display:block;margin-bottom:6px}
+.gp-img .l{font-weight:700;font-size:12px}
+.gp-img .d{font-size:11px;color:var(--muted);margin-top:2px}
+.gp-phrases{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.gp-phrase{padding:8px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--border);font-size:12px;cursor:pointer;transition:all .15s}
+.gp-phrase:hover{border-color:var(--purple)}
+.gp-phrase .ph{font-weight:700}
+.gp-phrase .pr{color:var(--purple);font-size:11px;margin-top:2px}
+.gp-facts{display:flex;flex-wrap:wrap;gap:8px}
+.gp-fact{padding:10px 14px;border-radius:12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);font-size:12px;color:#86efac}
+.gp-guess-row{display:flex;gap:10px;margin-top:14px}
+.gp-input{flex:1;padding:13px 16px;border-radius:14px;border:2px solid var(--border);background:var(--panel2);color:var(--text);font-size:15px;outline:none}
+.gp-input:focus{border-color:var(--purple)}
+.gp-result{text-align:center;padding:18px;border-radius:16px;margin-top:12px;font-weight:700}
+
+/* leaderboard */
+.lb-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:var(--panel);border:1px solid var(--border);margin-bottom:10px}
+.lb-rank{width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;flex-shrink:0}
+.lb-rank.r1{background:linear-gradient(135deg,#fbbf24,#f59e0b)}
+.lb-rank.r2{background:linear-gradient(135deg,#cbd5e1,#94a3b8)}
+.lb-rank.r3{background:linear-gradient(135deg,#fcd34d,#b45309)}
+.lb-avatar{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--panel2);border:1px solid var(--border)}
+.lb-name{font-weight:700;font-size:14px}
+.lb-xp{font-size:12px;color:var(--muted)}
+.lb-bar{flex:1;height:8px;border-radius:999px;background:var(--border);overflow:hidden;max-width:220px}
+.lb-bar div{height:100%;border-radius:999px;background:linear-gradient(90deg,#8b5cf6,#ec4899)}
+
+/* cat mascot */
+.cat-wrap{position:fixed;bottom:92px;right:14px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.cat-bubble{max-width:280px;background:var(--panel);border:1px solid var(--purple);border-radius:18px;padding:14px;box-shadow:0 16px 40px rgba(0,0,0,.45);margin-right:6px;animation:fadeUp .25s ease}
+.cat-bubble .cb-text{font-size:13px;line-height:1.6}
+.cat-bubble .cb-arrow{width:12px;height:12px;background:var(--panel);border-right:1px solid var(--purple);border-bottom:1px solid var(--purple);transform:rotate(45deg);position:absolute;bottom:-7px;right:18px}
+.cat-bubble-wrap{position:relative}
+.cat-actions{display:flex;gap:8px;margin-top:12px}
+.cat-act{flex:1;padding:8px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(139,92,246,.15);color:#c4b5fd}
+.cat-act.sound{background:rgba(34,197,94,.15);color:#86efac}
+.cat-act.sound.off{background:rgba(239,68,68,.15);color:#fca5a5}
+.cat-voices{margin-top:10px;border-top:1px solid var(--border);padding-top:10px;max-height:170px;overflow-y:auto}
+.cat-voice-btn{width:100%;text-align:left;padding:7px 10px;border-radius:8px;font-size:11px;color:var(--muted);margin-bottom:2px}
+.cat-voice-btn:hover{background:var(--panel2)}
+.cat-voice-btn.on{background:rgba(139,92,246,.2);color:#c4b5fd;font-weight:600}
+.cat-btn{
+  width:64px;height:64px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:30px;
+  background:linear-gradient(135deg,#a78bfa,#f472b6);box-shadow:0 12px 32px rgba(168,85,247,.5);
+  border:4px solid var(--bg); transition:transform .15s; position:relative;
+}
+.cat-btn:hover{transform:scale(1.08)}
+.cat-btn .cat-emoji{font-size:30px;display:inline-block}
+.cat-btn.bounce .cat-emoji{animation:catBounce .5s ease}
+.cat-btn.shake .cat-emoji{animation:catShake .5s ease}
+@keyframes catBounce{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-8px) scale(1.15)}60%{transform:translateY(0) scale(.95)}}
+@keyframes catShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(8deg)}}
+.cat-dot{position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:999px;background:#ef4444;border:2px solid var(--bg)}
+.cat-btn.speaking .cat-emoji{animation:catSpeak .7s infinite alternate}
+@keyframes catSpeak{from{transform:scale(1)}to{transform:scale(1.18) rotate(-4deg)}}
+.cat-btn.thinking .cat-emoji{animation:catThink 1.2s infinite}
+@keyframes catThink{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* achievement popup */
+.ach-pop{
+  position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;padding:14px 22px;border-radius:18px;
+  background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;font-weight:700;font-size:15px;
+  box-shadow:0 12px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;animation:dropIn .35s ease;
+}
+@keyframes dropIn{from{opacity:0;transform:translate(-50%,-40px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* toast + levelup */
+.xp-toast{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:75;padding:8px 16px;border-radius:999px;
+  background:rgba(139,92,246,.9);color:#fff;font-weight:700;font-size:13px;animation:dropIn .3s ease;
+}
+.muted-banner{text-align:center;padding:12px;border-radius:16px;background:rgba(245,158,11,.1);border:1px solid #b45309;color:#fbbf24;font-size:13px;margin-bottom:12px}
+.kara-listen-row{display:flex;align-items:center;justify-content:center;gap:8px;color:#f87171;font-size:13px;font-weight:600;margin-bottom:10px}
+
+@media(max-width:560px){
+  .cat-wrap{right:8px;bottom:86px}
+  .cat-bubble{max-width:240px}
+  .warm-q{padding:22px}
+  .warm-a{padding:22px}
+  .msg-body{max-width:88%}
+}
+</style>
+</head>
+<body class="dark">
+<div id="app"></div>
+<div id="cat-widget"></div>
+<script type="application/json" id="daily-data">{"lesson":{"topic":"The Digital Age: Navigating Modern Technology","level":"B1","theme":"Technology \u0026 Society","warmup":[{"question":"Do you use your smartphone more than 4 hours a day?","answer":"Most adults globally spend 4–6 hours daily on their phones. This is equivalent to over 60 days per year! Research shows that excessive screen time can reduce sleep quality and attention span.","emoji":"📱"},{"question":"Can you name three things you did this week that required the internet?","answer":"Common answers include: online shopping, video calls with family, streaming music or TV, reading news, using navigation apps, and sending messages. The internet has become essential to modern daily life.","emoji":"🌐"},{"question":"What would you do if you had no internet for one entire week?","answer":"Interesting thought experiment! You might read physical books, spend more time outdoors, cook new recipes, or have face-to-face conversations. Many people report feeling initially anxious but later peaceful without constant connectivity.","emoji":"🤔"},{"question":"Is technology making humans more connected or more isolated?","answer":"Both perspectives are valid! Technology connects us globally but can create local disconnection. Studies show that while social media increases weak social ties, it may reduce the quality of close relationships if overused.","emoji":"🔗"}],"keywords":[{"term":"digital literacy","definition":"The ability to use digital technology effectively and safely","example":"Digital literacy is now considered as important as reading and writing.","level":"B1"},{"term":"algorithm","definition":"A set of rules a computer follows to solve a problem or make decisions","example":"The social media algorithm decided which posts you see first.","level":"B1"},{"term":"screen time","definition":"The amount of time spent using a device with a screen","example":"Doctors recommend limiting screen time for children under 12.","level":"B1"},{"term":"connectivity","definition":"The state of being connected, especially to the internet","example":"Poor connectivity in rural areas is a growing concern.","level":"B1"},{"term":"bandwidth","definition":"The maximum rate of data transfer across a network","example":"Streaming HD videos requires high bandwidth.","level":"B1"},{"term":"cybersecurity","definition":"Protection of computer systems from digital attacks","example":"Companies invest millions in cybersecurity to protect customer data.","level":"B1"},{"term":"cloud storage","definition":"Saving files on remote servers accessible via the internet","example":"I back up my photos to cloud storage automatically.","level":"B1"},{"term":"artificial intelligence","definition":"Computer systems that can perform tasks that normally require human intelligence","example":"Artificial intelligence is used to detect fraud in banking.","level":"B1"},{"term":"social media fatigue","definition":"Exhaustion caused by excessive use of social networking sites","example":"Many people take social media breaks due to social media fatigue.","level":"B1"},{"term":"digital footprint","definition":"The trail of data you leave when using the internet","example":"Your digital footprint includes every website you have ever visited.","level":"B2"},{"term":"tech-savvy","definition":"Well-informed about and able to use modern technology","example":"Being tech-savvy is a major advantage in today's job market.","level":"B1"},{"term":"obsolete","definition":"No longer produced or used; out of date","example":"Fax machines have become largely obsolete in most offices.","level":"B2"},{"term":"seamless integration","definition":"When different systems work together smoothly without friction","example":"The app offers seamless integration with your calendar and email.","level":"B2"},{"term":"disruptive technology","definition":"Innovation that significantly alters or replaces an existing market","example":"Smartphones were a disruptive technology that replaced cameras and maps.","level":"B2"},{"term":"misinformation","definition":"False or inaccurate information, especially spread online","example":"Misinformation about health topics spreads rapidly on social networks.","level":"B1"},{"term":"echo chamber","definition":"An environment where a person only encounters beliefs similar to their own","example":"Social media algorithms can create echo chambers that reinforce existing views.","level":"B2"},{"term":"multitasking","definition":"Performing multiple tasks simultaneously","example":"Contrary to belief, multitasking often reduces overall productivity.","level":"B1"},{"term":"plug in / unplug","definition":"To connect to / disconnect from technology (literal and figurative)","example":"She decided to unplug for the weekend and left her phone at home.","level":"B1"},{"term":"go viral","definition":"To spread rapidly and widely on the internet","example":"The video went viral overnight, reaching 50 million views.","level":"B1"},{"term":"at the touch of a button","definition":"Very easily; with minimal effort","example":"You can now order groceries at the touch of a button.","level":"B1"},{"term":"keep up with the times","definition":"To stay current with changes and developments","example":"Small businesses must keep up with the times by embracing digital tools.","level":"B1"},{"term":"double-edged sword","definition":"Something that has both advantages and disadvantages","example":"Social media is a double-edged sword — it connects but also distracts.","level":"B2"}],"dialogue":{"title":"A Coffee Shop Conversation","speakers":["Maya","James"],"lines":[{"speaker":"Maya","text":"James, I noticed you have not touched your phone in the last hour. Is everything okay?","emotion":"curious"},{"speaker":"James","text":"Actually, I am trying something new. I am doing a digital detox this weekend.","emotion":"calm"},{"speaker":"Maya","text":"A digital detox? You mean no phone at all? How do you even survive?","emotion":"surprised"},{"speaker":"James","text":"It sounds extreme, I know. But honestly, I was spending about six hours a day on my phone. That is more than I sleep!","emotion":"reflective"},{"speaker":"Maya","text":"Wow. When you put it that way, it does sound like a lot. What made you decide to do this?","emotion":"thoughtful"},{"speaker":"James","text":"I read an article about how the algorithm on social media is literally designed to keep you scrolling. It felt manipulative.","emotion":"concerned"},{"speaker":"Maya","text":"I read something similar. The app developers actually hire psychologists to make the experience more addictive.","emotion":"serious"},{"speaker":"James","text":"Exactly. And I realised my attention span has gotten much shorter. I cannot even read a book for twenty minutes without checking my phone.","emotion":"honest"},{"speaker":"Maya","text":"I feel that too. So what are you doing with all the extra time?","emotion":"curious"},{"speaker":"James","text":"I went for a long walk this morning and actually noticed things I normally ignore. A beautiful old building on my street. The sound of birds. It was refreshing.","emotion":"happy"},{"speaker":"Maya","text":"That sounds lovely. Maybe I should try it too. Just for a day though. I am not sure I could manage a whole weekend!","emotion":"amused"},{"speaker":"James","text":"Start small. Even two hours without your phone can make a difference. You will be surprised how much more present you feel.","emotion":"encouraging"}]},"reading":{"basic":{"title":"How Technology Changed Our Lives","content":"\u003ch3\u003eTechnology Is Everywhere\u003c/h3\u003e\n\u003cp\u003eToday, technology is a big part of our daily lives. We use phones, computers, and tablets every day. These tools help us do many things quickly and easily. We can send messages, watch videos, and find information \u003cb\u003eat the touch of a button\u003c/b\u003e.\u003c/p\u003e\n\n\u003ch3\u003eThe Good Things About Technology\u003c/h3\u003e\n\u003cp\u003eTechnology has many benefits. We can stay connected with family and friends who live far away. Video calls allow us to see people's faces even when they are on the other side of the world. Online shopping saves us time because we do not need to go to a physical store.\u003c/p\u003e\n\u003cp\u003eEducation has also changed. Students can now learn from teachers in other countries. Free online courses make knowledge available to everyone. A person in a small village can learn the same things as someone in a big city.\u003c/p\u003e\n\n\u003ch3\u003eSome Problems With Technology\u003c/h3\u003e\n\u003cp\u003eHowever, technology also brings problems. Many people spend too much time on their phones. This is called excessive \u003cb\u003escreen time\u003c/b\u003e. Too much screen time can affect our sleep and make us feel tired. Some people feel anxious when they do not have their phone with them.\u003c/p\u003e\n\u003cp\u003eAnother problem is \u003cb\u003emisinformation\u003c/b\u003e. This means false information that spreads online. It can be hard to know what is true and what is not. We need to check information carefully before we share it.\u003c/p\u003e\n\n\u003ch3\u003eFinding a Balance\u003c/h3\u003e\n\u003cp\u003eThe key is to find a good balance. Technology should help us, not control us. We can set limits on our screen time. We can also spend time doing things without technology, like reading books, going for walks, or talking to people face to face.\u003c/p\u003e\n\u003cp\u003eBeing \u003cb\u003etech-savvy\u003c/b\u003e does not only mean knowing how to use devices. It also means knowing when NOT to use them. That is real digital wisdom.\u003c/p\u003e"},"intermediate":{"title":"The Digital Age: Navigating Modern Technology","content":"\u003ch3\u003eA World Transformed\u003c/h3\u003e\n\u003cp\u003eWe are living through one of the most significant transformations in human history. The rise of digital technology has fundamentally altered how we communicate, work, learn, and even think. From the moment we wake up to the time we fall asleep, technology mediates almost every aspect of modern life. While this brings extraordinary benefits, it also presents challenges that society is only beginning to understand.\u003c/p\u003e\n\n\u003ch3\u003eThe Promise of Connectivity\u003c/h3\u003e\n\u003cp\u003eAt its best, technology fulfils an ancient human dream: true global \u003cb\u003econnectivity\u003c/b\u003e. A student in rural Kenya can access the same educational resources as one at Harvard University. A small business owner in Vietnam can reach customers in Canada. Families separated by oceans can share meals virtually. The internet has democratised access to information in ways that previous generations could only imagine.\u003c/p\u003e\n\u003cp\u003eFurthermore, \u003cb\u003eartificial intelligence\u003c/b\u003e is beginning to personalise these experiences. Learning apps adapt to individual progress. Medical diagnostics are becoming faster and more accurate. Agricultural tools help farmers predict weather patterns and optimise crops. Technology, used wisely, can be a powerful force for human advancement.\u003c/p\u003e\n\n\u003ch3\u003eThe Hidden Costs\u003c/h3\u003e\n\u003cp\u003eHowever, this transformation comes with significant hidden costs. The \u003cb\u003ealgorithm\u003c/b\u003e-driven design of social media platforms is engineered to maximise engagement, often at the expense of user wellbeing. Research from leading universities has linked excessive social media use with increased rates of anxiety, depression, and loneliness — particularly among adolescents.\u003c/p\u003e\n\u003cp\u003eThe concept of the \u003cb\u003eecho chamber\u003c/b\u003e is particularly alarming. When platforms show us only content that aligns with our existing beliefs, they reinforce and amplify those views. This makes productive conversation between people with different perspectives increasingly difficult. \u003cb\u003eMisinformation\u003c/b\u003e thrives in these environments, spreading faster than verified facts.\u003c/p\u003e\n\u003cp\u003eThere is also the issue of our \u003cb\u003edigital footprint\u003c/b\u003e. Every click, search, and purchase leaves a permanent data trail. This information is collected by corporations and can be used in ways we have never explicitly agreed to. Privacy, once considered a basic right, has become a luxury in the digital age.\u003c/p\u003e\n\n\u003ch3\u003eReclaiming Control\u003c/h3\u003e\n\u003cp\u003eGrowing numbers of people are pushing back. The concept of a \"digital detox\" — deliberately disconnecting from technology for a period — has become a mainstream wellness practice. Studies show that even short breaks from social media improve mood and reduce anxiety. People are recognising that being \u003cb\u003etech-savvy\u003c/b\u003e means more than knowing how to use devices; it means understanding their power and choosing how to engage with them.\u003c/p\u003e\n\u003cp\u003eSchools are incorporating \u003cb\u003edigital literacy\u003c/b\u003e into their curricula, teaching children not just how to use technology, but how to think critically about it. Legislation is catching up, with new privacy laws in Europe and California giving users more control over their data.\u003c/p\u003e\n\n\u003ch3\u003eLooking Ahead\u003c/h3\u003e\n\u003cp\u003eThe relationship between humans and technology is not fixed — it is something we collectively shape through our choices. The devices we use, the platforms we support, and the time we invest all send signals to the technology industry about what we value. A future where technology genuinely serves human flourishing is possible, but it requires active participation, not passive consumption.\u003c/p\u003e\n\u003cp\u003eTechnology is neither a villain nor a saviour. Like all powerful tools, it reflects the intentions and values of those who wield it. The challenge of our generation is to develop the wisdom — individually and collectively — to use it well.\u003c/p\u003e"},"advanced":{"title":"The Anthropology of the Digital Self: Technology, Identity, and Society","content":"\u003ch3\u003eThe Mediated Self\u003c/h3\u003e\n\u003cp\u003eThe philosophical implications of our digital existence deserve far more serious examination than the breathless techno-optimism of Silicon Valley or the reflexive Luddism of its critics. We are not merely users of technology; we have become co-constituted with it. The \u003cb\u003edigital footprint\u003c/b\u003e we leave is not a shadow of the self — it is increasingly part of the self. Our identities, social relationships, and cognitive patterns are being restructured by the environments we inhabit, and those environments are now predominantly digital.\u003c/p\u003e\n\u003cp\u003eThe anthropologist Marshall McLuhan famously observed that \"the medium is the message.\" He could not have anticipated the prescience of this insight in an era of \u003cb\u003ealgorithmic\u003c/b\u003e content curation. The medium is no longer merely television or radio — it is a personalised, adaptive, behaviorally-engineered information environment that has no historical precedent.\u003c/p\u003e\n\n\u003ch3\u003eThe Architecture of Attention\u003c/h3\u003e\n\u003cp\u003eContemporary digital platforms are sophisticated attention-capture systems. Their designers, many trained in behavioural psychology and neuroscience, employ techniques derived from operant conditioning: variable reward schedules, social validation metrics, and infinite scroll mechanisms that eliminate natural stopping points. The result is not engagement but compulsion. The distinction between the two is morally significant.\u003c/p\u003e\n\u003cp\u003eThe consequences for cognitive architecture are profound. Neuroscientific research suggests that habitual digital multitasking is associated with reduced grey matter density in the anterior cingulate cortex — the brain region responsible for impulse control and emotional regulation. We are, in a very literal sense, reshaping our neurology through our technological habits. \u003cb\u003eScreen time\u003c/b\u003e is not merely a lifestyle choice; it is a neurological intervention.\u003c/p\u003e\n\n\u003ch3\u003eThe Epistemological Crisis\u003c/h3\u003e\n\u003cp\u003ePerhaps the most dangerous consequence of algorithmic \u003cb\u003eecho chambers\u003c/b\u003e is not political polarisation, though that is serious enough, but the epistemological fragmentation of shared reality. When different segments of society inhabit entirely different information ecosystems, the possibility of democratic deliberation — which requires some common ground of agreed facts — becomes structurally compromised.\u003c/p\u003e\n\u003cp\u003e\u003cb\u003eMisinformation\u003c/b\u003e exploits this fragmentation brilliantly. False narratives do not spread despite being false; they often spread because their falseness is irrelevant to their function. They serve as identity markers, tribal signals, and emotional outlets. Debunking alone cannot counter this dynamic because the problem is not primarily epistemic — it is psychological and sociological.\u003c/p\u003e\n\n\u003ch3\u003eThe Political Economy of Attention\u003c/h3\u003e\n\u003cp\u003eThe surveillance capitalism model — in which human attention and behavioural data constitute the primary commodity — creates structural incentives that are fundamentally misaligned with user wellbeing. \u003cb\u003eConnectivity\u003c/b\u003e is not sold; it is the bait. The actual product is the modification of human behaviour for advertisers. As Shoshana Zuboff has argued, this represents a new form of power that operates \"above and beyond\" traditional market and state power.\u003c/p\u003e\n\u003cp\u003e\u003cb\u003eCybersecurity\u003c/b\u003e in this context extends beyond protecting systems from intrusion. The more urgent challenge is protecting human cognitive autonomy from sophisticated behavioural engineering. This requires not merely technical solutions but regulatory frameworks, educational interventions, and cultural norms that have yet to fully emerge.\u003c/p\u003e\n\n\u003ch3\u003eToward Digital Wisdom\u003c/h3\u003e\n\u003cp\u003eThe concept of \u003cb\u003edigital literacy\u003c/b\u003e must be radically expanded. Technical competency — knowing how to use devices and platforms — is necessary but grossly insufficient. What is required is a deeper form of critical engagement: understanding the political economies that structure digital environments, recognising the psychological mechanisms being exploited, and developing the metacognitive capacity to observe one's own technologically-mediated behaviour.\u003c/p\u003e\n\u003cp\u003eThis is not a counsel of despair but a call for agency. Technology is neither inherently oppressive nor liberatory. The same \u003cb\u003eartificial intelligence\u003c/b\u003e systems that enable algorithmic manipulation can be redirected toward genuine educational personalisation. The same connectivity that creates echo chambers can bridge cultural divides. The question is not whether to engage with technology but how — and on whose terms.\u003c/p\u003e\n\u003cp\u003eThe generation that masters this question will not merely be tech-savvy in the conventional sense. They will have developed something more valuable: the wisdom to remain fully human in an increasingly posthuman landscape.\u003c/p\u003e"}},"grammarSlides":[{"level":"A2/B1","structure":"Present Perfect vs. Simple Past","example":"I have used social media for years. / I used Twitter in 2015.","meaning":"Present perfect connects past to now; simple past describes a finished action.","mistake":"Saying 'I have went online yesterday' — never use present perfect with finished time markers like 'yesterday'.","alternatives":["'I've been using...' (continuous)","'I used to use...' (past habit)"]},{"level":"A2/B1","structure":"Passive Voice with Technology","example":"The data is collected by the algorithm.","meaning":"Used when the action is more important than who does it, or the agent is unknown/obvious.","mistake":"Overusing passive voice makes writing impersonal and harder to read.","alternatives":["Active: 'The algorithm collects the data'","Focus shift: 'Your data gets collected automatically'"]},{"level":"A2/B1","structure":"Modal Verbs for Advice (should/ought to)","example":"You should limit your screen time. / We ought to check sources carefully.","meaning":"Express recommendations, not obligations. Softer than 'must'.","mistake":"Confusing 'should' (advice) with 'must' (obligation) or 'shall' (formal future).","alternatives":["'It would be wise to...'","'I'd recommend...'","'You might want to...'"]},{"level":"B1/B2","structure":"Conditional Type 2 (Hypothetical)","example":"If I deleted social media, I would feel more present.","meaning":"Describes an imaginary present/future situation and its result.","mistake":"Writing 'If I would delete...' — never use 'would' in the 'if' clause.","alternatives":["'Were I to delete...' (formal)","'Supposing I deleted...'","'Should I delete...'"]},{"level":"B1/B2","structure":"Relative Clauses (Defining/Non-defining)","example":"The algorithm that shows you ads is based on your behaviour. / Mark Zuckerberg, who founded Facebook, is one of the world's richest people.","meaning":"Defining: identifies which one. Non-defining: adds extra information (use commas).","mistake":"Using 'which' for people or 'who' for things in defining clauses.","alternatives":["'The person whose data was leaked...'","'The app, which I find addictive, ...'"]},{"level":"B1/B2","structure":"Gerunds vs. Infinitives After Verbs","example":"I enjoy scrolling through feeds. / I decided to take a digital detox.","meaning":"Some verbs take gerunds (enjoy, avoid, consider), others take infinitives (decide, want, choose).","mistake":"Saying 'I enjoy to scroll' or 'I decided taking' — these are very common B1 errors.","alternatives":["'I can't help scrolling...'","'I managed to disconnect...'"]},{"level":"B2/C1","structure":"Inversion for Emphasis","example":"Not only does social media distract us, but it also shapes our beliefs.","meaning":"Starting with a negative/restrictive expression triggers subject-verb inversion. Creates strong emphasis.","mistake":"Forgetting to invert after 'not only,' 'rarely,' 'never have I,' etc.","alternatives":["'Rarely do we question...'","'Never before has technology...'","'Only when we disconnect...'"]},{"level":"B2/C1","structure":"Noun Clauses as Subjects","example":"What concerns researchers most is the long-term effect on attention spans.","meaning":"A whole clause acts as the subject. Creates sophisticated, academic-style sentence structure.","mistake":"Using a pronoun where a noun clause is needed: 'It concerns researchers' removes the specificity.","alternatives":["'The fact that... is concerning'","'That algorithms manipulate us is well documented'"]},{"level":"B2/C1","structure":"Advanced Hedging Language","example":"This might suggest that prolonged use could potentially alter cognitive patterns.","meaning":"Hedging (might, could, potentially, arguably) is essential in academic writing to avoid overgeneralisation.","mistake":"Making absolute statements: 'Social media destroys concentration' — unqualified and defensible claims.","alternatives":["'Evidence suggests...'","'It appears that...'","'There is reason to believe...'"]}],"radioDrama":{"title":"The Disconnected","setting":"A kitchen table. Morning. The Okafor family.","cast":["Narrator","Mom (Adaeze)","Dad (Emeka)","Teen (Zoe)"],"lines":[{"character":"Narrator","text":"It is a Sunday morning in the Okafor household. Adaeze is making tea. Emeka reads the news on his tablet. Zoe sits across from them, headphones on, completely absorbed in her phone.","emotion":"neutral"},{"character":"Mom (Adaeze)","text":"Zoe. Zoe! Take those headphones off, please. We are having breakfast as a family.","emotion":"firm"},{"character":"Teen (Zoe)","text":"One second, Mum! I am literally in the middle of a video.","emotion":"annoyed"},{"character":"Dad (Emeka)","text":"You said one second twenty minutes ago. And I notice I am also guilty — let me put this down too.","emotion":"self-aware"},{"character":"Narrator","text":"Emeka sets his tablet face-down on the table. It is a small gesture, but Zoe notices.","emotion":"neutral"},{"character":"Teen (Zoe)","text":"Okay, okay. I am off. See? Completely unplugged. Are you happy?","emotion":"sarcastic"},{"character":"Mom (Adaeze)","text":"I am not trying to make you unhappy. I just miss talking to you. Actually talking — not through a screen.","emotion":"sincere"},{"character":"Teen (Zoe)","text":"But Mum, all my friends are on there. It is where we communicate. It is how my generation works.","emotion":"defensive"},{"character":"Dad (Emeka)","text":"I understand that, Zoe. I really do. But here is a question — when did you last have a conversation so good that you forgot to check your phone?","emotion":"curious"},{"character":"Teen (Zoe)","text":"I... that is a weird question. I do not know. Maybe... actually, when we went camping last summer? We had no signal.","emotion":"thoughtful"},{"character":"Mom (Adaeze)","text":"And what was that weekend like?","emotion":"gentle"},{"character":"Teen (Zoe)","text":"It was actually really nice. We talked properly. I felt... present, I think. Is that the word?","emotion":"realising"},{"character":"Dad (Emeka)","text":"That is exactly the word. The algorithm never gives you that feeling. Only real moments do.","emotion":"wise"},{"character":"Narrator","text":"There is a long silence. Not an uncomfortable one — the kind that is full of something. Zoe slides her phone into her pocket.","emotion":"neutral"},{"character":"Teen (Zoe)","text":"Alright. What do you want to talk about? Actually talk about.","emotion":"open"},{"character":"Mom (Adaeze)","text":"Tell me something that surprised you this week. Something you learned.","emotion":"warm"},{"character":"Teen (Zoe)","text":"Okay... I read that the average person touches their phone over two thousand six hundred times a day. I could not believe it. But then I started counting and I think I might be above average.","emotion":"amused"},{"character":"Dad (Emeka)","text":"That is a genuinely alarming statistic. And you read that online, of course.","emotion":"amused"},{"character":"Teen (Zoe)","text":"Oh, the irony is not lost on me, Dad.","emotion":"laughing"},{"character":"Narrator","text":"And for the first time in a long while, the Okafor kitchen fills with real laughter — the kind that no algorithm can manufacture.","emotion":"warm"}],"ambientSound":"kitchen","comprehensionQuestions":[{"question":"What is Zoe doing at the beginning of the scene?","options":["Making breakfast","Scrolling on her phone with headphones on","Talking to her parents","Reading a book"],"correct":1,"explanation":"The narrator describes Zoe sitting with headphones on, completely absorbed in her phone."},{"question":"What does Dad (Emeka) do that catches Zoe's attention?","options":["Takes away her phone","Raises his voice","Puts his own tablet face-down","Leaves the room"],"correct":2,"explanation":"Emeka models the behavior he wants to see by putting his own device down first, rather than demanding Zoe do so."},{"question":"When did Zoe last feel 'present' according to the conversation?","options":["Last week at school","During the camping trip with no signal","At a birthday party","She never has"],"correct":1,"explanation":"Zoe recalls feeling genuinely present during a camping trip last summer when there was no phone signal."},{"question":"What surprising statistic does Zoe mention?","options":["People sleep 6 hours on average","The average person touches their phone 2,600 times daily","80% of teens are addicted to phones","Screen time reduces sleep by 2 hours"],"correct":1,"explanation":"Zoe mentions reading that the average person touches their phone over 2,600 times per day."}]},"dictation":{"sentences":["The algorithm decides which posts appear at the top of your feed based on your previous behaviour.","Digital literacy is becoming as important as traditional reading and writing skills in the modern world.","Social media platforms are designed to maximise engagement, sometimes at the expense of user wellbeing.","A growing number of people are choosing to take regular digital detox breaks to improve their mental health.","Misinformation spreads rapidly online because false stories often trigger stronger emotional reactions than factual ones."]},"discussion":{"topic":"Is technology making us smarter or more dependent?","post":"I think technology is a double-edged sword. Sure, we have access to incredible information, but are we actually becoming more intelligent, or just better at finding answers without understanding them? When was the last time you memorised a phone number? I used to know thirty. Now I know three. — Posted by @TechWatcher","comments":[{"character":"Chad","avatar":"😎","text":"Honestly? Technology is making us SMARTER. We offload boring memorisation to machines so our brains can focus on creativity and problem-solving. Why remember a phone number when you can think about bigger ideas?","isCorrect":false,"feedback":"Chad makes a valid point about cognitive offloading, but he oversimplifies. While we do free up some cognitive resources, studies show passive reliance on technology can weaken certain cognitive muscles. His argument lacks nuance about what 'smarter' actually means.","catFeedback":"Chad's got confidence, but his answer is a bit too simple. The reality is more complicated than that! Cognitive offloading is real, but it's not the whole story."},{"character":"Brittany","avatar":"💁‍♀️","text":"It depends entirely on HOW you use it. Technology used passively makes us dependent. Technology used actively — for creating, learning, and connecting ideas — genuinely enhances intelligence. The tool is neutral; the user is not.","isCorrect":true,"feedback":"Excellent insight! Brittany identifies the crucial distinction between passive consumption and active engagement. This reflects real research on technology use and cognitive outcomes. She avoids blanket statements and acknowledges context — a hallmark of B2+ critical thinking.","catFeedback":"Purr-fect answer! Brittany nailed it. The key is HOW you use technology, not just that you use it. That's exactly the kind of nuanced thinking we need!"},{"character":"Mr. Worthington","avatar":"🧐","text":"In my forty years of teaching, I have watched students go from encyclopaedias to search engines. Each generation said the new technology would ruin young minds. Each generation was wrong. Children adapt. Stop worrying.","isCorrect":false,"feedback":"Mr. Worthington commits an appeal to tradition fallacy. The fact that previous technologies did not cause lasting harm does not mean current ones won't — particularly given the engineered addictive properties of modern platforms, which have no historical precedent.","catFeedback":"Hmm, Mr. Worthington is wise but a bit too comfortable with the past. Just because old worries were wrong doesn't mean new ones are!"},{"character":"Kevin","avatar":"🙄","text":"Who cares? Everything is online anyway. If I need to know something, I Google it. If I need to think about something, I'll ask ChatGPT. Intelligence is overrated. Efficiency is what matters now.","isCorrect":false,"feedback":"Kevin's comment, while humorously blunt, confuses information retrieval with understanding. Efficiency without comprehension creates brittle knowledge that breaks under novel circumstances. He raises the important question of what we value — but does not engage with it.","catFeedback":"Oh Kevin... I love the honesty, but mixing up 'finding information' with 'being intelligent' is like saying you can cook because you have a menu. Nice try though!"}]},"quiz":[{"question":"Based on the reading, what does 'echo chamber' primarily refer to in the context of social media?","options":["A soundproof room for recording podcasts","A digital environment that reinforces existing beliefs","A device that amplifies voices on video calls","A marketing strategy for audio content"],"correct":1,"explanation":"An echo chamber is a digital environment where algorithms show content that aligns with existing views, reinforcing and amplifying those beliefs."},{"question":"The dialogue uses the phrase 'at the touch of a button.' This is best described as a:","options":["Technical term for touchscreen technology","Formal expression for device operation","Colloquial idiom meaning 'very easily'","Metaphor for digital addiction"],"correct":2,"explanation":"At the touch of a button is an idiomatic expression meaning something can be done very easily with minimal effort."},{"question":"Which grammar structure does James use when he says 'I was spending about six hours a day on my phone'?","options":["Present Perfect Continuous","Past Simple","Past Continuous","Present Simple"],"correct":2,"explanation":"Past Continuous (was + -ing) describes an ongoing action in the past, emphasising the duration and continuity of the behaviour."},{"question":"In the Radio Drama, what causes Zoe to begin engaging more genuinely?","options":["Her mother threatens to take her phone away","Her father puts down his own device first","She receives a notification that distracts her","The internet connection is lost"],"correct":1,"explanation":"Emeka's act of putting his own tablet face-down is what Zoe notices — modelling the behaviour rather than demanding it creates genuine engagement."},{"question":"The term 'digital footprint' most accurately means:","options":["The size of a computer screen in pixels","A physical USB connection to a device","The data trail left by internet activity","Software that tracks step counts"],"correct":2,"explanation":"A digital footprint is the trail of data — clicks, searches, purchases — that you leave when using the internet."},{"question":"Which comment in the Discussion Corner is considered most insightful, and why?","options":["Chad's, because he mentions creativity and problem-solving","Brittany's, because she distinguishes between active and passive use","Mr. Worthington's, because he has historical perspective","Kevin's, because he is the most honest about modern habits"],"correct":1,"explanation":"Brittany's comment is most insightful because she avoids absolute statements and acknowledges that the impact of technology depends on HOW it is used — reflecting nuanced critical thinking."},{"question":"The advanced reading describes 'surveillance capitalism.' Based on context clues, this term most likely means:","options":["Government monitoring of stock markets","A business model based on collecting and monetising user data","A political system that controls communication technology","Software used by police to monitor criminals"],"correct":1,"explanation":"Surveillance capitalism, as described by Shoshana Zuboff, is a business model in which human attention and behavioural data are commodified for commercial purposes."},{"question":"What type of conditional is used in: 'If I deleted social media, I would feel more present'?","options":["Zero Conditional (universal truths)","First Conditional (real possibility)","Second Conditional (hypothetical/unlikely)","Third Conditional (past regret)"],"correct":2,"explanation":"The Second Conditional (If + past simple, would + infinitive) describes an imaginary or hypothetical present/future scenario."},{"question":"The lesson argues that true digital literacy involves:","options":["Typing speed and knowing keyboard shortcuts","Using the latest devices and software","Critical understanding of how and why to engage with technology","Having multiple social media accounts"],"correct":2,"explanation":"The lesson consistently argues that real digital literacy goes beyond technical skill to include critical thinking about purpose, design, and impact."},{"question":"Which sentence uses hedging language correctly, as described in the Grammar Slides?","options":["Social media destroys concentration completely.","I am certain that algorithms make everyone anxious.","This might suggest that prolonged use could potentially alter thinking patterns.","Technology definitely causes depression in teenagers."],"correct":2,"explanation":"Hedging uses words like 'might,' 'could,' and 'potentially' to avoid overgeneralisation — essential in academic and professional writing."}],"secretCode":"DGTL-B1-2025-MASTER","conversationGame":{"title":"The Tech Job Interview","description":"You are interviewing for a position at a tech startup. Navigate the conversation carefully — your digital literacy and communication skills are being tested!","characters":[{"name":"Sarah Chen","role":"HR Manager","avatar":"👩‍💼","personality":"Professional but warm"},{"name":"Marcus Rivera","role":"Tech Lead","avatar":"👨‍💻","personality":"Direct and technical"}],"nodes":{"start":{"id":"start","speaker":"Sarah Chen","text":"Welcome! We are excited to meet you. Before we dive in, I'd like to understand your relationship with technology. How would you describe your digital literacy?","emotion":"cheerful","choices":[{"text":"I am extremely tech-savvy. I spend 8+ hours online daily and know every new app.","next":"overclaim","catNote":"Overconfidence alert! Quality over quantity..."},{"text":"I am comfortable with technology and try to use it critically and purposefully.","next":"good_start","catNote":"Excellent! Thoughtful and balanced!"},{"text":"To be honest, I am still learning. Technology moves very fast.","next":"humble","catNote":"Honest humility is always appreciated!"},{"text":"I prefer not to use technology much. I am more of a people person.","next":"red_flag","catNote":"Hmm, for a tech job? Maybe not the best angle..."}]},"good_start":{"id":"good_start","speaker":"Sarah Chen","text":"That is exactly the mindset we value here. Now, Marcus would like to ask you something about our industry. Marcus?","emotion":"cheerful","choices":[{"text":"Of course, I am happy to answer any technical questions.","next":"security_correct","catNote":"Confident and ready! Great attitude!"},{"text":"Sure — although I am still developing my technical knowledge.","next":"humble","catNote":"Honest and open to learning!"}]},"overclaim":{"id":"overclaim","speaker":"Sarah Chen","text":"Interesting... but we actually worry about candidates who are online all day without purpose. Could you tell me about a time you chose NOT to use technology to solve a problem?","emotion":"dramatic","choices":[{"text":"I cannot think of any. Technology always has the answer.","next":"lose_overclaim","catNote":"Oh no, that's not the right answer here..."},{"text":"Actually, I once resolved a team conflict through face-to-face conversation rather than email chains.","next":"recover","catNote":"Great recovery! Face-to-face wins sometimes!"}]},"humble":{"id":"humble","speaker":"Marcus Rivera","text":"I appreciate the honesty. We like learners here. Tell me — if you encountered a cybersecurity threat at work, what would your first step be?","emotion":"cheerful","choices":[{"text":"I would immediately try to fix it myself by looking it up online.","next":"lose_security","catNote":"Hmm, going solo on security threats is risky..."},{"text":"I would disconnect the affected system and notify the IT security team immediately.","next":"security_correct","catNote":"Purrfect! That's exactly right!"}]},"red_flag":{"id":"red_flag","speaker":"Marcus Rivera","text":"This is a technology company. We need people who embrace digital tools thoughtfully. I am afraid this might not be the right fit. Thank you for coming in.","emotion":"angry","choices":[],"isEnd":true,"isWin":false,"endMessage":"The interview ends early. The tech company needed someone more comfortable with digital tools. Remember: being 'a people person' and being tech-savvy are NOT opposites!"},"lose_overclaim":{"id":"lose_overclaim","speaker":"Sarah Chen","text":"We actually value human judgment over digital automation. Someone who relies entirely on technology is a liability here. Thank you for your time.","emotion":"dramatic","choices":[],"isEnd":true,"isWin":false,"endMessage":"The interview ends. Being unable to disconnect from technology when needed is seen as a weakness. True digital literacy means knowing WHEN not to use technology."},"recover":{"id":"recover","speaker":"Sarah Chen","text":"Excellent example! That shows real emotional intelligence. Now, Marcus has a technical question for you.","emotion":"cheerful","choices":[{"text":"I am ready. What would you like to know?","next":"security_correct","catNote":"Confident! Let's hear the question."},{"text":"I will do my best to answer honestly.","next":"humble","catNote":"Humble but willing — nice approach!"}]},"lose_security":{"id":"lose_security","speaker":"Marcus Rivera","text":"That is actually the worst thing you could do — searching online about a security breach could alert the attacker or spread the problem. We need people who follow protocol. Thank you for your time.","emotion":"angry","choices":[],"isEnd":true,"isWin":false,"endMessage":"Cybersecurity incident response requires protocol, not improvisation. The correct first step is always: isolate and report."},"security_correct":{"id":"security_correct","speaker":"Marcus Rivera","text":"Perfect response. You clearly understand that protocol matters more than heroics. One final question — how do you feel about digital detox policies at work?","emotion":"cheerful","choices":[{"text":"I think they are unnecessary. We should always be reachable.","next":"lose_detox","catNote":"Always reachable? That's a recipe for burnout..."},{"text":"I support them. Research shows boundaries improve productivity and creativity.","next":"win","catNote":"Wonderful! You understand work-life balance!"},{"text":"I would comply but I personally disagree with them.","next":"lose_disagree","catNote":"Almost! But expressing disagreement with company values is tricky..."}]},"lose_detox":{"id":"lose_detox","speaker":"Sarah Chen","text":"We have found that always-on culture leads to burnout and poor quality work. We are looking for someone who models healthy digital habits. Thank you.","emotion":"dramatic","choices":[],"isEnd":true,"isWin":false,"endMessage":"Always-on culture is recognised as harmful. Companies that prioritise wellbeing produce better results. Understanding boundaries is a professional skill."},"lose_disagree":{"id":"lose_disagree","speaker":"Sarah Chen","text":"We appreciate the honesty, but we need team members who genuinely believe in our culture, not just comply with it. We will keep your CV on file.","emotion":"secretive","choices":[],"isEnd":true,"isWin":false,"endMessage":"Cultural alignment matters in hiring. Expressing disagreement with core company values — even politely — signals a potential mismatch."},"win":{"id":"win","speaker":"Sarah Chen","text":"That is exactly our philosophy. You have demonstrated digital literacy, critical thinking, emotional intelligence, and alignment with our values. We would love to have you join our team. Welcome aboard!","emotion":"cheerful","choices":[],"isEnd":true,"isWin":true,"endMessage":"Congratulations! You navigated the interview perfectly. You demonstrated that true digital literacy means using technology purposefully, knowing its limits, following security protocols, and supporting healthy digital habits."}},"keywords":{"digital literacy":"The ability to use digital technology effectively, critically, and safely","tech-savvy":"Well-informed about and comfortable using modern technology","cybersecurity":"Protection of computer systems and networks from digital attacks","protocol":"An established set of rules or procedures to follow in a given situation","digital detox":"A period of time during which a person refrains from using digital devices","emotional intelligence":"The ability to recognise and manage one's own emotions and those of others","burnout":"Physical or mental collapse caused by overwork or stress","cultural alignment":"Sharing the same values and working style as an organisation"},"discussionQuestions":["What would you do if you were asked to be available by phone 24 hours a day for your job?","How do you personally balance technology use in your daily life?","Do you think companies have a responsibility to protect employees from digital overload?","What is one digital habit you would like to change, and how would you do it?"]},"guessThePlace":{"name":"Kyoto, Japan","coordinates":{"lat":35.0116,"lng":135.7681},"clue":"This extraordinary city is one of the most carefully preserved urban spaces on the planet. Walking through its ancient districts feels like stepping backward through time, yet the city itself is entirely alive and modern. In the older neighbourhoods, the streets narrow to paths barely wide enough for two people to walk side by side. Traditional wooden buildings line these lanes, their dark timber facades blackened by centuries of seasons. Paper lanterns cast warm amber light in the evenings, and the air carries the faint scent of cedar and incense.\n\nThe city is home to hundreds of shrines and temples, each with its own distinct character. Some are grand and imposing, set against forested hillsides and approached through long corridors of towering red gates that seem to multiply endlessly. Others are intimate and hidden, discovered suddenly at the end of an unmarked alley.\n\nSeasonal change is experienced here with unusual intensity. When spring arrives, every street becomes briefly magical as blossoms drift from ancient trees, carpeting the ground in pale pink. Autumn brings an equally theatrical transformation — the hillsides burn in shades of crimson, amber, and deep gold.\n\nThe local cuisine reflects the same philosophy of careful refinement. Small portions, exquisite presentation, seasonal ingredients. There is a particular multi-course dining tradition here that has been practised for centuries and is considered one of the world's great culinary arts.\n\nWomen in colourful traditional dress can still be seen walking between the old tea house districts, though today many are visitors enjoying a cultural experience rather than professional practitioners. The city has managed the rare achievement of being both a living community and a world heritage site simultaneously.","tooltipWords":{"facades":"The front faces of buildings","incense":"A substance burned to produce a fragrant smell, often used in religious ceremonies","intimate":"Small, private, and cosy","theatrical":"Very dramatic and visually impressive","culinary":"Related to cooking or the kitchen","refinement":"The quality of being cultured and having good taste","heritage site":"A place recognised as having special cultural, historical, or natural importance"},"hints":["This place is located in an island nation in East Asia, known for its unique blend of ancient tradition and cutting-edge technology.","This is the second-largest city in its country's Kansai region, and served as the nation's imperial capital for over a thousand years.","The city's name means 'Capital City' in the local language. It begins with the letter K."],"images":[{"label":"Aerial View","emoji":"🛩️","description":"Ancient temple complexes nestled in forested hills"},{"label":"Street Level","emoji":"🏮","description":"Narrow lanes with traditional wooden buildings"},{"label":"Local Food","emoji":"🍱","description":"Exquisite multi-course traditional cuisine"},{"label":"Cultural Detail","emoji":"⛩️","description":"Iconic vermillion gates stretching through forest"}],"funFacts":["Kyoto has over 1,600 Buddhist temples and 400 Shinto shrines within city limits.","It was deliberately spared from bombing in World War II partly due to its immense cultural significance.","The city inspired the design of several animated films, including works by Studio Ghibli.","Kyoto's geisha district, Gion, is one of the last places where the geisha tradition is still authentically practised.","The famous Arashiyama Bamboo Grove is so tall and dense that it blocks out direct sunlight at midday."],"cultureNotes":["Always walk on the left side of temple pathways — it's respectful and traditional.","Photography of geiko (Kyoto geisha) without permission is considered deeply disrespectful.","Many high-end restaurants require reservations months in advance — even in Japan, Kyoto's dining culture is considered elite.","Remove your shoes before entering any traditional building, and many temple areas require complete silence."],"thingsToAvoid":["Do not eat or drink while walking — it's considered rude in traditional areas.","Avoid loud conversations near temple and shrine grounds.","Do not touch the moss or sacred objects in garden areas.","Avoid pointing at people or using large gestures in formal spaces."],"country":"Japan","language":"Japanese","languageCode":"ja","survivalPhrases":[{"phrase":"こんにちは","pronunciation":"Konnichiwa","translation":"Hello / Good afternoon","context":"General greeting during daytime"},{"phrase":"ありがとうございます","pronunciation":"Arigatou gozaimasu","translation":"Thank you very much","context":"Polite way to thank someone"},{"phrase":"すみません","pronunciation":"Sumimasen","translation":"Excuse me / Sorry","context":"Getting attention or apologizing"},{"phrase":"お願いします","pronunciation":"Onegaishimasu","translation":"Please","context":"When making a request"},{"phrase":"いくらですか？","pronunciation":"Ikura desu ka?","translation":"How much is it?","context":"Asking the price when shopping"},{"phrase":"どこですか？","pronunciation":"Doko desu ka?","translation":"Where is...?","context":"Asking for directions"},{"phrase":"トイレはどこですか？","pronunciation":"Toire wa doko desu ka?","translation":"Where is the toilet?","context":"Essential for finding restrooms"},{"phrase":"英語を話せますか？","pronunciation":"Eigo wo hanasemasu ka?","translation":"Do you speak English?","context":"Asking if someone speaks English"},{"phrase":"助けてください","pronunciation":"Tasukete kudasai","translation":"Please help me","context":"Emergency situations"},{"phrase":"美味しいです","pronunciation":"Oishii desu","translation":"It's delicious","context":"Complimenting food"}],"audioTour":{"lines":[{"speaker":"Tourist Guide","text":"Welcome to one of the world's most beautifully preserved ancient cities. I'm so glad you could join us today."},{"speaker":"Tourist","text":"Thank you! I have to say, the moment we arrived, I felt like I had stepped into another century. Everything is so different from what I expected."},{"speaker":"Tourist Guide","text":"That reaction is very common here. The city has managed something quite rare — genuine continuity with the past. These wooden buildings in the district we're walking through date back several centuries."},{"speaker":"Tourist","text":"And people actually live in them? They're not just museums?"},{"speaker":"Tourist Guide","text":"Yes, many are family homes that have been passed down for generations. That is precisely what makes this place alive rather than simply preserved. It's a community, not a display case."},{"speaker":"Tourist","text":"What are those amazing gates we saw earlier? The red ones that seemed to go on forever?"},{"speaker":"Tourist Guide","text":"Those are called torii gates. Each one is a donation from an individual or company, offered to the shrine as an act of gratitude or prayer. There are thousands of them, and they create this extraordinary tunnel effect as you walk through."},{"speaker":"Tourist","text":"It was genuinely breathtaking. And the light coming through the trees made it feel almost spiritual."},{"speaker":"Tourist Guide","text":"That's intentional. The experience of approaching a sacred space was designed to gradually shift your state of mind — from the ordinary world to something more reflective. Architecture as transformation, you might say."},{"speaker":"Tourist","text":"That's beautiful. I'd love to come back in spring, when I heard the blossoms are extraordinary."},{"speaker":"Tourist Guide","text":"Spring here is unlike anywhere else on earth. For about two weeks, the entire city is in bloom. The petals fall like gentle snow. It is impermanent and perfect — which, interestingly, is a central concept in the local philosophy of beauty."},{"speaker":"Tourist","text":"Finding beauty in things that don't last. I think we could all learn something from that."},{"speaker":"Tourist Guide","text":"Indeed. And that, perhaps, is the greatest lesson this remarkable place has to offer."}]}},"catFeedback":{"correct":["Purrr-fect! That's exactly right! You're really getting the hang of this!","Meow-nificent! Correct answer! You're on fire today!","Yes! Yes! Yes! You got it! I'm so proud of you right now!","That's my human! Absolutely correct! Keep up this amazing work!","Brilliant! You nailed that one! I might just purr all day now!"],"incorrect":["Oh no, not quite... Don't worry, every mistake is a lesson in disguise!","Hmm, that wasn't it. Let me help you think through this one...","Close, but not quite! The right answer might surprise you. Read the explanation!","Oops! Even cats miss sometimes. The important thing is we keep going!","Not this time! But the explanation below will make it crystal clear."],"idle":["Psst! I'm watching over your lesson progress. You're doing great!","Did you know? Reading aloud improves language retention by up to 40%!","Take it step by step. Consistency beats intensity every time!","I noticed you're working hard today. That dedication is what makes learners succeed!","Fun fact: The word 'algorithm' comes from the name of a 9th-century Persian mathematician!"],"lessonIntro":"Welcome to today's lesson on Digital Technology! I'll be your guide throughout. We're exploring how technology shapes our lives — a topic that's incredibly relevant at B1 level and beyond. Ready? Let's dive in!","moduleIntro":{"lesson":"Time for the Daily English Lesson! We have 10 exciting steps to work through together. I'll be here to cheer you on and help explain anything that's tricky.","conversation":"Now for the Conversation Game! You'll be navigating a real-world job interview scenario. Listen carefully to what the characters say — the right path is logical but you need to think it through!","place":"Ooh, the Place Guessing Game! This is one of my favourites. Read the description carefully and use the clues wisely. I believe in you!"}},"stepImages":{"warmup":"diverse students brainstorming discussion classroom","keywords":"vocabulary flashcards language learning books","listen":"people having conversation coffee shop casual","reading":"person reading digital tablet modern library","speaking":"person speaking microphone podcast recording","grammar":"language grammar book study education","drama":"radio studio microphone broadcast vintage","dictation":"person writing notebook listening headphones study","discussion":"social media comments discussion online","quiz":"student taking test exam classroom education"},"keywordTranslations":{"es":{"digital literacy":"alfabetización digital","algorithm":"algoritmo","screen time":"tiempo de pantalla","connectivity":"conectividad","cybersecurity":"ciberseguridad"},"fr":{"digital literacy":"littératie numérique","algorithm":"algorithme","screen time":"temps d'écran","connectivity":"connectivité","cybersecurity":"cybersécurité"},"de":{"digital literacy":"digitale Kompetenz","algorithm":"Algorithmus","screen time":"Bildschirmzeit","connectivity":"Konnektivität","cybersecurity":"Cybersicherheit"},"ja":{"digital literacy":"デジタルリテラシー","algorithm":"アルゴリズム","screen time":"スクリーンタイム","connectivity":"接続性","cybersecurity":"サイバーセキュリティ"},"zh":{"digital literacy":"数字素养","algorithm":"算法","screen time":"屏幕时间","connectivity":"连接性","cybersecurity":"网络安全"},"ar":{"digital literacy":"المعرفة الرقمية","algorithm":"خوارزمية","screen time":"وقت الشاشة","connectivity":"الاتصال","cybersecurity":"الأمن السيبراني"},"pt":{"digital literacy":"literacia digital","algorithm":"algoritmo","screen time":"tempo de tela","connectivity":"conectividade","cybersecurity":"cibersegurança"},"ko":{"digital literacy":"디지털 리터러시","algorithm":"알고리즘","screen time":"스크린 타임","connectivity":"연결성","cybersecurity":"사이버 보안"}}},"learnerName":"Demo Learner","learnerAvatar":"🐱","fileName":"Daily_Lesson_The_Digital_Age_Navigating_Modern_Technology"}</script>
+<script>
+(function(){
+  var el = document.getElementById('daily-data');
+  var data = null;
+  try { data = JSON.parse(el.textContent); } catch (e) { console.error('Bad daily lesson payload', e); }
+  window.__DAILY__ = data || {};
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+  var LESSON = window.__DAILY__ || {};
+  var DATA = LESSON.lesson || null;
+  var LEARNER_NAME = LESSON.learnerName || 'Learner';
+  var AVATAR = LESSON.learnerAvatar || '🐱';
+  var FILE_NAME = LESSON.fileName || 'daily-lesson';
+  var TITLE = (DATA && DATA.topic) || 'Daily Lesson';
+
+  var STATS_KEY = 'daily_lesson_stats';
+  var PROG_KEY = 'tutorly-daily-progress-' + LEARNER_NAME;
+  var VOICE_KEY = 'daily_lesson_voices';
+
+  var $ = function(s, c){ return (c || document).querySelector(s); };
+  var $$ = function(s, c){ return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+
+  /* ---------- tiny audio SFX (WebAudio, no assets) ---------- */
+  var audioCtx = null;
+  function ac(){
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+    return audioCtx;
+  }
+  function tone(freq, dur, type, vol){
+    try {
+      var ctx = ac(); if (!ctx) return;
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = type || 'sine'; o.frequency.setValueAtTime(freq, ctx.currentTime);
+      g.gain.setValueAtTime(vol || 0.3, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + dur);
+    } catch(e) {}
+  }
+  function playSuccess(){ tone(523.25,0.15,'sine',0.3); setTimeout(function(){tone(659.25,0.15,'sine',0.3);},150); setTimeout(function(){tone(783.99,0.3,'sine',0.3);},300); }
+  function playError(){ tone(220,0.2,'sawtooth',0.2); setTimeout(function(){tone(180,0.3,'sawtooth',0.2);},200); }
+  function playClick(){ tone(800,0.05,'sine',0.1); }
+  function playUnlock(){ var notes=[261.63,329.63,392,523.25,659.25,783.99]; notes.forEach(function(n,i){ setTimeout(function(){tone(n,0.2,'sine',0.3);},i*120); }); }
+
+  /* ---------- speech ---------- */
+  var isMuted = false;
+  var catVoiceName = null;
+  var speakerVoices = {};
+  var characterVoices = {};
+  try {
+    var vSaved = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}');
+    if (vSaved) {
+      catVoiceName = vSaved.catVoice || null;
+      speakerVoices = vSaved.speakerVoices || {};
+      characterVoices = vSaved.characterVoices || {};
+    }
+  } catch(e) {}
+  function saveVoicePrefs(){
+    try { localStorage.setItem(VOICE_KEY, JSON.stringify({ catVoice: catVoiceName, speakerVoices: speakerVoices, characterVoices: characterVoices })); } catch(e) {}
+  }
+  function allVoices(){
+    if (typeof speechSynthesis === 'undefined') return [];
+    return speechSynthesis.getVoices() || [];
+  }
+  function naturalVoices(){
+    var vs = allVoices();
+    var excl = ['david','zira','mark','hazel'];
+    var pref = ['natural','enhanced','premium','neural','siri','alex','samantha','victoria','karen','moira','tessa','fiona'];
+    var out = vs.filter(function(v){ return v.lang.indexOf('en') === 0 && excl.indexOf(v.name.toLowerCase()) < 0; });
+    out.sort(function(a,b){
+      var as = pref.some(function(p){ return a.name.toLowerCase().indexOf(p) >= 0; }) ? 1 : 0;
+      var bs = pref.some(function(p){ return b.name.toLowerCase().indexOf(p) >= 0; }) ? 1 : 0;
+      return bs - as;
+    });
+    return out.length ? out : vs.filter(function(v){ return v.lang.indexOf('en') === 0; });
+  }
+  function pickVoice(pref){
+    var vs = allVoices();
+    if (!pref) return null;
+    for (var i = 0; i < vs.length; i++) if (vs[i].name === pref) return vs[i];
+    return null;
+  }
+  function stripEmojis(t){
+    return String(t)
+      .replace(/[\u{1F600}-\u{1F64F}]/gu,'').replace(/[\u{1F300}-\u{1F5FF}]/gu,'')
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu,'').replace(/[\u{1F1E0}-\u{1F1FF}]/gu,'')
+      .replace(/[\u{2600}-\u{26FF}]/gu,'').replace(/[\u{2700}-\u{27BF}]/gu,'')
+      .replace(/[\u{FE00}-\u{FE0F}]/gu,'').replace(/[\u{1F900}-\u{1F9FF}]/gu,'')
+      .replace(/\s+/g,' ').trim();
+  }
+  function speak(text, opts){
+    if (isMuted || typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    var clean = stripEmojis(text);
+    if (!clean) return;
+    var u = new SpeechSynthesisUtterance(clean);
+    var voice = (opts && opts.voice) ? opts.voice : pickVoice(catVoiceName);
+    if (voice) u.voice = voice;
+    u.rate = (opts && opts.rate) || 0.9;
+    u.pitch = (opts && opts.pitch) || 1.0;
+    if (opts && opts.onEnd) u.onend = opts.onEnd;
+    speechSynthesis.speak(u);
+  }
+  function stopSpeech(){ if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }
+
+  /* ---------- state ---------- */
+  var state = {
+    module: 'lesson',
+    currentStep: 1,
+    completedSteps: [],
+    completedModules: [],
+    xp: 0, level: 1, streak: 0, lastActive: '',
+    quizScores: [], secretCode: null,
+    achievements: [], totalCorrect: 0, totalAttempts: 0,
+    theme: 'dark',
+    // per-step ui state
+    warmRevealed: [], warmCard: 0,
+    kwMode: 'flashcard', kwFilter: 'All', kwSearch: '', kwCard: 0, kwFlipped: false, mastered: [],
+    dialogueVoicesOpen: true, dialoguePlaying: false, dialogueLine: -1, dialoguePlayed: false, dialogueStop: false,
+    readLevel: 'intermediate', readPlaying: false,
+    gramOpen: null, gramViewed: [],
+    dramaVoicesOpen: true, dramaPlaying: false, dramaLine: -1, dramaPlayed: false, dramaStop: false,
+    dramaQuizOpen: false, dramaAnswers: [], dramaSubmitted: false,
+    dictIdx: 0, dictInput: '', dictSubmitted: false, dictScores: [], dictResults: [],
+    discSelected: null, discRevealed: false,
+    quizCur: 0, quizSelected: null, quizAnswered: false, quizAnswers: [], quizResults: false, quizSecret: false,
+    karaListening: false, karaWords: [], karaWpm: 0, karaStart: null, karaIdx: 0, karaDone: false, karaErr: '',
+    cgNode: 'start', cgPicked: null, cgHistory: [],
+    gpHintShown: 0, gpTipWord: null, gpGuess: '', gpRevealed: false, gpPhrase: null,
+    catOpen: false, catVoicesOpen: false, catEmoji: '😺', catAnim: 'idle',
+    message: (DATA && DATA.catFeedback && DATA.catFeedback.lessonIntro) || 'Welcome!',
+    achPop: null, xpToast: null
+  };
+
+  function loadStats(){
+    try {
+      var saved = JSON.parse(localStorage.getItem(STATS_KEY) || 'null');
+      if (saved) {
+        state.xp = saved.xp || 0; state.level = saved.level || 1;
+        state.streak = saved.streak || 0; state.lastActive = saved.lastActive || '';
+        state.completedSteps = saved.completedSteps || [];
+        state.completedModules = saved.completedModules || [];
+        state.quizScores = saved.quizScores || [];
+        state.secretCode = saved.secretCode || null;
+        state.achievements = saved.achievements || [];
+        state.totalCorrect = saved.totalCorrect || 0;
+        state.totalAttempts = saved.totalAttempts || 0;
+      }
+    } catch(e) {}
+    // streak update
+    var today = new Date().toDateString();
+    var yesterday = new Date(Date.now() - 86400000).toDateString();
+    if (state.lastActive !== today) {
+      if (state.lastActive === yesterday) state.streak += 1;
+      else if (state.lastActive !== today) state.streak = 1;
+      state.lastActive = today;
+    }
+  }
+  function saveStats(){
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify({
+        xp: state.xp, level: state.level, streak: state.streak, lastActive: state.lastActive,
+        completedSteps: state.completedSteps, completedModules: state.completedModules,
+        quizScores: state.quizScores, secretCode: state.secretCode,
+        achievements: state.achievements, totalCorrect: state.totalCorrect, totalAttempts: state.totalAttempts
+      }));
+    } catch(e) {}
+    mirrorProgress();
+  }
+  function mirrorProgress(){
+    try {
+      var list = [];
+      try { list = JSON.parse(localStorage.getItem(PROG_KEY) || '[]'); } catch(e) { list = []; }
+      var rec = {
+        fileName: FILE_NAME, title: TITLE, topic: TITLE, level: (DATA && DATA.level) || '',
+        xp: state.xp, levelNum: state.level, streak: state.streak,
+        completedSteps: state.completedSteps.slice(), completedModules: state.completedModules.slice(),
+        achievements: state.achievements.slice(), secretCode: state.secretCode,
+        quizScores: state.quizScores.slice(), totalCorrect: state.totalCorrect, totalAttempts: state.totalAttempts,
+        updatedAt: new Date().toISOString()
+      };
+      var others = list.filter(function(r){ return r.fileName !== rec.fileName; });
+      others.unshift(rec);
+      localStorage.setItem(PROG_KEY, JSON.stringify(others.slice(0, 20)));
+    } catch(e) {}
+  }
+
+  var LEVELS = [
+    { level: 1, name: 'Beginner', xpRequired: 0, badge: '🌱' },
+    { level: 2, name: 'Explorer', xpRequired: 100, badge: '🔍' },
+    { level: 3, name: 'Learner', xpRequired: 250, badge: '📚' },
+    { level: 4, name: 'Scholar', xpRequired: 500, badge: '🎓' },
+    { level: 5, name: 'Expert', xpRequired: 1000, badge: '⭐' },
+    { level: 6, name: 'Master', xpRequired: 2000, badge: '🏆' },
+    { level: 7, name: 'Grandmaster', xpRequired: 3500, badge: '💎' }
+  ];
+  var ACHIEVEMENTS = [
+    { id: 'first_step', name: 'First Step', emoji: '👣', xp: 10 },
+    { id: 'halfway', name: 'Halfway There', emoji: '🌟', xp: 25 },
+    { id: 'lesson_complete', name: 'Lesson Master', emoji: '🎓', xp: 100 },
+    { id: 'perfect_quiz', name: 'Perfect Score', emoji: '💯', xp: 50 },
+    { id: 'high_quiz', name: 'High Achiever', emoji: '🏆', xp: 30 },
+    { id: 'conversation_win', name: 'Conversation Champion', emoji: '🗣️', xp: 40 },
+    { id: 'place_found', name: 'World Explorer', emoji: '🌍', xp: 35 },
+    { id: 'all_modules', name: 'Daily Legend', emoji: '🌈', xp: 75 },
+    { id: 'secret_code', name: 'Code Breaker', emoji: '🔐', xp: 30 }
+  ];
+  function levelInfo(){
+    var cur = LEVELS[0];
+    for (var i = 0; i < LEVELS.length; i++) if (state.xp >= LEVELS[i].xpRequired) cur = LEVELS[i];
+    var next = null;
+    for (var j = 0; j < LEVELS.length; j++) if (LEVELS[j].level === cur.level + 1) next = LEVELS[j];
+    var progress = next ? Math.min(100, Math.round(((state.xp - cur.xpRequired) / (next.xpRequired - cur.xpRequired)) * 100)) : 100;
+    return { cur: cur, next: next, progress: progress };
+  }
+  function addXP(amount, silent){
+    state.xp += amount;
+    var nl = 1;
+    for (var i = 0; i < LEVELS.length; i++) if (state.xp >= LEVELS[i].xpRequired) nl = LEVELS[i].level;
+    if (nl > state.level) {
+      state.level = nl;
+      catMessage('🎉 Level up! You reached level ' + nl + ' — ' + LEVELS[nl-1].name + '!', 'excited');
+    }
+    if (!silent) {
+      state.xpToast = '+' + amount + ' XP';
+      setTimeout(function(){ state.xpToast = null; if (!document.hidden) render(); }, 1600);
+    }
+    checkAchievements();
+    saveStats();
+    render();
+  }
+  function checkAchievements(){
+    var checks = [
+      { id: 'first_step', c: state.completedSteps.length >= 1 },
+      { id: 'halfway', c: state.completedSteps.length >= 5 },
+      { id: 'lesson_complete', c: state.completedSteps.length >= 10 },
+      { id: 'perfect_quiz', c: state.quizScores.some(function(s){ return s.score === s.total; }) },
+      { id: 'high_quiz', c: state.quizScores.some(function(s){ return s.score / s.total >= 0.8; }) },
+      { id: 'conversation_win', c: state.completedModules.indexOf('conversation') >= 0 },
+      { id: 'place_found', c: state.completedModules.indexOf('place') >= 0 },
+      { id: 'all_modules', c: state.completedModules.length >= 3 },
+      { id: 'secret_code', c: state.secretCode !== null }
+    ];
+    var newXP = 0;
+    checks.forEach(function(ch){
+      if (ch.c && state.achievements.indexOf(ch.id) < 0) {
+        var a = null;
+        for (var i = 0; i < ACHIEVEMENTS.length; i++) if (ACHIEVEMENTS[i].id === ch.id) a = ACHIEVEMENTS[i];
+        if (a) {
+          state.achievements.push(ch.id);
+          newXP += a.xp;
+          state.achPop = a.name;
+          playSuccess();
+          setTimeout(function(){ state.achPop = null; if (!document.hidden) render(); }, 3000);
+        }
+      }
+    });
+    if (newXP > 0) addXP(newXP, true);
+  }
+
+  /* ---------- cat ---------- */
+  var CAT_EMOTIONS = {
+    correct: ['😸','😻','😹','😸','😻'],
+    incorrect: ['🙀','😿','😾','🙀','😿'],
+    idle: ['😺','😼','😽','🐱','😺'],
+    speaking: ['😻','😸','😹','😻'],
+    excited: ['😹','😸','😻','😹'],
+    thinking: ['🤔','😼','🐱','😺']
+  };
+  var catTimer = null;
+  function catMessage(msg, emotion, speakIt){
+    state.message = msg;
+    state.catAnim = emotion || 'idle';
+    var emojis = CAT_EMOTIONS[state.catAnim] || CAT_EMOTIONS.idle;
+    var i = 0;
+    state.catEmoji = emojis[0];
+    if (catTimer) clearInterval(catTimer);
+    catTimer = setInterval(function(){
+      i = (i + 1) % emojis.length;
+      state.catEmoji = emojis[i];
+      renderCat();
+    }, 600);
+    setTimeout(function(){
+      if (catTimer) clearInterval(catTimer);
+      state.catEmoji = emojis[0];
+      state.catAnim = 'idle';
+      renderCat();
+    }, 3000);
+    if (speakIt !== false) speak(msg, { rate: 0.95, pitch: 1.1 });
+    renderCat();
+    render();
+  }
+  function renderCat(){
+    var el = $('#cat-widget');
+    if (!el) return;
+    var animClass = '';
+    if (state.catAnim === 'correct' || state.catAnim === 'excited') animClass = 'bounce';
+    if (state.catAnim === 'incorrect') animClass = 'shake';
+    if (state.catAnim === 'speaking') animClass = 'speaking';
+    if (state.catAnim === 'thinking') animClass = 'thinking';
+    var voicesHtml = '';
+    if (state.catVoicesOpen) {
+      var vs = naturalVoices();
+      voicesHtml = '<div class="cat-voices">' + vs.map(function(v){
+        var on = v.name === catVoiceName ? ' on' : '';
+        return '<button class="cat-voice-btn' + on + '" onclick="window.__setCatVoice(\'' + esc(v.name).replace(/'/g,'') + '\')">' + esc(v.name) + ' (' + esc(v.lang) + ')</button>';
+      }).join('') + '</div>';
+    }
+    el.innerHTML =
+      (state.catOpen ? '<div class="cat-bubble-wrap"><div class="cat-bubble">' +
+        '<p class="cb-text">' + esc(state.message) + '</p>' +
+        '<div class="cat-actions">' +
+          '<button class="cat-act" onclick="window.__toggleCatVoices()">🎙️ Voices</button>' +
+          '<button class="cat-act sound' + (isMuted ? ' off' : '') + '" onclick="window.__toggleMute()">' + (isMuted ? '🔇 Muted' : '🔊 Sound') + '</button>' +
+        '</div>' + voicesHtml +
+        '<div class="cb-arrow"></div></div></div>' : '') +
+      '<button class="cat-btn ' + animClass + '" onclick="window.__toggleCat()" aria-label="Cat assistant">' +
+        '<span class="cat-emoji">' + state.catEmoji + '</span>' +
+        (state.message ? '<span class="cat-dot"></span>' : '') +
+      '</button>';
+  }
+
+  /* ---------- helpers ---------- */
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function pick(arr, i){ return arr[i % arr.length]; }
+  function catFeedback(kind){
+    var fb = DATA && DATA.catFeedback && DATA.catFeedback[kind];
+    if (!fb || !fb.length) return kind === 'correct' ? 'Purr-fect!' : 'Keep trying!';
+    return fb[Math.floor(Math.random() * fb.length)];
+  }
+  function totalProgress(){
+    var stepsPct = Math.min(1, state.completedSteps.length / 10) * 50;
+    var conv = state.completedModules.indexOf('conversation') >= 0 ? 25 : 0;
+    var place = state.completedModules.indexOf('place') >= 0 ? 25 : 0;
+    return Math.round(stepsPct + conv + place);
+  }
+
+  var STEPS = [
+    { id: 1, label: 'Warm-Up', icon: '🔥', desc: 'Interactive Q&A' },
+    { id: 2, label: 'Keywords', icon: '📖', desc: '22 Advanced Terms' },
+    { id: 3, label: 'Listen', icon: '🎧', desc: 'Dialogue Player' },
+    { id: 4, label: 'Reading', icon: '📰', desc: '3 Difficulty Levels' },
+    { id: 5, label: 'Speaking', icon: '🎤', desc: 'Karaoke Mode' },
+    { id: 6, label: 'Grammar', icon: '🔬', desc: '9 Grammar Slides' },
+    { id: 7, label: 'Drama', icon: '🎭', desc: 'Radio Play' },
+    { id: 8, label: 'Dictation', icon: '✍️', desc: 'Accuracy Test' },
+    { id: 9, label: 'Discussion', icon: '💬', desc: 'Social Analysis' },
+    { id: 10, label: 'Quiz', icon: '🧠', desc: 'Final Challenge' }
+  ];
+
+  /* ---------- renderers ---------- */
+  function render(){
+    if (!DATA) {
+      $('#app').innerHTML = '<div class="card card-pad" style="text-align:center;padding:60px 20px"><div style="font-size:44px">😿</div><h2 style="margin:12px 0">No lesson data</h2><p class="section-head p">This Daily Lesson has no content. Create one in the Manual JSON Creator.</p></div>';
+      return;
+    }
+    var li = levelInfo();
+    var html = '';
+    // header
+    html += '<header class="app-header"><div class="header-row">' +
+      '<div class="avatar-box">' + (AVATAR || '🐱') + '</div>' +
+      '<div class="header-info">' +
+        '<div class="header-name">' + esc(LEARNER_NAME) + '</div>' +
+        '<div class="header-sub">' + esc(TITLE) + ' • Level ' + esc(DATA.level) + ' • ' + esc(li.cur.name) + '</div>' +
+        '<div class="progress-track"><div class="progress-fill" style="width:' + totalProgress() + '%"></div></div>' +
+      '</div>' +
+      '<div class="streak-pill">🔥 ' + state.streak + '</div>' +
+      '<button class="icon-btn" onclick="window.__toggleTheme()">' + (state.theme === 'dark' ? '☀️' : '🌙') + '</button>' +
+      '<button class="icon-btn" title="Print / Export PDF study worksheet" onclick="window.__printLesson()">🖨️</button>' +
+      '</div></header>';
+
+    // module tabs
+    var modules = [
+      { id: 'lesson', label: 'Daily Lesson', icon: '📚' },
+      { id: 'conversation', label: 'Conversation', icon: '🗣️' },
+      { id: 'place', label: 'Guess Place', icon: '🗺️' },
+      { id: 'leaderboard', label: 'Leaderboard', icon: '🏆' }
+    ];
+    html += '<div class="module-tabs"><div class="tabs-row">' + modules.map(function(m){
+      var done = m.id !== 'lesson' && state.completedModules.indexOf(m.id) >= 0;
+      return '<button class="tab-btn' + (state.module === m.id ? ' active' : '') + '" onclick="window.__setModule(\'' + m.id + '\')">' +
+        '<div class="t-icon">' + m.icon + '</div><div class="t-label">' + m.label + '</div>' +
+        (done ? '<div class="tab-done">✓ Done</div>' : '') +
+        '</button>';
+    }).join('') + '</div></div>';
+
+    html += '<main class="step-enter">';
+    if (state.module === 'lesson') html += renderLesson();
+    else if (state.module === 'conversation') html += renderConversation();
+    else if (state.module === 'place') html += renderPlace();
+    else html += renderLeaderboard();
+    html += '</main>';
+
+    // footer
+    html += '<footer class="app-footer"><div class="footer-row">' +
+      '<div class="footer-meta" style="flex:1">Global Lesson Progress <span style="color:var(--purple)">' + totalProgress() + '%</span></div>' +
+      '<div class="badge-chip' + (state.completedSteps.length >= 10 ? ' on' : '') + '">📚</div>' +
+      '<div class="badge-chip' + (state.completedModules.indexOf('conversation') >= 0 ? ' on' : '') + '">🗣️</div>' +
+      '<div class="badge-chip' + (state.completedModules.indexOf('place') >= 0 ? ' on' : '') + '">🗺️</div>' +
+      (state.secretCode ? '<div class="secret-pill">🔐 ' + esc(state.secretCode) + '</div>' : '') +
+      '</div></footer>';
+
+    $('#app').innerHTML = html;
+    renderCat();
+    if (state.xpToast) {
+      var t = document.createElement('div');
+      t.className = 'xp-toast';
+      t.textContent = state.xpToast;
+      document.body.appendChild(t);
+      setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 1600);
+    }
+    if (state.achPop) {
+      var a = document.createElement('div');
+      a.className = 'ach-pop';
+      a.innerHTML = '<span style="font-size:24px">🏆</span><div><div style="font-size:11px;opacity:.8">Achievement Unlocked!</div>' + esc(state.achPop) + '</div>';
+      document.body.appendChild(a);
+      setTimeout(function(){ if (a.parentNode) a.parentNode.removeChild(a); }, 3000);
+    }
+    bindDynamic();
+  }
+
+  function stepUnlocked(id){
+    if (id === 1) return true;
+    return state.completedSteps.indexOf(id - 1) >= 0;
+  }
+
+  function renderLesson(){
+    var cur = STEPS[state.currentStep - 1];
+    var html = '';
+    // step rail
+    html += '<div class="step-rail">' + STEPS.map(function(s){
+      var cls = 'step-chip';
+      if (s.id === state.currentStep) cls += ' current';
+      else if (state.completedSteps.indexOf(s.id) >= 0) cls += ' done';
+      else if (!stepUnlocked(s.id)) cls += ' locked';
+      var icon = state.completedSteps.indexOf(s.id) >= 0 ? '✅' : s.icon;
+      return '<button class="' + cls + '" onclick="window.__goStep(' + s.id + ')"' + (stepUnlocked(s.id) ? '' : ' disabled') + '>' +
+        '<span class="s-icon">' + icon + '</span><span class="s-label">' + s.label + '</span><span class="s-num">' + s.id + '</span></button>';
+    }).join('') + '</div>';
+
+    // step header
+    html += '<div class="step-head">' +
+      '<div class="step-head-icon">' + cur.icon + '</div>' +
+      '<div><div class="step-head-label">Step ' + cur.id + ' of 10</div>' +
+      '<div class="step-head-title">' + cur.label + '</div>' +
+      '<div class="step-head-desc">' + cur.desc + '</div></div>' +
+      (state.completedSteps.indexOf(cur.id) >= 0 ? '<div class="step-done-pill">✓ Completed</div>' : '') +
+      '</div>';
+
+    switch (state.currentStep) {
+      case 1: html += renderWarmup(); break;
+      case 2: html += renderKeywords(); break;
+      case 3: html += renderListen(); break;
+      case 4: html += renderReading(); break;
+      case 5: html += renderKaraoke(); break;
+      case 6: html += renderGrammar(); break;
+      case 7: html += renderDrama(); break;
+      case 8: html += renderDictation(); break;
+      case 9: html += renderDiscussion(); break;
+      case 10: html += renderQuiz(); break;
+    }
+    return html;
+  }
+
+  function renderWarmup(){
+    var w = DATA.warmup || [];
+    var cur = state.warmCard;
+    var item = w[cur] || { question: '', answer: '', emoji: '❓' };
+    var allRevealed = state.warmRevealed.length >= w.length;
+    return '<div class="section-head"><span class="sh-icon">🔥</span><h2>Warm-Up Questions</h2><p>Think about each question, then reveal the answer</p></div>' +
+      '<div class="warm-nav">' + w.map(function(_, i){
+        var cls = 'warm-dot';
+        if (i === cur) cls += ' current';
+        if (state.warmRevealed.indexOf(i) >= 0) cls += ' revealed';
+        return '<button class="' + cls + '" onclick="window.__warmCard(' + i + ')">' + (state.warmRevealed.indexOf(i) >= 0 ? '✓' : (i + 1)) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="card warm-card"><div class="warm-q"><div class="w-emoji">' + item.emoji + '</div><p>' + esc(item.question) + '</p></div><div class="warm-a">' +
+      (state.warmRevealed.indexOf(cur) >= 0
+        ? '<div style="color:#4ade80;font-weight:600;margin-bottom:10px">✅ Answer Revealed</div><p style="line-height:1.7;color:var(--text)">' + esc(item.answer) + '</p>' +
+          '<button class="kw-sound" style="margin-top:12px" onclick="window.__speak(\'' + esc(item.answer).replace(/'/g,'\u0027') + '\')">🔊 Listen Again</button>'
+        : '<div style="text-align:center"><p style="color:var(--muted);font-style:italic;margin-bottom:14px">Take a moment to think about your answer...</p>' +
+          '<button class="reveal-btn" onclick="window.__warmReveal(' + cur + ')">💡 Reveal Answer</button></div>') +
+      '</div></div>' +
+      '<div class="warm-nav-row"><button class="warm-prev" onclick="window.__warmCard(' + (cur - 1) + ')" ' + (cur === 0 ? 'disabled' : '') + '>← Previous</button>' +
+      '<span class="warm-count">' + (cur + 1) + ' / ' + w.length + '</span>' +
+      (cur < w.length - 1
+        ? '<button class="warm-next" onclick="window.__warmCard(' + (cur + 1) + ')">Next →</button>'
+        : '<button class="warm-next" style="background:linear-gradient(135deg,#22c55e,#10b981)" onclick="window.__completeStep(1)" ' + (allRevealed ? '' : 'disabled') + '>Complete Step ✓</button>') +
+      '</div>' +
+      (!allRevealed ? '<p class="warm-hint">Reveal all ' + w.length + ' answers to complete this step (' + state.warmRevealed.length + '/' + w.length + ' done)</p>' : '');
+  }
+
+  function renderKeywords(){
+    var kws = DATA.keywords || [];
+    var filtered = kws.filter(function(k){
+      var lvl = state.kwFilter === 'All' || k.level === state.kwFilter;
+      var q = state.kwSearch.toLowerCase();
+      var s = !q || k.term.toLowerCase().indexOf(q) >= 0 || k.definition.toLowerCase().indexOf(q) >= 0;
+      return lvl && s;
+    });
+    var translations = (DATA.keywordTranslations && DATA.keywordTranslations.es) || {};
+    var html = '<div class="section-head"><span class="sh-icon">📖</span><h2>Keywords & Phrases</h2><p>' + kws.length + ' terms • flashcards & list view</p></div>' +
+      '<div class="kw-toggle">' +
+      '<button class="' + (state.kwMode === 'flashcard' ? 'on' : '') + '" onclick="window.__kwMode(\'flashcard\')">🎴 Flashcards</button>' +
+      '<button class="' + (state.kwMode === 'list' ? 'on' : '') + '" onclick="window.__kwMode(\'list\')">📋 List View</button>' +
+      '</div>' +
+      '<div class="kw-progress"><div class="progress-track" style="flex:1;height:8px"><div class="progress-fill" style="width:' + Math.round((state.mastered.length / Math.max(1, kws.length)) * 100) + '%"></div></div>' +
+      '<span style="font-size:13px;color:var(--muted);white-space:nowrap">' + state.mastered.length + '/' + kws.length + ' mastered</span></div>';
+
+    if (state.kwMode === 'flashcard') {
+      var kw = filtered[state.kwCard];
+      if (kw) {
+        var trans = translations[kw.term] || '';
+        html += '<div class="fc-dots">' + filtered.slice(0, 10).map(function(_, i){
+          var cls = 'fc-dot';
+          if (i === state.kwCard) cls += ' cur';
+          if (state.mastered.indexOf(kws.indexOf(filtered[i])) >= 0) cls += ' mastered';
+          return '<button class="' + cls + '" onclick="window.__kwCard(' + i + ')"></button>';
+        }).join('') + (filtered.length > 10 ? '<span style="font-size:11px;color:var(--muted)">+' + (filtered.length - 10) + '</span>' : '') + '</div>' +
+        '<div class="fc-wrap"><div class="fc-inner' + (state.kwFlipped ? ' flipped' : '') + '" onclick="window.__kwFlip()">' +
+          '<div class="fc-face fc-front">' +
+            '<span class="fc-level">' + esc(kw.level) + '</span>' +
+            '<div class="fc-term">' + esc(kw.term) + '</div>' +
+            (trans ? '<div class="fc-trans">' + esc(trans) + '</div>' : '') +
+            '<button class="fc-listen" onclick="event.stopPropagation();window.__kwSpeak(' + kws.indexOf(kw) + ')">🔊 Listen</button>' +
+            '<div class="fc-tap">Tap to flip</div>' +
+          '</div>' +
+          '<div class="fc-face fc-back">' +
+            '<div class="fc-back-scroll">' +
+              '<div class="fc-def-label">Definition</div><div class="fc-def">' + esc(kw.definition) + '</div>' +
+              '<div class="fc-def-label">Example</div><div class="fc-ex">"' + esc(kw.example) + '"</div>' +
+              (trans ? '<div class="fc-def-label">Español</div><div class="fc-trans" style="color:var(--purple);font-size:14px">' + esc(trans) + '</div>' : '') +
+            '</div>' +
+            '<div class="fc-tap" style="color:var(--muted)">Tap to flip back</div>' +
+          '</div>' +
+        '</div></div>' +
+        '<div class="fc-nav-row">' +
+          '<button class="fc-arr" onclick="window.__kwNav(-1)" ' + (state.kwCard === 0 ? 'disabled' : '') + '>←</button>' +
+          '<button class="fc-master" onclick="window.__kwMaster(' + kws.indexOf(kw) + ')">✓ Mastered</button>' +
+          '<button class="fc-arr" onclick="window.__kwNav(1)" ' + (state.kwCard >= filtered.length - 1 ? 'disabled' : '') + '>→</button>' +
+        '</div>';
+      } else {
+        html += '<p style="text-align:center;color:var(--muted);padding:30px">No keywords match your filter.</p>';
+      }
+    } else {
+      html += '<div class="kw-list-search">' +
+        '<span style="position:relative;flex:1;min-width:180px"><input class="kw-search" style="width:100%" placeholder="Search terms..." value="' + esc(state.kwSearch) + '" oninput="window.__kwSearch(this.value)" /><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%)">🔍</span></span>' +
+        ['All','B1','B2'].map(function(l){
+          return '<button class="kw-level-btn' + (state.kwFilter === l ? ' on' : '') + '" onclick="window.__kwFilter(\'' + l + '\')">' + l + '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="kw-list">' + filtered.map(function(k){
+        var gi = kws.indexOf(k);
+        var isM = state.mastered.indexOf(gi) >= 0;
+        var tr = translations[k.term] || '';
+        return '<div class="kw-item' + (isM ? ' mastered' : '') + '">' +
+          '<button class="kw-check" onclick="window.__kwToggle(' + gi + ')">✓</button>' +
+          '<div class="kw-main"><span class="kw-term">' + esc(k.term) + '</span>' + (tr ? ' <span style="color:var(--purple);font-size:12px">(' + esc(tr) + ')</span>' : '') +
+          '<div class="kw-def">' + esc(k.definition) + '</div></div>' +
+          '<button class="kw-sound" onclick="window.__kwSpeak(' + gi + ')">🔊</button>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
+
+    html += '<button class="grad-btn" style="margin-top:16px" onclick="window.__completeStep(2)">Continue to Listening ✓</button>';
+    return html;
+  }
+
+  function voiceSelectHtml(prefix, key, label, voicesObj, placeholder, emoji, color){
+    var vs = naturalVoices();
+    return '<div class="vs-row"><div class="vs-avatar" style="background:linear-gradient(135deg,' + color + ')">' + emoji + '</div>' +
+      '<select class="vs-select" onchange="window.__setVoice(\'' + prefix + '\',\'' + key.replace(/'/g,'') + '\',this.value)">' +
+      '<option value="">' + placeholder + '</option>' +
+      vs.map(function(v){
+        var sel = voicesObj[key] === v.name ? ' selected' : '';
+        return '<option value="' + esc(v.name) + '"' + sel + '>' + esc(v.name) + ' (' + esc(v.lang) + ')</option>';
+      }).join('') +
+      '</select></div>';
+  }
+
+  // Compact inline voice picker for a transcript bubble — lets the learner
+  // assign a distinct voice to each character right from the transcript view
+  // (like Micro Lesson V1's per-character voices). Persists via __setVoice.
+  function inlineVoice(prefix, key, voicesObj, currentVoice){
+    var vs = naturalVoices();
+    return '<select class="vs-inline" onchange="window.__setVoice(\'' + prefix + '\',\'' + key.replace(/'/g,'') + '\',this.value)" title="Voice for ' + esc(key) + '">' +
+      '<option value="">🎙️</option>' +
+      vs.map(function(v){
+        var sel = currentVoice === v.name ? ' selected' : '';
+        return '<option value="' + esc(v.name) + '"' + sel + '>' + esc(v.name) + ' (' + esc(v.lang) + ')</option>';
+      }).join('') +
+      '</select>';
+  }
+  // "Play this line" button — speaks a single transcript bubble with the
+  // character's assigned voice (falls back to a sensible default).
+  function linePlayBtn(prefix, key, text, lineIdx, speaking){
+    var spoken = speaking === lineIdx ? 'is-playing' : '';
+    return '<button class="msg-play ' + spoken + '" onclick="window.__speakLine(\'' + prefix + '\',\'' + key.replace(/'/g,'') + '\',' + lineIdx + ')">▶</button>';
+  }
+
+  function renderListen(){
+    var d = DATA.dialogue || { title: '', speakers: [], lines: [] };
+    var avatars = { Maya: ['👩‍💼','#f472b6,#f43f5e'], James: ['👨‍💻','#60a5fa,#6366f1'] };
+    var emotions = {
+      curious: 'rgba(250,204,21,.15),#fbbf24', calm: 'rgba(59,130,246,.15),#93c5fd', surprised: 'rgba(249,115,22,.15),#fb923c',
+      reflective: 'rgba(139,92,246,.15),#c4b5fd', thoughtful: 'rgba(20,184,166,.15),#5eead4', concerned: 'rgba(239,68,68,.15),#fca5a5',
+      serious: 'rgba(107,114,128,.15),#9ca3af', honest: 'rgba(99,102,241,.15),#a5b4fc', happy: 'rgba(34,197,94,.15),#86efac',
+      amused: 'rgba(236,72,153,.15),#f9a8d4', encouraging: 'rgba(16,185,129,.15),#6ee7b7'
+    };
+    var html = '<div class="section-head"><span class="sh-icon">🎧</span><h2>Listen to the Dialogue</h2><p>' + esc(d.title) + '</p></div>';
+    if (isMuted) html += '<div class="muted-banner">🔇 Audio is muted. Unmute the cat to hear the dialogue.</div>';
+    if (state.dialogueVoicesOpen) {
+      html += '<div class="voice-setup"><div class="vs-title">🎙️ Choose Voices for Each Character</div>' +
+        (d.speakers || []).map(function(s){
+          var a = avatars[s] || ['👤','#6b7280,#374151'];
+          return voiceSelectHtml('speaker', s, s, speakerVoices, 'Select voice for ' + s, a[0], a[1]);
+        }).join('') +
+        '<button class="vs-skip" onclick="window.__skipVoices(\'dialogue\')">Skip (use default voices)</button></div>';
+    } else {
+      html += '<div class="speaker-cards">' + (d.speakers || []).map(function(s){
+        var a = avatars[s] || ['👤','#6b7280,#374151'];
+        var v = speakerVoices[s] ? speakerVoices[s].slice(0, 20) : 'Default';
+        return '<div class="speaker-card"><div class="vs-avatar" style="background:linear-gradient(135deg,' + a[1] + ')">' + a[0] + '</div>' +
+          '<div><div class="s-name">' + esc(s) + '</div><div class="s-voice">' + esc(v) + '</div></div></div>';
+      }).join('') +
+      '<button class="icon-btn" onclick="window.__openVoiceSetup(\'dialogue\')">⚙️</button></div>';
+    }
+    html += '<div class="play-row">' +
+      (!state.dialoguePlaying
+        ? '<button class="play-btn" onclick="window.__playDialogue()" ' + (isMuted ? 'disabled' : '') + '><span style="font-size:22px">▶</span> ' + (state.dialoguePlayed ? 'Play Again' : 'Play Dialogue') + '</button>'
+        : '<button class="play-btn stop" onclick="window.__stopDialogue()"><span style="font-size:22px">⏹</span> Stop</button>') +
+      '</div>';
+    html += '<div class="transcript">' + (d.lines || []).map(function(l, i){
+      var a = avatars[l.speaker] || ['👤','#6b7280,#374151'];
+      var isMaya = l.speaker === 'Maya';
+      var active = state.dialogueLine === i;
+      var emo = emotions[l.emotion];
+      var em = emo ? '<span class="msg-emotion" style="background:' + emo.split(',')[0] + ';color:' + emo.split(',')[1] + '">' + esc(l.emotion) + '</span>' : '';
+      return '<div class="msg-row' + (isMaya ? ' reverse' : '') + '">' +
+        '<div class="msg-avatar" style="background:linear-gradient(135deg,' + a[1] + ');' + (active ? 'outline:3px solid var(--purple);outline-offset:2px' : '') + '">' + a[0] + '</div>' +
+        '<div class="msg-body"><div class="msg-meta' + (isMaya ? '" style="flex-direction:row-reverse' : '') + '"><span class="msg-speaker">' + esc(l.speaker) + '</span>' + em + linePlayBtn('speaker', l.speaker, l.text, i, state.dialogueLine) + inlineVoice('speaker', l.speaker, speakerVoices, speakerVoices[l.speaker] || '') + '</div>' +
+        '<div class="msg-bubble' + (active ? ' active' : '') + '">' + esc(l.text) + '</div></div></div>';
+    }).join('') + '</div>';
+    html += '<button class="grad-btn" style="margin-top:16px" onclick="window.__completeStep(3)">Continue to Reading ✓</button>';
+    return html;
+  }
+
+  function renderReading(){
+    var r = DATA.reading || {};
+    var levels = [
+      { id: 'basic', label: '🌱 Basic', desc: 'A1/A2 vocabulary' },
+      { id: 'intermediate', label: '📘 Intermediate', desc: 'B1/B2 vocabulary' },
+      { id: 'advanced', label: '🎓 Advanced', desc: 'B2/C1 vocabulary' }
+    ];
+    var art = r[state.readLevel] || { title: '', content: '' };
+    return '<div class="section-head"><span class="sh-icon">📰</span><h2>Multi-Level Reading</h2><p>Read the same topic at three difficulty levels</p></div>' +
+      '<div class="read-tabs">' + levels.map(function(l){
+        return '<button class="read-tab' + (state.readLevel === l.id ? ' on' : '') + '" onclick="window.__setReadLevel(\'' + l.id + '\')">' + l.label + '</button>';
+      }).join('') + '</div>' +
+      '<div class="read-badge-bar"><span style="font-size:22px">' + (state.readLevel === 'basic' ? '🌱' : state.readLevel === 'intermediate' ? '📘' : '🎓') + '</span>' +
+      '<div><div style="font-weight:700;font-size:13px">' + (levels.find(function(l){ return l.id === state.readLevel; }) || {}).label + ' Level</div>' +
+      '<div style="font-size:11px;color:var(--muted)">' + (levels.find(function(l){ return l.id === state.readLevel; }) || {}).desc + '</div></div>' +
+      (!state.readPlaying
+        ? '<button class="read-listen" onclick="window.__readAloud()" ' + (isMuted ? 'disabled' : '') + '>🔊 Listen</button>'
+        : '<button class="read-listen" style="color:#f87171" onclick="window.__stopRead()">⏹ Stop</button>') +
+      '</div>' +
+      '<div class="read-art"><h3>' + esc(art.title) + '</h3><div>' + art.content + '</div></div>' +
+      '<button class="grad-btn" style="margin-top:16px" onclick="window.__completeStep(4)">Continue to Speaking ✓</button>';
+  }
+
+  function renderKaraoke(){
+    var passage = '';
+    if (DATA.reading && DATA.reading.basic) passage = DATA.reading.basic.content;
+    var words = state.karaWords;
+    if (!words.length) {
+      words = passage.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().split(/\s+/).filter(Boolean).map(function(w, i){ return { word: w, status: 'pending', index: i }; });
+      state.karaWords = words;
+    }
+    var correctCount = words.filter(function(w){ return w.status === 'correct'; }).length;
+    var progress = Math.round((correctCount / Math.max(1, words.length)) * 100);
+    return '<div class="section-head"><span class="sh-icon">🎤</span><h2>Karaoke Reading Mode</h2><p>Read aloud — words highlight as you speak</p></div>' +
+      '<div class="kara-stats">' +
+      '<div class="kara-stat" style="border-color:rgba(34,197,94,.3)"><div class="v" style="color:#4ade80">' + correctCount + '</div><div style="font-size:11px;color:var(--muted)">Words Said</div></div>' +
+      '<div class="kara-stat" style="border-color:rgba(139,92,246,.3)"><div class="v" style="color:#c4b5fd">' + state.karaWpm + '</div><div style="font-size:11px;color:var(--muted)">WPM</div></div>' +
+      '<div class="kara-stat" style="border-color:rgba(59,130,246,.3)"><div class="v" style="color:#93c5fd">' + progress + '%</div><div style="font-size:11px;color:var(--muted)">Progress</div></div>' +
+      '</div>' +
+      '<div class="progress-track" style="margin-bottom:14px"><div class="progress-fill" style="width:' + progress + '%"></div></div>' +
+      '<div class="play-row">' +
+      (!state.karaListening
+        ? '<button class="play-btn" style="background:linear-gradient(135deg,#ef4444,#ec4899)" onclick="window.__karaStart()">🎤 Start Speaking</button>'
+        : '<button class="play-btn stop" onclick="window.__karaStop()">⏹ Stop</button>') +
+      '<button class="play-btn" style="background:var(--panel2);color:var(--muted)" onclick="window.__karaReset()">🔄 Reset</button>' +
+      '</div>' +
+      (state.karaListening ? '<div class="kara-listen-row"><span class="listen-dot"></span> Listening...</div>' : '') +
+      (state.karaErr ? '<div class="muted-banner" style="color:#fca5a5;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.1)">' + esc(state.karaErr) + '</div>' : '') +
+      '<div class="kara-words">' + words.map(function(w){
+        var cls = 'kw-word';
+        if (w.status === 'correct') cls += ' correct';
+        if (w.status === 'current') cls += ' current';
+        if (w.status === 'missed') cls += ' missed';
+        return '<span class="' + cls + '">' + esc(w.word) + '</span>';
+      }).join('') + '</div>' +
+      (state.karaDone ? '<div style="margin-top:14px;padding:20px;border-radius:16px;background:rgba(34,197,94,.1);border:1px solid #22c55e;text-align:center"><div style="font-size:34px">🎉</div><div style="font-weight:700;color:#4ade80;margin-top:6px">Reading Complete!</div><div style="font-size:13px;color:var(--muted)">Final speed: ' + state.karaWpm + ' WPM</div></div>' : '') +
+      '<button class="grad-btn" style="margin-top:16px" onclick="window.__completeStep(5)">Continue to Grammar Analysis ✓</button>';
+  }
+
+  function renderGrammar(){
+    var slides = DATA.grammarSlides || [];
+    var grouped = { 'A2/B1': [], 'B1/B2': [], 'B2/C1': [] };
+    slides.forEach(function(s){ (grouped[s.level] = grouped[s.level] || []).push(s); });
+    var levelColors = {
+      'A2/B1': 'rgba(34,197,94,.12),#4ade80',
+      'B1/B2': 'rgba(59,130,246,.12),#60a5fa',
+      'B2/C1': 'rgba(139,92,246,.12),#c4b5fd'
+    };
+    var html = '<div class="section-head"><span class="sh-icon">🔬</span><h2>Language Analysis</h2><p>9 grammar structures across CEFR levels — click any to explore</p></div>' +
+      '<div class="gram-progress"><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Slides explored</span><span>' + state.gramViewed.length + '/' + slides.length + '</span></div>' +
+      '<div class="progress-track"><div class="progress-fill" style="width:' + Math.round((state.gramViewed.length / Math.max(1, slides.length)) * 100) + '%"></div></div></div></div>';
+    Object.keys(grouped).forEach(function(lvl){
+      if (!grouped[lvl].length) return;
+      var c = levelColors[lvl] || levelColors['A2/B1'];
+      html += '<div class="gram-group"><div class="gram-lvl-badge" style="background:' + c.split(',')[0] + ';color:' + c.split(',')[1] + ';border:1px solid ' + c.split(',')[1] + '">CEFR ' + lvl + '</div>';
+      grouped[lvl].forEach(function(g){
+        var idx = slides.indexOf(g);
+        var open = state.gramOpen === idx;
+        var viewed = state.gramViewed.indexOf(idx) >= 0;
+        html += '<div class="gram-card' + (open ? ' open' : '') + '" onclick="window.__gramToggle(' + idx + ')">' +
+          '<div class="gram-head"><div class="gram-ico" style="' + (viewed ? 'background:' + c.split(',')[0] + ';color:' + c.split(',')[1] : '') + '">' + (viewed ? '✅' : '📌') + '</div>' +
+          '<div style="flex:1;min-width:0"><div class="gram-title">' + esc(g.structure) + '</div>' + (!open ? '<div class="gram-meaning">' + esc(g.meaning) + '</div>' : '') + '</div>' +
+          '<span class="gram-caret">▾</span></div>' +
+          (open ? '<div class="gram-body">' +
+            '<div class="gram-sec-label">Example</div><div class="gram-ex" style="background:' + c.split(',')[0] + ';color:' + c.split(',')[1] + '">"' + esc(g.example) + '"</div>' +
+            '<div class="gram-sec-label">Meaning & Use</div><p style="font-size:13px;line-height:1.6;margin-bottom:12px">' + esc(g.meaning) + '</p>' +
+            '<div class="gram-sec-label">⚠️ Common Mistake</div><div class="gram-mistake">' + esc(g.mistake) + '</div>' +
+            '<div class="gram-sec-label">Alternatives</div><div class="gram-alts">' + (g.alternatives || []).map(function(a){ return '<span class="gram-alt">' + esc(a) + '</span>'; }).join('') + '</div>' +
+            '<button class="gram-listen" onclick="event.stopPropagation();window.__gramSpeak(' + idx + ')">🔊 Listen to Explanation</button>' +
+          '</div>' : '') +
+        '</div>';
+      });
+      html += '</div>';
+    });
+    html += '<button class="grad-btn" onclick="window.__completeStep(6)">Continue to Radio Drama ✓</button>';
+    return html;
+  }
+
+  function renderDrama(){
+    var dr = DATA.radioDrama || { title: '', setting: '', cast: [], lines: [] };
+    var styles = {
+      'Narrator': ['📻','#6b7280,#374151'],
+      'Mom (Adaeze)': ['👩🏾‍🍳','#fb7185,#ec4899'],
+      'Dad (Emeka)': ['👨🏾‍💼','#3b82f6,#4f46e5'],
+      'Teen (Zoe)': ['👧🏾','#c084fc,#8b5cf6']
+    };
+    var ambient = { kitchen: '🍳 Kitchen ambiance', office: '💼 Office sounds', cafe: '☕ Café background', street: '🚗 Street noise', park: '🌳 Park atmosphere', rain: '🌧️ Rainy day' };
+    var amKey = dr.ambientSound || 'kitchen';
+    var html = '<div class="section-head"><span class="sh-icon">🎭</span><h2>Radio Drama</h2><p>"' + esc(dr.title) + '" — ' + esc(dr.setting) + '</p></div>' +
+      '<div class="ambient-pill"><div>🍳 ' + (ambient[amKey] || ambient.kitchen) + '</div></div>';
+    if (isMuted) html += '<div class="muted-banner">🔇 Audio is muted. Unmute the cat to hear the drama.</div>';
+
+    if (state.dramaVoicesOpen) {
+      html += '<div class="voice-setup"><div class="vs-title">🎙️ Choose Voices for Each Character</div>' +
+        (dr.cast || []).map(function(c){
+          var s = styles[c] || ['👤','#6b7280,#374151'];
+          return voiceSelectHtml('character', c, c, characterVoices, 'Select voice for ' + c, s[0], s[1]);
+        }).join('') +
+        '<button class="vs-skip" onclick="window.__skipVoices(\'drama\')">Skip (use default voices)</button></div>';
+    } else if (!state.dramaQuizOpen) {
+      html += '<div class="cast-grid">' + (dr.cast || []).map(function(c){
+        var s = styles[c] || ['👤','#6b7280,#374151'];
+        var active = state.dramaLine >= 0 && dr.lines[state.dramaLine] && dr.lines[state.dramaLine].character === c;
+        return '<div class="cast-card' + (active ? ' active' : '') + '"><div class="cast-emoji" style="background:linear-gradient(135deg,' + s[1] + ')">' + s[0] + '</div>' +
+          '<div class="cast-name">' + esc(c) + '</div>' +
+          (active ? '<div class="eq"><span></span><span></span><span></span></div>' : '') +
+          '</div>';
+      }).join('') + '</div>';
+    }
+
+    if (!state.dramaQuizOpen) {
+      html += '<div class="play-row">' +
+        (!state.dramaPlaying
+          ? '<button class="play-btn" style="background:linear-gradient(135deg,#f43f5e,#ec4899)" onclick="window.__playDrama()" ' + (isMuted ? 'disabled' : '') + '><span style="font-size:22px">🎙️</span> ' + (state.dramaPlayed ? 'Replay Drama' : 'Play Radio Drama') + '</button>'
+          : '<button class="play-btn stop" onclick="window.__stopDrama()"><span>⏹</span> Stop</button>') +
+        '<button class="play-btn" style="background:var(--panel2);color:var(--muted)" onclick="window.__openVoiceSetup(\'drama\')">⚙️</button>' +
+        '</div>';
+      html += '<div class="script-box">' + (dr.lines || []).map(function(l, i){
+        var s = styles[l.character] || ['👤','#6b7280,#374151'];
+        var active = state.dramaLine === i;
+        if (l.character === 'Narrator') {
+          return '<div class="narr-line' + (active ? ' active' : '') + '">[' + esc(l.text) + ']</div>';
+        }
+        return '<div class="msg-row"><div class="msg-avatar" style="background:linear-gradient(135deg,' + s[1] + ');' + (active ? 'outline:3px solid var(--purple);outline-offset:2px' : '') + '">' + s[0] + '</div>' +
+          '<div class="msg-body"><div class="msg-meta"><span class="msg-speaker">' + esc(l.character) + '</span>' + linePlayBtn('character', l.character, l.text, i, state.dramaLine) + inlineVoice('character', l.character, characterVoices, characterVoices[l.character] || '') + '</div>' +
+          '<div class="msg-bubble' + (active ? ' active' : '') + '" style="border-top-left-radius:4px">' + esc(l.text) + '</div></div></div>';
+      }).join('') + '</div>';
+      html += '<button class="grad-btn" style="margin-top:16px" onclick="window.__dramaContinue()">' + (state.dramaPlayed && (dr.comprehensionQuestions || []).length ? 'Take Comprehension Quiz →' : 'Continue to Dictation ✓') + '</button>';
+    } else {
+      html += renderDramaQuiz(dr);
+    }
+    return html;
+  }
+
+  function renderDramaQuiz(dr){
+    var qs = dr.comprehensionQuestions || [];
+    if (!qs.length) {
+      return '<button class="grad-btn" onclick="window.__completeStep(7)">Continue to Dictation ✓</button>';
+    }
+    var html = '<div class="section-head"><h2 style="font-size:18px">📝 Comprehension Check</h2><p>Test your understanding of the radio drama</p></div>';
+    qs.forEach(function(q, qi){
+      html += '<div class="card card-pad" style="margin-bottom:12px"><p style="font-weight:700;margin-bottom:12px">' + (qi + 1) + '. ' + esc(q.question) + '</p>';
+      q.options.forEach(function(opt, oi){
+        var cls = 'quiz-opt';
+        var sel = state.dramaAnswers[qi] === oi;
+        if (state.dramaSubmitted) {
+          if (oi === q.correct) cls += ' correct';
+          else if (sel) cls += ' wrong';
+          else cls += ' dim';
+        } else if (sel) cls += ' correct';
+        html += '<button class="' + cls + '" onclick="window.__dramaAnswer(' + qi + ',' + oi + ')" ' + (state.dramaSubmitted ? 'disabled' : '') + '>' +
+          '<span class="q-letter">' + String.fromCharCode(65 + oi) + '</span>' + esc(opt) + '</button>';
+      });
+      if (state.dramaSubmitted) html += '<div class="quiz-expl">💡 ' + esc(q.explanation) + '</div>';
+      html += '</div>';
+    });
+    if (!state.dramaSubmitted) {
+      var allAnswered = (state.dramaAnswers.filter(function(a){ return a !== null && a !== undefined; }).length) === qs.length;
+      html += '<button class="grad-btn" onclick="window.__dramaSubmit()" ' + (allAnswered ? '' : 'disabled') + '>Check Answers ✓</button>';
+    } else {
+      var score = 0;
+      qs.forEach(function(q, i){ if (state.dramaAnswers[i] === q.correct) score++; });
+      var good = score >= qs.length / 2;
+      html += '<div class="cg-end ' + (good ? 'win' : 'lose') + '" style="margin-bottom:12px"><div style="font-size:34px">' + (good ? '🎉' : '💪') + '</div>' +
+        '<div style="font-weight:700;margin-top:6px">You got ' + score + '/' + qs.length + ' correct!</div></div>' +
+        '<div class="play-row">' +
+        '<button class="play-btn" style="background:var(--panel2);color:var(--muted)" onclick="window.__dramaReplay()">🔄 Replay Drama</button>' +
+        '<button class="play-btn" onclick="window.__completeStep(7)">Continue →</button></div>';
+    }
+    return html;
+  }
+
+  function renderDictation(){
+    var sents = DATA.dictation ? DATA.dictation.sentences : [];
+    if (!sents.length) return '<p style="color:var(--muted);text-align:center">No dictation sentences.</p>';
+    var cur = state.dictIdx;
+    var sentence = sents[cur];
+    var avg = state.dictScores.length ? Math.round(state.dictScores.reduce(function(a, b){ return a + b; }, 0) / state.dictScores.length) : 0;
+    var html = '<div class="section-head"><span class="sh-icon">✍️</span><h2>Dictation Challenge</h2><p>Listen carefully and type what you hear</p></div>' +
+      '<div class="dict-track">' + sents.map(function(_, i){
+        var cls = 'dict-seg';
+        if (i < cur) cls += state.dictScores[i] >= 70 ? ' past-g' : ' past-b';
+        if (i === cur) cls += ' cur';
+        return '<div class="' + cls + '"></div>';
+      }).join('') + '</div>' +
+      '<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:12px">Sentence ' + (cur + 1) + ' of ' + sents.length + (state.dictScores.length ? ' • Average accuracy: ' + avg + '%' : '') + '</div>';
+    if (isMuted) html += '<div class="muted-banner">🔇 Unmute the cat to hear the sentence</div>';
+    html += '<div class="card card-pad dict-player"><div style="font-size:36px">🎧</div>' +
+      '<p style="color:var(--muted);font-size:13px;margin:8px 0 14px">' + (isMuted ? 'Unmute to hear the sentence' : 'Click play to hear the sentence') + '</p>' +
+      '<div class="play-row"><button class="play-btn" onclick="window.__dictPlay()" ' + (isMuted ? 'disabled' : '') + '>' +
+      '<span style="font-size:20px">▶</span> Play Sentence</button>' +
+      (state.dictSubmitted ? '<button class="play-btn" style="background:rgba(59,130,246,.2);color:#93c5fd" onclick="window.__dictPlay()">🔁 Hear Again</button>' : '') +
+      '</div></div>';
+    html += '<textarea id="dict-input" rows="3" placeholder="Type what you heard..." class="gp-input" style="width:100%;margin-top:12px;resize:none" ' + (state.dictSubmitted ? 'disabled' : '') + ' oninput="window.__dictInput(this.value)">' + esc(state.dictInput) + '</textarea>';
+    if (!state.dictSubmitted) {
+      html += '<button class="grad-btn" style="margin-top:12px" onclick="window.__dictSubmit()" ' + (state.dictInput.trim() ? '' : 'disabled') + '>Check My Answer ✓</button>';
+    } else {
+      var acc = Math.round((state.dictResults.filter(function(r){ return r.correct; }).length / Math.max(1, state.dictResults.length)) * 100);
+      html += '<div class="dict-acc" style="' + (acc >= 90 ? 'border-color:#22c55e;background:rgba(34,197,94,.1)' : acc >= 70 ? 'border-color:#eab308;background:rgba(234,179,8,.1)' : 'border-color:#ef4444;background:rgba(239,68,68,.1)') + '">' +
+        '<div class="big" style="color:' + (acc >= 90 ? '#4ade80' : acc >= 70 ? '#fbbf24' : '#f87171') + '">' + acc + '%</div>' +
+        '<div style="font-weight:700;font-size:13px;color:' + (acc >= 90 ? '#4ade80' : acc >= 70 ? '#fbbf24' : '#f87171') + '">' + (acc >= 90 ? '🎉 Excellent!' : acc >= 70 ? '👍 Good effort!' : '💪 Keep practicing!') + '</div></div>' +
+        '<div class="card card-pad" style="margin-bottom:12px"><div class="gram-sec-label" style="margin-bottom:8px">Word Analysis</div><div class="word-tags">' +
+        state.dictResults.map(function(r){
+          return '<span class="word-tag ' + (r.correct ? 'good' : 'bad') + '">' + (r.correct ? esc(r.word) : '<span style="text-decoration:line-through;opacity:.6">' + esc(r.userWord || '?') + '</span> → <b>' + esc(r.word) + '</b>') + '</span>';
+        }).join('') + '</div></div>' +
+        '<div class="dict-correct">✅ Correct sentence: "' + esc(sentence) + '"</div>' +
+        (cur >= sents.length - 1
+          ? '<button class="grad-btn" style="background:linear-gradient(135deg,#22c55e,#10b981)" onclick="window.__completeStep(8)">Continue to Discussion ✓</button>'
+          : '<button class="grad-btn" onclick="window.__dictNext()">Next Sentence →</button>');
+    }
+    return html;
+  }
+
+  function renderDiscussion(){
+    var d = DATA.discussion || { post: '', comments: [] };
+    var comments = d.comments || [];
+    var html = '<div class="section-head"><span class="sh-icon">💬</span><h2>Discussion Corner</h2><p>Select the most insightful comment</p></div>' +
+      '<div class="card post-card"><div class="post-head"><div class="post-avatar">🐦</div>' +
+      '<div><div class="post-name">TechWatcher</div><div class="post-handle">@TechWatcher • Just now</div></div>' +
+      '<span class="post-tag">Discussion Post</span></div>' +
+      '<p class="post-text">' + esc(d.post) + '</p>' +
+      '<div class="post-stats"><span>❤️ 247 likes</span><span>💬 4 comments</span><span>🔁 89 shares</span></div></div>' +
+      '<div class="divider-row"><div class="line"></div><span style="font-size:13px;color:var(--muted);font-weight:500;white-space:nowrap">Which response is most insightful?</span><div class="line"></div></div>';
+    comments.forEach(function(c, i){
+      var cls = 'comment-card';
+      if (state.discRevealed) {
+        if (c.isCorrect) cls += ' correct-ans';
+        else if (state.discSelected === i) cls += ' wrong-ans';
+      } else if (state.discSelected === i) cls += ' selected';
+      html += '<div class="' + cls + '" onclick="window.__discSelect(' + i + ')">' +
+        '<div class="comment-row"><div class="comment-avatar">' + c.avatar +
+        (state.discRevealed ? (c.isCorrect ? '<span class="comment-mark">✓</span>' : (state.discSelected === i ? '<span class="comment-mark x">✗</span>' : '')) : '') +
+        '</div><div class="comment-main">' +
+        '<div class="comment-name">' + esc(c.character) + (state.discSelected === i && !state.discRevealed ? '<span style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(139,92,246,.2);color:#c4b5fd">Selected</span>' : '') + '</div>' +
+        '<p class="comment-text">' + esc(c.text) + '</p>' +
+        (state.discRevealed ? '<div class="comment-fb ' + (c.isCorrect ? 'good' : 'neutral') + '"><div class="gram-sec-label">📊 Analysis</div>' + esc(c.feedback) + '</div>' : '') +
+        '</div><div class="radio-dot">' + (state.discSelected === i ? '✓' : '') + '</div></div></div>';
+    });
+    if (!state.discRevealed) {
+      html += '<button class="grad-btn" onclick="window.__discSubmit()" ' + (state.discSelected !== null ? '' : 'disabled') + '>Submit My Answer ✓</button>';
+    } else {
+      var correctPick = comments[state.discSelected] && comments[state.discSelected].isCorrect;
+      html += '<div class="cg-end ' + (correctPick ? 'win' : 'lose') + '" style="margin-bottom:12px">' +
+        (correctPick ? '<p style="font-weight:700">🎉 Excellent critical thinking! You selected the most insightful response.</p>' : '<p style="font-weight:700">💡 Good try! Read Brittany\'s response for the best critical thinking example.</p>') +
+        '</div>' +
+        '<button class="grad-btn" onclick="window.__completeStep(9)">Continue to Final Quiz ✓</button>';
+    }
+    return html;
+  }
+
+  function renderQuiz(){
+    var quiz = DATA.quiz || [];
+    if (state.quizResults) {
+      var score = state.quizAnswers.filter(Boolean).length;
+      var pct = Math.round((score / Math.max(1, quiz.length)) * 100);
+      var html = '<div class="results-hero"><div style="font-size:56px">' + (pct >= 90 ? '🏆' : pct >= 80 ? '⭐' : pct >= 60 ? '👍' : '📖') + '</div>' +
+        '<h2 style="font-size:26px;font-weight:900;margin-top:6px">Quiz Complete!</h2>' +
+        '<div class="big">' + pct + '%</div>' +
+        '<p style="font-size:15px">' + score + ' out of ' + quiz.length + ' correct</p></div>' +
+        '<div class="kara-stats" style="margin-top:12px">' +
+        '<div class="kara-stat"><div class="v" style="color:#4ade80">' + score + '</div><div style="font-size:11px;color:var(--muted)">Correct</div></div>' +
+        '<div class="kara-stat"><div class="v" style="color:#f87171">' + (quiz.length - score) + '</div><div style="font-size:11px;color:var(--muted)">Incorrect</div></div>' +
+        '<div class="kara-stat"><div class="v" style="color:#c4b5fd">' + pct + '%</div><div style="font-size:11px;color:var(--muted)">Accuracy</div></div>' +
+        '</div>';
+      if (state.quizSecret) {
+        html += '<div class="secret-box"><div style="position:absolute;left:15%;top:8px" class="sparkle">✨</div><div style="position:absolute;left:40%;top:12px" class="sparkle" style2="">⭐</div><div style="position:absolute;left:65%;top:8px" class="sparkle">💫</div><div style="position:absolute;left:82%;top:14px" class="sparkle">✨</div>' +
+          '<div style="font-size:30px;margin-bottom:8px">🔐</div>' +
+          '<h3 style="color:#fff;font-weight:900;font-size:17px;margin-bottom:6px">Secret Progress Code Unlocked!</h3>' +
+          '<p style="color:rgba(255,255,255,.7);font-size:13px;margin-bottom:14px">You scored 80%+ and earned this exclusive code</p>' +
+          '<div class="secret-code">' + esc(DATA.secretCode) + '</div>' +
+          '<p style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px">Save this code — it proves you completed today\'s lesson!</p></div>';
+      }
+      html += '<div style="margin-top:14px"><h3 style="font-weight:700;font-size:14px;margin-bottom:8px">Answer Review:</h3>' +
+        quiz.map(function(q, i){
+          return '<div class="review-row ' + (state.quizAnswers[i] ? 'good' : 'bad') + '"><span style="font-size:17px">' + (state.quizAnswers[i] ? '✅' : '❌') + '</span>' +
+            '<div style="flex:1"><p style="font-size:13px;font-weight:500">' + esc(q.question) + '</p>' +
+            (!state.quizAnswers[i] ? '<p style="font-size:11px;color:var(--muted);margin-top:2px">' + esc(q.explanation) + '</p>' : '') + '</div></div>';
+        }).join('') + '</div>' +
+        '<button class="grad-btn" style="margin-top:16px;background:linear-gradient(135deg,#22c55e,#10b981)" onclick="window.__finishLesson()">🎓 Complete Lesson!</button>';
+      return html;
+    }
+    var q = quiz[state.quizCur] || quiz[0];
+    if (!q) return '<p style="color:var(--muted);text-align:center">No quiz questions.</p>';
+    var html = '<div class="section-head"><span class="sh-icon">🧠</span><h2>Final Quiz</h2><p>Score 80%+ to unlock the Secret Code</p></div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div class="progress-track" style="flex:1"><div class="progress-fill" style="width:' + Math.round((state.quizCur / quiz.length) * 100) + '%"></div></div>' +
+      '<span style="font-size:13px;font-weight:700;color:var(--muted)">' + (state.quizCur + 1) + '/' + quiz.length + '</span></div>' +
+      '<div class="quiz-track">' + state.quizAnswers.map(function(a, i){
+        return '<div class="quiz-dot ' + (a ? 'good' : 'bad') + '">' + (a ? '✓' : '✗') + '</div>';
+      }).join('') + Array(Math.max(0, quiz.length - state.quizAnswers.length)).fill('<div class="quiz-dot" style="background:var(--border)"></div>').join('') + '</div>' +
+      '<div class="card quiz-q-card" key="q' + state.quizCur + '">' +
+      '<div class="gram-sec-label" style="margin-bottom:6px;color:var(--purple)">Question ' + (state.quizCur + 1) + '</div>' +
+      '<p style="font-size:17px;font-weight:700;line-height:1.5;margin-bottom:18px">' + esc(q.question) + '</p>' +
+      q.options.map(function(opt, oi){
+        var cls = 'quiz-opt';
+        if (state.quizAnswered) {
+          if (oi === q.correct) cls += ' correct';
+          else if (oi === state.quizSelected) cls += ' wrong';
+          else cls += ' dim';
+        } else if (oi === state.quizSelected) cls += ' correct';
+        return '<button class="' + cls + '" onclick="window.__quizAnswer(' + oi + ')" ' + (state.quizAnswered ? 'disabled' : '') + '>' +
+          '<span class="q-letter">' + String.fromCharCode(65 + oi) + '</span>' + esc(opt) + '</button>';
+      }).join('') +
+      (state.quizAnswered ? '<div class="quiz-expl">💡 ' + esc(q.explanation) + '</div>' : '') +
+      '</div>' +
+      (state.quizAnswered ? '<button class="grad-btn" style="margin-top:14px" onclick="window.__quizNext()">' + (state.quizCur < quiz.length - 1 ? 'Next Question →' : 'See Results 🎯') + '</button>' : '');
+    return html;
+  }
+
+  function renderConversation(){
+    var cg = DATA.conversationGame;
+    if (!cg) return '<p style="color:var(--muted);text-align:center;padding:40px">No conversation game in this lesson.</p>';
+    var node = cg.nodes[state.cgNode];
+    if (!node) node = cg.nodes.start;
+    var char = null;
+    for (var i = 0; i < cg.characters.length; i++) if (cg.characters[i].name === node.speaker) char = cg.characters[i];
+    var html = '<div class="section-head"><span class="sh-icon">🗣️</span><h2>' + esc(cg.title) + '</h2><p>' + esc(cg.description) + '</p></div>' +
+      '<div class="cg-chars">' + cg.characters.map(function(c){
+        return '<div class="cg-char"><div class="c-avatar" style="background:linear-gradient(135deg,#a78bfa,#6366f1)">' + c.avatar + '</div>' +
+          '<div><div style="font-weight:700;font-size:13px">' + esc(c.name) + '</div><div style="font-size:11px;color:var(--muted)">' + esc(c.role) + '</div></div></div>';
+      }).join('') + '</div>';
+    if (node.isEnd) {
+      html += '<div class="cg-end ' + (node.isWin ? 'win' : 'lose') + '"><div style="font-size:44px">' + (node.isWin ? '🎉' : '💼') + '</div>' +
+        '<div style="font-weight:900;font-size:18px;margin:8px 0">' + (node.isWin ? 'Welcome Aboard!' : 'Interview Ended') + '</div>' +
+        '<p style="font-size:14px;color:var(--muted);line-height:1.7">' + esc(node.endMessage) + '</p>' +
+        '<button class="grad-btn" style="margin-top:14px;width:auto;padding:12px 28px" onclick="window.__cgReset()">🔄 Play Again</button></div>' +
+        '<div class="cg-discuss"><h3 style="font-weight:700;font-size:14px;margin-bottom:8px">💭 Discussion Questions</h3><ul>' +
+        (cg.discussionQuestions || []).map(function(dq){ return '<li>' + esc(dq) + '</li>'; }).join('') + '</ul></div>';
+    } else {
+      html += '<div class="card cg-dialogue"><div class="cg-speaker">' + (char ? char.avatar + ' ' : '') + esc(node.speaker) + '</div>' +
+        '<div class="cg-text">' + esc(node.text) + '</div></div>' +
+        node.choices.map(function(ch, i){
+          var picked = state.cgPicked === i;
+          return '<button class="cg-choice' + (picked ? ' picked' : '') + '" onclick="window.__cgChoose(' + i + ')">' +
+            '<span style="font-weight:700;margin-right:8px">' + String.fromCharCode(65 + i) + '.</span>' + esc(ch.text) +
+            '<div class="cg-cat-note">🐱 ' + esc(ch.catNote) + '</div></button>';
+        }).join('') +
+        (state.cgPicked !== null ? '<button class="grad-btn" style="margin-top:12px" onclick="window.__cgAdvance()">Continue →</button>' : '');
+    }
+    return html;
+  }
+
+  function renderPlace(){
+    var gp = DATA.guessThePlace;
+    if (!gp) return '<p style="color:var(--muted);text-align:center;padding:40px">No place game in this lesson.</p>';
+    var html = '<div class="section-head"><span class="sh-icon">🗺️</span><h2>Guess the Place</h2><p>Read the description and guess where in the world you are</p></div>' +
+      '<div class="gp-clue">' + clueHtml(gp.clue, gp.tooltipWords || {}) + '</div>' +
+      '<div style="margin-bottom:12px"><div class="gram-sec-label" style="margin-bottom:6px">Need a hint?</div>' +
+      gp.hints.map(function(h, i){
+        if (i >= state.gpHintShown) return '<button class="gp-hint-btn" onclick="window.__gpHint()">🔎 Reveal Hint ' + (i + 1) + '</button>';
+        return '<div class="gp-hint-btn" style="cursor:default;border-color:rgba(139,92,246,.4)">💡 Hint ' + (i + 1) + ': <span class="hint">' + esc(h) + '</span></div>';
+      }).join('') + '</div>' +
+      '<div class="gp-imgs">' + gp.images.map(function(img){
+        return '<div class="gp-img"><span class="e">' + img.emoji + '</span><div class="l">' + esc(img.label) + '</div><div class="d">' + esc(img.description) + '</div></div>';
+      }).join('') + '</div>' +
+      '<div class="gram-sec-label" style="margin-bottom:6px">Survival phrases — tap to hear</div>' +
+      '<div class="gp-phrases">' + gp.survivalPhrases.map(function(p, i){
+        return '<button class="gp-phrase" onclick="window.__gpPhrase(' + i + ')"><div class="ph">' + esc(p.phrase) + '</div><div class="pr">' + esc(p.pronunciation) + ' — ' + esc(p.translation) + '</div></button>';
+      }).join('') + '</div>' +
+      '<button class="play-btn" style="width:100%;margin-bottom:12px" onclick="window.__gpTour()" ' + (isMuted ? 'disabled' : '') + '>🎧 Audio Tour</button>' +
+      '<div class="gram-sec-label" style="margin-bottom:6px">Fun facts</div>' +
+      '<div class="gp-facts">' + gp.funFacts.map(function(f){ return '<div class="gp-fact">' + esc(f) + '</div>'; }).join('') + '</div>';
+    if (!state.gpRevealed) {
+      html += '<div class="gp-guess-row"><input class="gp-input" placeholder="What place is this?" oninput="window.__gpGuess(this.value)" value="' + esc(state.gpGuess) + '" /><button class="play-btn" onclick="window.__gpSubmit()">Guess!</button></div>';
+    } else {
+      html += '<div class="gp-result ' + (state.gpWon ? 'cg-end win' : 'cg-end lose') + '">' +
+        '<div style="font-size:40px">' + (state.gpWon ? '🎉' : '🤔') + '</div>' +
+        '<div style="font-weight:900;font-size:17px;margin:6px 0">' + (state.gpWon ? 'Correct!' : 'The answer was...') + '</div>' +
+        '<div style="font-size:20px;font-weight:900;color:var(--purple)">' + esc(gp.name) + '</div>' +
+        '<p style="font-size:13px;color:var(--muted);margin-top:8px">📍 ' + esc(gp.country) + ' • 🗣️ ' + esc(gp.language) + '</p>' +
+        (state.gpWon ? '' : '<button class="grad-btn" style="margin-top:12px;width:auto;padding:10px 24px" onclick="window.__gpAgain()">Try Another</button>') +
+        '</div>';
+    }
+    return html;
+  }
+
+  function clueHtml(clue, words){
+    var out = esc(clue);
+    Object.keys(words || {}).forEach(function(w){
+      var re = new RegExp('\\b' + w + '\\b', 'gi');
+      out = out.replace(re, '<span class="gp-word" data-w="' + esc(w) + '">' + w + '</span>');
+    });
+    return out;
+  }
+
+  function renderLeaderboard(){
+    var li = levelInfo();
+    var rows = [
+      { name: LEARNER_NAME, avatar: AVATAR, xp: state.xp, me: true },
+      { name: 'Amira K.', avatar: '🦊', xp: Math.max(0, state.xp - 120) },
+      { name: 'Liam O.', avatar: '🐼', xp: Math.max(0, state.xp - 260) },
+      { name: 'Sofia R.', avatar: '🦉', xp: Math.max(0, state.xp - 400) },
+      { name: 'Noah B.', avatar: '🐸', xp: Math.max(0, state.xp - 610) }
+    ];
+    rows.sort(function(a, b){ return b.xp - a.xp; });
+    var max = rows[0] ? Math.max(100, rows[0].xp) : 100;
+    var html = '<div class="section-head"><span class="sh-icon">🏆</span><h2>Leaderboard</h2><p>You have ' + state.xp + ' XP • Level ' + state.level + ' ' + li.cur.badge + ' ' + li.cur.name + '</p></div>' +
+      rows.map(function(r, i){
+        var rankCls = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
+        return '<div class="lb-card"><div class="lb-rank ' + rankCls + '">' + (i + 1) + '</div>' +
+          '<div class="lb-avatar">' + r.avatar + '</div>' +
+          '<div style="flex:1;min-width:120px"><div class="lb-name">' + esc(r.name) + (r.me ? ' <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(139,92,246,.2);color:#c4b5fd">You</span>' : '') + '</div>' +
+          '<div class="lb-xp">' + r.xp + ' XP</div></div>' +
+          '<div class="lb-bar"><div style="width:' + Math.round((r.xp / max) * 100) + '%"></div></div></div>';
+      }).join('') +
+      '<div class="card card-pad" style="margin-top:14px"><div class="gram-sec-label" style="margin-bottom:6px">Your achievements</div><div class="gp-facts">' +
+      ACHIEVEMENTS.map(function(a){
+        var on = state.achievements.indexOf(a.id) >= 0;
+        return '<div class="gp-fact" style="' + (on ? '' : 'opacity:.35') + '">' + a.emoji + ' ' + esc(a.name) + '</div>';
+      }).join('') + '</div></div>';
+    return html;
+  }
+
+  /* ---------- bind dynamic (tooltips etc) ---------- */
+  function bindDynamic(){
+    var words = $$('.gp-word');
+    words.forEach(function(w){
+      w.onmouseover = function(e){
+        var tip = document.getElementById('gp-tip');
+        if (!tip) {
+          tip = document.createElement('div');
+          tip.id = 'gp-tip';
+          tip.className = 'gp-tip';
+          document.body.appendChild(tip);
+        }
+        var def = '';
+        var gw = DATA && DATA.guessThePlace && DATA.guessThePlace.tooltipWords;
+        if (gw) def = gw[w.getAttribute('data-w')] || '';
+        tip.textContent = w.getAttribute('data-w') + ': ' + def;
+        tip.style.left = (e.pageX + 12) + 'px';
+        tip.style.top = (e.pageY + 12) + 'px';
+        tip.style.display = 'block';
+      };
+      w.onmouseout = function(){
+        var tip = document.getElementById('gp-tip');
+        if (tip) tip.style.display = 'none';
+      };
+    });
+    var ta = $('#dict-input');
+    if (ta) ta.value = state.dictInput;
+  }
+
+  /* ---------- actions ---------- */
+  window.__setModule = function(m){
+    playClick();
+    stopSpeech();
+    state.module = m;
+    var intros = DATA && DATA.catFeedback && DATA.catFeedback.moduleIntro;
+    if (intros && intros[m]) catMessage(intros[m], 'idle');
+    if (m === 'leaderboard') catMessage('Check out how you rank against other learners! Keep learning to climb higher!', 'idle');
+    render();
+  };
+  window.__goStep = function(s){
+    if (!stepUnlocked(s)) return;
+    playClick();
+    state.currentStep = s;
+    render();
+  };
+  window.__completeStep = function(s){
+    if (state.completedSteps.indexOf(s) < 0) {
+      state.completedSteps.push(s);
+      addXP(15);
+    }
+    if (s < 10) state.currentStep = s + 1;
+    var msgs = {
+      1: 'Great job on the warm-up! Now let\'s explore some important vocabulary.',
+      2: 'Fantastic! You now know 22 key terms. Let\'s listen to them in action.',
+      3: 'Wonderful listening! Now read about the topic at your own level.',
+      4: 'You read the article! Now let\'s try speaking it aloud.',
+      5: 'Amazing speaking practice! Time to analyse the grammar.',
+      6: 'Excellent grammar work! Now listen to a radio drama.',
+      7: 'Brilliant! Now test how well you can hear and write the sentences.',
+      8: 'Great dictation! Now let\'s discuss the topic critically.',
+      9: 'Wonderful analysis! Time for the final quiz. Give it your best!'
+    };
+    if (msgs[s]) catMessage(msgs[s], 'correct');
+    render();
+  };
+  window.__finishLesson = function(){
+    if (state.completedSteps.indexOf(10) < 0) {
+      state.completedSteps.push(10);
+      addXP(15);
+    }
+    var score = state.quizAnswers.filter(Boolean).length;
+    state.quizScores.push({ date: new Date().toISOString(), score: score, total: (DATA.quiz || []).length });
+    if (state.quizSecret && !state.secretCode) {
+      state.secretCode = DATA.secretCode || null;
+      addXP(50);
+    }
+    if (state.quizSecret) {
+      catMessage('Incredible! You scored ' + score + '/' + (DATA.quiz || []).length + ' and unlocked the secret code! You\'re a true language master!', 'excited');
+      playUnlock();
+    } else {
+      catMessage('You scored ' + score + '/' + (DATA.quiz || []).length + '. Good effort! Keep studying and try again!', 'idle');
+    }
+    saveStats();
+    render();
+  };
+  window.__toggleTheme = function(){
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    document.body.classList.toggle('light', state.theme === 'light');
+    try { localStorage.setItem('dl_theme', state.theme); } catch(e) {}
+    render();
+  };
+  window.__toggleMute = function(){
+    isMuted = !isMuted;
+    if (isMuted) stopSpeech();
+    render();
+  };
+  window.__toggleCat = function(){ state.catOpen = !state.catOpen; if (!state.catOpen) state.catVoicesOpen = false; renderCat(); };
+  window.__toggleCatVoices = function(){ state.catVoicesOpen = !state.catVoicesOpen; renderCat(); };
+  window.__setCatVoice = function(name){
+    catVoiceName = name;
+    saveVoicePrefs();
+    state.catVoicesOpen = false;
+    speak('Hello! This is how I sound. I will be your guide throughout the lesson!', { rate: 0.95, pitch: 1.1 });
+    renderCat();
+  };
+  window.__setVoice = function(prefix, key, value){
+    if (prefix === 'speaker') speakerVoices[key] = value || null;
+    else characterVoices[key] = value || null;
+    saveVoicePrefs();
+    render();
+  };
+  // Play one transcript line with that character's assigned voice.
+  window.__speakLine = function(prefix, key, lineIdx){
+    if (isMuted) return;
+    var lines = prefix === 'speaker' ? DATA.dialogue.lines : DATA.radioDrama.lines;
+    var line = lines[lineIdx];
+    if (!line) return;
+    var voice = prefix === 'speaker' ? pickVoice(speakerVoices[key]) : pickVoice(characterVoices[key]);
+    var voiceEls = $$('.msg-play');
+    voiceEls.forEach(function(b, i){
+      var on = b.classList.contains('is-playing');
+      b.classList.toggle('is-playing', false);
+      b.textContent = '▶';
+    });
+    speak(line.text, {
+      rate: prefix === 'speaker' ? 0.88 : (key === 'Narrator' ? 0.8 : 0.88),
+      voice: voice,
+      onEnd: function(){ $$('.msg-play').forEach(function(b){ b.classList.remove('is-playing'); b.textContent = '▶'; }); }
+    });
+  };
+  window.__skipVoices = function(which){
+    if (which === 'dialogue') state.dialogueVoicesOpen = false;
+    else state.dramaVoicesOpen = false;
+    render();
+  };
+  window.__openVoiceSetup = function(which){
+    if (which === 'dialogue') state.dialogueVoicesOpen = true;
+    else state.dramaVoicesOpen = true;
+    render();
+  };
+  window.__speak = function(t){ speak(t); };
+
+  /* ---------- print / export PDF ---------- */
+  function stripTags(h){ return String(h||'').replace(/<[^>]+>/g,' ').replace(/s+/g,' ').trim(); }
+  function worksheetSection(title, icon, bodyHtml){
+    return '<section style="page-break-inside:avoid;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:0 0 16px">' +
+      '<h2 style="font-size:17px;font-weight:800;color:#7c3aed;margin:0 0 10px">' + icon + ' ' + title + '</h2>' + bodyHtml + '</section>';
+  }
+  window.__printLesson = function(){
+    if (!DATA) return;
+    var escH = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    var parts = [];
+
+    // 1. Header
+    parts.push('<div style="text-align:center;padding:8px 0 18px;border-bottom:3px solid #7c3aed;margin-bottom:18px">' +
+      '<h1 style="font-size:24px;font-weight:900;color:#111827;margin:0 0 4px">' + escH(DATA.topic) + '</h1>' +
+      '<p style="font-size:13px;color:#6b7280;margin:0">Level ' + escH(DATA.level) + ' · ' + escH(DATA.theme) + ' · Study Worksheet — ' + new Date().toLocaleDateString() + '</p></div>');
+
+    // 2. Warm-up
+    parts.push(worksheetSection('Warm-Up','🔥', (DATA.warmup||[]).map(function(w,i){
+      return '<div style="margin-bottom:10px"><p style="font-weight:700;font-size:14px;margin:0 0 4px">' + (i+1) + '. ' + escH(w.emoji) + ' ' + escH(w.question) + '</p>' +
+        '<div style="font-size:13px;color:#374151;padding-left:14px;border-left:3px solid #e5e7eb">' + escH(w.answer) + '</div></div>';
+    }).join('') || '<p style="color:#9ca3af">No warm-up questions.</p>'));
+
+    // 3. Keywords
+    parts.push(worksheetSection('Keywords & Phrases','📖', '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+      '<thead><tr style="background:#f3f4f6"><th style="text-align:left;padding:6px 8px;border:1px solid #e5e7eb">Term</th><th style="text-align:left;padding:6px 8px;border:1px solid #e5e7eb">Definition</th><th style="text-align:left;padding:6px 8px;border:1px solid #e5e7eb">Example</th></tr></thead><tbody>' +
+      (DATA.keywords||[]).map(function(k){ return '<tr><td style="padding:6px 8px;border:1px solid #e5e7eb;font-weight:700">' + escH(k.term) + '</td><td style="padding:6px 8px;border:1px solid #e5e7eb">' + escH(k.definition) + '</td><td style="padding:6px 8px;border:1px solid #e5e7eb;font-style:italic">' + escH(k.example) + '</td></tr>'; }).join('') +
+      '</tbody></table>'));
+
+    // 4. Dialogue
+    parts.push(worksheetSection('Listening — Dialogue','🎧', (DATA.dialogue&&DATA.dialogue.lines||[]).map(function(l){
+      return '<p style="font-size:13px;margin:0 0 6px"><b>' + escH(l.speaker) + ':</b> ' + escH(l.text) + '</p>';
+    }).join('') || '<p style="color:#9ca3af">No dialogue.</p>'));
+
+    // 5. Reading (all three levels, titles only + first paragraph)
+    var r = DATA.reading || {};
+    var readingHtml = ['basic','intermediate','advanced'].map(function(lvl){
+      var a = r[lvl]; if (!a) return '';
+      return '<div style="margin-bottom:12px"><p style="font-weight:800;font-size:14px;color:#4f46e5;margin:0 0 4px">' + escH(a.title) + '</p>' +
+        '<p style="font-size:13px;color:#374151;margin:0;line-height:1.6">' + escH(stripTags(a.content).slice(0, 400)) + (stripTags(a.content).length>400?'…':'') + '</p></div>';
+    }).join('');
+    parts.push(worksheetSection('Reading','📰', readingHtml || '<p style="color:#9ca3af">No reading.</p>'));
+
+    // 6. Grammar
+    parts.push(worksheetSection('Language Analysis','🔬', (DATA.grammarSlides||[]).map(function(g){
+      return '<div style="margin-bottom:10px"><p style="font-weight:700;font-size:13px;margin:0 0 2px"><span style="color:#7c3aed">' + escH(g.level) + '</span> · ' + escH(g.structure) + '</p>' +
+        '<p style="font-size:13px;margin:0 0 2px">' + escH(g.meaning) + '</p>' +
+        '<p style="font-size:12px;color:#6b7280;margin:0">"' + escH(g.example) + '"</p></div>';
+    }).join('') || '<p style="color:#9ca3af">No grammar slides.</p>'));
+
+    // 7. Radio drama
+    parts.push(worksheetSection('Radio Drama','🎭', (DATA.radioDrama&&DATA.radioDrama.lines||[]).map(function(l){
+      return '<p style="font-size:13px;margin:0 0 6px"><b>' + escH(l.character) + ':</b> ' + escH(l.text) + '</p>';
+    }).join('') || '<p style="color:#9ca3af">No drama.</p>'));
+
+    // 8. Dictation
+    parts.push(worksheetSection('Dictation','✍️', (DATA.dictation&&DATA.dictation.sentences||[]).map(function(s,i){
+      return '<p style="font-size:13px;margin:0 0 6px"><b>' + (i+1) + '.</b> <span style="border-bottom:1px solid #9ca3af;display:inline-block;min-width:260px"></span></p>' +
+        '<p style="font-size:12px;color:#9ca3af;margin:0 0 12px">(Answer: ' + escH(s) + ')</p>';
+    }).join('') || '<p style="color:#9ca3af">No dictation.</p>'));
+
+    // 9. Discussion
+    var dsc = DATA.discussion||{};
+    parts.push(worksheetSection('Discussion','💬', '<p style="font-size:13px;font-weight:600;margin:0 0 8px">' + escH(dsc.post) + '</p>' +
+      '<p style="font-size:12px;color:#6b7280;margin:0 0 6px">Which response is most insightful? Write why below.</p>' +
+      (dsc.comments||[]).map(function(c){ return '<div style="font-size:13px;margin:0 0 4px;padding-left:12px;border-left:3px solid #e5e7eb"><b>' + escH(c.character) + ':</b> ' + escH(c.text) + '</div>'; }).join('')));
+
+    // 10. Quiz
+    parts.push(worksheetSection('Final Quiz','🧠', (DATA.quiz||[]).map(function(q,i){
+      return '<div style="margin-bottom:12px;page-break-inside:avoid"><p style="font-weight:700;font-size:13px;margin:0 0 6px">' + (i+1) + '. ' + escH(q.question) + '</p>' +
+        (q.options||[]).map(function(o,oi){ return '<p style="font-size:13px;margin:0 0 2px;padding-left:12px">' + String.fromCharCode(65+oi) + '. <span style="border-bottom:1px solid #9ca3af;display:inline-block;min-width:200px">' + escH(o) + '</span></p>'; }).join('') +
+        '</div>';
+    }).join('') || '<p style="color:#9ca3af">No quiz.</p>'));
+
+    // Secret code note
+    parts.push('<div style="text-align:center;padding:14px;border:2px dashed #7c3aed;border-radius:12px;font-size:13px;color:#6b7280">Secret code for this lesson: <b style="color:#111827;letter-spacing:.05em">' + escH(DATA.secretCode||'—') + '</b></div>');
+
+    var doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + escH(DATA.topic) + ' — Worksheet</title>' +
+      '<style>@media print{body{padding:20px}} *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111827;max-width:820px;margin:0 auto;padding:24px} section{break-inside:avoid-page}</style>' +
+      '</head><body>' + parts.join('') +
+      '<script>window.onload=function(){setTimeout(function(){window.print();},250);};</'+'script>' +
+      '</body></html>';
+    var win = window.open('', '_blank');
+    if (!win) { alert('Popup blocked. Allow popups to print the worksheet.'); return; }
+    win.document.open();
+    win.document.write(doc);
+    win.document.close();
+  };
+
+  // warmup
+  window.__warmCard = function(i){ playClick(); state.warmCard = i; render(); };
+  window.__warmReveal = function(i){
+    playClick();
+    if (state.warmRevealed.indexOf(i) < 0) state.warmRevealed.push(i);
+    speak(DATA.warmup[i].answer);
+    render();
+  };
+
+  // keywords
+  window.__kwMode = function(m){ playClick(); state.kwMode = m; render(); };
+  window.__kwCard = function(i){ playClick(); state.kwCard = i; state.kwFlipped = false; render(); };
+  window.__kwFlip = function(){ state.kwFlipped = !state.kwFlipped; render(); };
+  window.__kwNav = function(d){
+    var filtered = filteredKws();
+    var next = Math.max(0, Math.min(filtered.length - 1, state.kwCard + d));
+    state.kwCard = next; state.kwFlipped = false; render();
+  };
+  window.__kwMaster = function(gi){
+    playSuccess();
+    if (state.mastered.indexOf(gi) < 0) state.mastered.push(gi);
+    var filtered = filteredKws();
+    if (state.kwCard < filtered.length - 1) { state.kwCard += 1; state.kwFlipped = false; }
+    render();
+  };
+  window.__kwToggle = function(gi){
+    var i = state.mastered.indexOf(gi);
+    if (i >= 0) state.mastered.splice(i, 1); else state.mastered.push(gi);
+    render();
+  };
+  window.__kwSpeak = function(gi){
+    var k = DATA.keywords[gi];
+    if (k) speak(k.term + '. ' + k.definition);
+  };
+  window.__kwSearch = function(v){ state.kwSearch = v; state.kwCard = 0; render(); };
+  window.__kwFilter = function(l){ state.kwFilter = l; state.kwCard = 0; render(); };
+  function filteredKws(){
+    var kws = DATA.keywords || [];
+    return kws.filter(function(k){
+      var lvl = state.kwFilter === 'All' || k.level === state.kwFilter;
+      var q = state.kwSearch.toLowerCase();
+      var s = !q || k.term.toLowerCase().indexOf(q) >= 0 || k.definition.toLowerCase().indexOf(q) >= 0;
+      return lvl && s;
+    });
+  }
+
+  // listen
+  window.__playDialogue = function(){
+    if (isMuted) return;
+    state.dialogueStop = false;
+    state.dialoguePlaying = true;
+    state.dialogueVoicesOpen = false;
+    state.dialogueLine = 0;
+    render();
+    var lines = DATA.dialogue.lines;
+    var i = 0;
+    (function playNext(){
+      if (state.dialogueStop || i >= lines.length) {
+        state.dialoguePlaying = false;
+        state.dialogueLine = -1;
+        state.dialoguePlayed = true;
+        render();
+        return;
+      }
+      var line = lines[i];
+      state.dialogueLine = i;
+      render();
+      var voice = pickVoice(speakerVoices[line.speaker]);
+      var isMaya = line.speaker === 'Maya';
+      speak(line.text, {
+        rate: 0.88,
+        pitch: voice ? 1.0 : (isMaya ? 1.2 : 0.85),
+        voice: voice,
+        onEnd: function(){ setTimeout(playNext, 400); }
+      });
+      i++;
+    })();
+  };
+  window.__stopDialogue = function(){
+    state.dialogueStop = true;
+    stopSpeech();
+    state.dialoguePlaying = false;
+    state.dialogueLine = -1;
+    render();
+  };
+  window.__readAloud = function(){
+    if (isMuted) return;
+    state.readPlaying = true;
+    render();
+    var art = DATA.reading[state.readLevel];
+    var plain = art.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    speak(plain, { rate: 0.85, onEnd: function(){ state.readPlaying = false; if (!document.hidden) render(); } });
+  };
+  window.__stopRead = function(){ stopSpeech(); state.readPlaying = false; render(); };
+  window.__setReadLevel = function(l){ stopSpeech(); state.readLevel = l; state.readPlaying = false; render(); };
+
+  // karaoke
+  window.__karaStart = function(){
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      state.karaErr = 'Speech recognition is not supported in your browser. Please use Chrome.';
+      render();
+      return;
+    }
+    state.karaErr = '';
+    var rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+    state.karaRec = rec;
+    state.karaListening = true;
+    state.karaStart = Date.now();
+    if (state.karaWords.length) {
+      state.karaWords[0] = { ...state.karaWords[0], status: 'current' };
+    }
+    rec.onresult = function(ev){
+      var finalT = '';
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        if (ev.results[i].isFinal) finalT += ev.results[i][0].transcript;
+      }
+      if (finalT) processKara(finalT);
+    };
+    rec.onerror = function(){ state.karaListening = false; render(); };
+    rec.onend = function(){ if (state.karaListening) { try { rec.start(); } catch(e) {} } };
+    try { rec.start(); } catch(e) {}
+    render();
+  };
+  function processKara(transcript){
+    var spoken = transcript.trim().toLowerCase().split(/\s+/).map(function(w){ return w.toLowerCase().replace(/[^a-z]/g, ''); }).filter(Boolean);
+    if (!spoken.length) return;
+    var latest = spoken[spoken.length - 1];
+    var idx = state.karaIdx;
+    var found = false;
+    for (var i = idx; i < Math.min(idx + 5, state.karaWords.length); i++) {
+      var w = state.karaWords[i].word.toLowerCase().replace(/[^a-z]/g, '');
+      if (w === latest && state.karaWords[i].status === 'pending') {
+        state.karaWords[i] = { ...state.karaWords[i], status: 'correct' };
+        state.karaIdx = i + 1;
+        if (state.karaStart) {
+          var mins = (Date.now() - state.karaStart) / 60000;
+          var count = state.karaWords.filter(function(x){ return x.status === 'correct'; }).length;
+          if (mins > 0) state.karaWpm = Math.round(count / mins);
+        }
+        if (i + 1 < state.karaWords.length) state.karaWords[i + 1] = { ...state.karaWords[i + 1], status: 'current' };
+        else state.karaDone = true;
+        found = true;
+        break;
+      }
+    }
+    if (found) render();
+  }
+  window.__karaStop = function(){
+    if (state.karaRec) try { state.karaRec.stop(); } catch(e) {}
+    state.karaListening = false;
+    render();
+  };
+  window.__karaReset = function(){
+    if (state.karaRec) try { state.karaRec.stop(); } catch(e) {}
+    state.karaListening = false;
+    state.karaWords = [];
+    state.karaIdx = 0;
+    state.karaWpm = 0;
+    state.karaStart = null;
+    state.karaDone = false;
+    render();
+  };
+
+  // grammar
+  window.__gramToggle = function(i){
+    playClick();
+    if (state.gramOpen === i) state.gramOpen = null;
+    else {
+      state.gramOpen = i;
+      if (state.gramViewed.indexOf(i) < 0) state.gramViewed.push(i);
+      var g = DATA.grammarSlides[i];
+      speak(g.structure + '. ' + g.meaning + '. Example: ' + g.example);
+    }
+    render();
+  };
+  window.__gramSpeak = function(i){
+    var g = DATA.grammarSlides[i];
+    speak(g.structure + '. ' + g.meaning + '. Example: ' + g.example);
+  };
+
+  // drama
+  window.__playDrama = function(){
+    if (isMuted) return;
+    state.dramaStop = false;
+    state.dramaPlaying = true;
+    state.dramaVoicesOpen = false;
+    state.dramaLine = 0;
+    render();
+    var lines = DATA.radioDrama.lines;
+    var i = 0;
+    (function playNext(){
+      if (state.dramaStop || i >= lines.length) {
+        state.dramaPlaying = false;
+        state.dramaLine = -1;
+        state.dramaPlayed = true;
+        render();
+        if (!state.dramaStop && (DATA.radioDrama.comprehensionQuestions || []).length) {
+          state.dramaQuizOpen = true;
+          render();
+        }
+        return;
+      }
+      var line = lines[i];
+      state.dramaLine = i;
+      render();
+      var voice = pickVoice(characterVoices[line.character]);
+      speak(line.text, {
+        pitch: voice ? 1.0 : (line.character === 'Narrator' ? 1.0 : line.character.indexOf('Mom') >= 0 ? 1.15 : line.character.indexOf('Dad') >= 0 ? 0.85 : 1.1),
+        rate: line.character === 'Narrator' ? 0.8 : 0.88,
+        voice: voice,
+        onEnd: function(){ setTimeout(playNext, 500); }
+      });
+      i++;
+    })();
+  };
+  window.__stopDrama = function(){
+    state.dramaStop = true;
+    stopSpeech();
+    state.dramaPlaying = false;
+    render();
+  };
+  window.__dramaContinue = function(){
+    if (state.dramaPlayed && (DATA.radioDrama.comprehensionQuestions || []).length) {
+      state.dramaQuizOpen = true;
+      state.dramaAnswers = (DATA.radioDrama.comprehensionQuestions || []).map(function(){ return null; });
+      render();
+    } else {
+      window.__completeStep(7);
+    }
+  };
+  window.__dramaAnswer = function(qi, oi){
+    if (state.dramaSubmitted) return;
+    state.dramaAnswers[qi] = oi;
+    render();
+  };
+  window.__dramaSubmit = function(){
+    state.dramaSubmitted = true;
+    var qs = DATA.radioDrama.comprehensionQuestions || [];
+    var score = state.dramaAnswers.filter(function(a, i){ return a === qs[i].correct; }).length;
+    if (score >= qs.length / 2) { playSuccess(); catMessage(catFeedback('correct'), 'correct'); }
+    else { playError(); catMessage(catFeedback('incorrect'), 'incorrect'); }
+    render();
+  };
+  window.__dramaReplay = function(){
+    state.dramaQuizOpen = false;
+    state.dramaSubmitted = false;
+    state.dramaAnswers = (DATA.radioDrama.comprehensionQuestions || []).map(function(){ return null; });
+    state.dramaPlayed = false;
+    state.dramaVoicesOpen = true;
+    render();
+  };
+
+  // dictation
+  window.__dictInput = function(v){ state.dictInput = v; };
+  window.__dictPlay = function(){
+    if (isMuted) return;
+    var s = DATA.dictation.sentences[state.dictIdx];
+    speak(s, { rate: 0.7 });
+  };
+  window.__dictSubmit = function(){
+    if (!state.dictInput.trim()) return;
+    var original = DATA.dictation.sentences[state.dictIdx];
+    var ow = original.toLowerCase().replace(/[.,!?;:]/g, '').split(/\s+/);
+    var tw = state.dictInput.toLowerCase().replace(/[.,!?;:]/g, '').split(/\s+/);
+    var results = ow.map(function(word, i){
+      return { word: word, userWord: tw[i] || '', correct: word === (tw[i] || '').toLowerCase() };
+    });
+    var acc = results.length ? Math.round((results.filter(function(r){ return r.correct; }).length / results.length) * 100) : 0;
+    state.dictResults = results;
+    state.dictScores.push(acc);
+    state.dictSubmitted = true;
+    state.totalAttempts += 1;
+    if (acc >= 70) { playSuccess(); state.totalCorrect += 1; }
+    else { playError(); catMessage(catFeedback('incorrect'), 'incorrect'); }
+    saveStats();
+    render();
+  };
+  window.__dictNext = function(){
+    state.dictIdx += 1;
+    state.dictInput = '';
+    state.dictSubmitted = false;
+    state.dictResults = [];
+    render();
+    setTimeout(function(){ window.__dictPlay(); }, 800);
+  };
+
+  // discussion
+  window.__discSelect = function(i){
+    if (state.discRevealed) return;
+    playClick();
+    state.discSelected = i;
+    speak(DATA.discussion.comments[i].text);
+    render();
+  };
+  window.__discSubmit = function(){
+    if (state.discSelected === null) return;
+    state.discRevealed = true;
+    var c = DATA.discussion.comments[state.discSelected];
+    if (c.isCorrect) { playSuccess(); catMessage(catFeedback('correct'), 'correct'); }
+    else { playError(); catMessage(catFeedback('incorrect'), 'incorrect'); }
+    speak(c.feedback);
+    render();
+  };
+
+  // quiz
+  window.__quizAnswer = function(oi){
+    if (state.quizAnswered) return;
+    state.quizSelected = oi;
+    state.quizAnswered = true;
+    var q = DATA.quiz[state.quizCur];
+    var ok = oi === q.correct;
+    state.quizAnswers.push(ok);
+    state.totalAttempts += 1;
+    if (ok) { playSuccess(); state.totalCorrect += 1; catMessage(catFeedback('correct'), 'correct'); speak(q.explanation); }
+    else { playError(); catMessage(catFeedback('incorrect'), 'incorrect'); speak('Incorrect. ' + q.explanation); }
+    saveStats();
+    render();
+  };
+  window.__quizNext = function(){
+    if (state.quizCur < DATA.quiz.length - 1) {
+      state.quizCur += 1;
+      state.quizSelected = null;
+      state.quizAnswered = false;
+    } else {
+      state.quizResults = true;
+      var pct = Math.round((state.quizAnswers.filter(Boolean).length / DATA.quiz.length) * 100);
+      if (pct >= 80) {
+        setTimeout(function(){
+          state.quizSecret = true;
+          playUnlock();
+          speak('Congratulations! You scored ' + pct + '% and have unlocked the secret progress code: ' + DATA.secretCode);
+          render();
+        }, 1000);
+      }
+    }
+    render();
+  };
+
+  // conversation game
+  window.__cgChoose = function(i){
+    playClick();
+    state.cgPicked = i;
+    var ch = DATA.conversationGame.nodes[state.cgNode].choices[i];
+    if (ch) catMessage(ch.catNote, 'thinking');
+    render();
+  };
+  window.__cgAdvance = function(){
+    var node = DATA.conversationGame.nodes[state.cgNode];
+    var ch = node.choices[state.cgPicked];
+    state.cgPicked = null;
+    if (ch) {
+      state.cgNode = ch.next;
+      state.cgHistory.push(ch.next);
+      var nxt = DATA.conversationGame.nodes[ch.next];
+      if (nxt && nxt.isEnd) {
+        if (nxt.isWin && state.completedModules.indexOf('conversation') < 0) {
+          state.completedModules.push('conversation');
+          addXP(30);
+        }
+        if (nxt.isWin) catMessage('Congratulations! You navigated the interview perfectly!', 'excited');
+        else catMessage('Good try! Read the feedback and try again.', 'idle');
+      }
+    }
+    render();
+  };
+  window.__cgReset = function(){
+    state.cgNode = 'start';
+    state.cgPicked = null;
+    state.cgHistory = [];
+    render();
+  };
+
+  // guess the place
+  window.__gpHint = function(){
+    playClick();
+    state.gpHintShown += 1;
+    render();
+  };
+  window.__gpPhrase = function(i){
+    var p = DATA.guessThePlace.survivalPhrases[i];
+    speak(p.phrase + '. ' + p.translation);
+  };
+  window.__gpTour = function(){
+    if (isMuted) return;
+    var lines = DATA.guessThePlace.audioTour.lines;
+    var i = 0;
+    (function playNext(){
+      if (i >= lines.length) return;
+      var l = lines[i];
+      speak(l.text, { rate: 0.9, onEnd: function(){ setTimeout(playNext, 350); } });
+      i++;
+    })();
+  };
+  window.__gpGuess = function(v){ state.gpGuess = v; };
+  window.__gpSubmit = function(){
+    var guess = state.gpGuess.toLowerCase().trim();
+    var name = (DATA.guessThePlace.name || '').toLowerCase();
+    var city = name.split(',')[0].trim();
+    var won = guess.indexOf(city) >= 0 || city.indexOf(guess) >= 0;
+    state.gpRevealed = true;
+    state.gpWon = won;
+    if (won) {
+      playSuccess();
+      if (state.completedModules.indexOf('place') < 0) {
+        state.completedModules.push('place');
+        addXP(30);
+      }
+      catMessage('Purr-fect! It\'s ' + DATA.guessThePlace.name + '! You\'re a true world explorer!', 'excited');
+    } else {
+      playError();
+      catMessage('Close! But not quite. Read the clues again and try!', 'thinking');
+    }
+    render();
+  };
+  window.__gpAgain = function(){
+    state.gpRevealed = false;
+    state.gpWon = false;
+    state.gpGuess = '';
+    render();
+  };
+
+  /* ---------- init ---------- */
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem('dl_theme'); } catch(e) {}
+  if (savedTheme === 'light') {
+    state.theme = 'light';
+    document.body.classList.add('light');
+  }
+  loadStats();
+  // Preserve any completion records the Daily_Lesson app left behind
+  if (state.completedSteps.length) mirrorProgress();
+
+  // initial cat welcome (only once per file open to avoid noise)
+  try {
+    var introKey = 'daily_intro_' + FILE_NAME;
+    if (!localStorage.getItem(introKey)) {
+      localStorage.setItem(introKey, '1');
+      setTimeout(function(){ catMessage(state.message, 'idle'); }, 600);
+    }
+  } catch(e) {
+    setTimeout(function(){ catMessage(state.message, 'idle'); }, 600);
+  }
+
+  render();
+  // Load voices async so select options populate
+  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged) {
+    speechSynthesis.onvoiceschanged = function(){ if (!document.hidden) render(); };
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🪚 Welcome to the Game — Gamified Challenge</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;min-height:100vh;background:#0a0a0a;color:#e0e0e0;font-family:system-ui,-apple-system,sans-serif;overflow-x:hidden}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#8b0000;border-radius:4px}
+button{font-family:inherit}
+
+@keyframes shake{0%,100%{transform:translateX(0)}10%{transform:translateX(-10px) translateY(5px)}20%{transform:translateX(10px) translateY(-5px)}30%{transform:translateX(-10px) translateY(3px)}40%{transform:translateX(10px) translateY(-3px)}50%{transform:translateX(-5px) translateY(5px)}60%{transform:translateX(5px) translateY(-5px)}70%{transform:translateX(-5px)}80%{transform:translateX(5px)}90%{transform:translateX(-3px)}}
+@keyframes bloodDrip{0%{transform:translateY(-100%);opacity:0}20%{opacity:1}100%{transform:translateY(100vh);opacity:.3}}
+@keyframes heartbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.3)}30%{transform:scale(1)}45%{transform:scale(1.2)}}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(139,0,0,.5)}50%{box-shadow:0 0 60px rgba(220,20,60,.8),0 0 100px rgba(139,0,0,.4)}}
+@keyframes float{0%,100%{transform:translateY(0) rotateY(0deg)}50%{transform:translateY(-20px) rotateY(180deg)}}
+@keyframes float-slow{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes glitch{0%,100%{transform:translate(0);filter:none}20%{transform:translate(-2px,2px);filter:hue-rotate(90deg)}40%{transform:translate(2px,-2px);filter:hue-rotate(180deg)}60%{transform:translate(-1px,1px);filter:hue-rotate(270deg)}80%{transform:translate(1px,-1px);filter:hue-rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes rotateArtifact{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+@keyframes ember{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-100vh) scale(0);opacity:0}}
+@keyframes fogDrift{0%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(0) translateY(-20px)}100%{transform:translateX(50%) translateY(0)}}
+@keyframes splashPulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.05);filter:brightness(1.3)}}
+
+.animate-shake{animation:shake .6s ease-in-out}
+.animate-heartbeat{animation:heartbeat 1s ease-in-out infinite}
+.animate-pulse-glow{animation:pulse-glow 2s ease-in-out infinite}
+.animate-float{animation:float 6s ease-in-out infinite}
+.animate-float-slow{animation:float-slow 4s ease-in-out infinite}
+.animate-flicker{animation:flicker .1s infinite}
+.animate-glitch{animation:glitch .3s infinite}
+.animate-fadeIn{animation:fadeIn .8s ease-out forwards}
+.animate-rotate{animation:rotateArtifact 4s linear infinite}
+.animate-splash{animation:splashPulse 3s ease-in-out infinite}
+
+.blood-overlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:9999;background:linear-gradient(180deg,rgba(139,0,0,.8) 0%,transparent 30%),linear-gradient(0deg,rgba(139,0,0,.6) 0%,transparent 20%);animation:shake .5s ease-in-out}
+.fog-layer{position:fixed;bottom:0;left:-50%;width:200%;height:200px;background:radial-gradient(ellipse,rgba(100,100,100,.15) 0%,transparent 70%);animation:fogDrift 15s ease-in-out infinite;pointer-events:none;z-index:1}
+.ember-particle{position:fixed;bottom:-10px;width:4px;height:4px;background:#ff4400;border-radius:50%;animation:ember 4s ease-out infinite;pointer-events:none;z-index:1}
+.perspective-3d{perspective:1200px;transform-style:preserve-3d}
+.card-3d{transform-style:preserve-3d;transition:transform .6s cubic-bezier(.175,.885,.32,1.275)}
+.card-3d:hover{transform:rotateY(5deg) rotateX(-5deg) scale(1.02)}
+.text-shadow-blood{text-shadow:0 0 20px rgba(139,0,0,.8),0 0 40px rgba(220,20,60,.4)}
+.text-shadow-glow{text-shadow:0 0 10px rgba(255,215,0,.8),0 0 30px rgba(255,215,0,.4)}
+.bg-dark-gradient{background:linear-gradient(135deg,#0a0a0a 0%,#1a0000 50%,#0a0a0a 100%)}
+.border-blood-glow{border:1px solid rgba(139,0,0,.5);box-shadow:0 0 15px rgba(139,0,0,.3),inset 0 0 15px rgba(139,0,0,.1)}
+.fear-border{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:100;border:4px solid transparent;transition:border-color 1s,box-shadow 1s}
+.fear-border.active{border-color:rgba(139,0,0,.6);box-shadow:inset 0 0 100px rgba(139,0,0,.3)}
+
+/* app shell */
+.app{min-height:100vh;position:relative;background:#0a0a0a}
+.bg-layer{position:fixed;inset:0;z-index:0}
+.bg-layer img{width:100%;height:100%;object-fit:cover;opacity:.2}
+.bg-layer .shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(10,0,0,.7),rgba(0,0,0,.95))}
+.content{position:relative;z-index:10;max-width:1152px;margin:0 auto;padding:16px 16px 80px}
+
+/* header */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}
+.topbar-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:background .2s}
+.btn.dark{background:#1f2937;color:#fff;border:1px solid #4b5563}
+.btn.dark:hover{background:#374151}
+.btn.red{background:#7f1d1d;color:#fff}
+.btn.red:hover{background:#991b1b}
+.bigbtn{font-size:18px;font-weight:700;padding:8px 16px;border-radius:8px;border:1px solid #4b5563;background:#1f2937;color:#fff;cursor:pointer}
+.bigbtn:hover{background:#374151}
+.iconbtn{font-size:30px;cursor:pointer;background:none;border:none;line-height:1}
+.iconbtn:hover{transform:scale(1.1)}
+.learner-chip{display:flex;align-items:center;gap:12px}
+.learner-chip .photo{font-size:36px}
+.learner-chip .name{font-size:20px;font-weight:700;color:#fff}
+.stats{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.stat{font-size:20px;font-weight:700}
+.stat.yellow{color:#facc15}
+.stat.purple{color:#c084fc}
+.stat.blue{color:#60a5fa}
+.stat.green{color:#4ade80}
+
+/* theme title */
+.theme-title{text-align:center;margin-bottom:24px}
+.theme-title h1{font-family:'Creepster',cursive;font-size:clamp(2rem,6vw,4rem);color:#dc143c;text-shadow:0 0 20px rgba(139,0,0,.6);margin:0}
+.theme-title p{color:#9ca3af;font-size:18px;margin:4px auto 0;max-width:672px}
+
+/* fear meter */
+.fearmeter{max-width:512px;margin:0 auto 24px}
+.fearmeter .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.fearmeter .lbl{font-size:18px;font-weight:700}
+.fearmeter .track{height:20px;background:#111827;border-radius:9999px;overflow:hidden;border:1px solid #374151}
+.fearmeter .fill{height:100%;border-radius:9999px;transition:width .5s}
+
+/* artifact */
+.artifact-float{display:flex;justify-content:center;margin-bottom:32px}
+.artifact-float .a{font-size:8rem;filter:drop-shadow(0 0 30px #00ff88);transition:filter 1s}
+
+/* day grid */
+.days-grid{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:640px){.days-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.days-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1280px){.days-grid{grid-template-columns:repeat(4,1fr)}}
+.day-card{display:block;width:100%;text-align:left;border-radius:16px;overflow:hidden;cursor:pointer;border:2px solid rgba(139,0,0,.5);background:rgba(20,0,0,.9);transition:transform .3s;position:relative}
+.day-card.locked{opacity:.6;filter:grayscale(1);border-color:rgba(50,50,50,.5)}
+.day-card.completed{border-color:#00ff88;box-shadow:0 0 20px rgba(0,255,136,.3)}
+.day-card.accessible:hover{transform:scale(1.05)}
+.day-card .thumb{position:relative;height:112px;overflow:hidden}
+.day-card .thumb img{width:100%;height:100%;object-fit:cover;opacity:.4;transition:opacity .3s}
+.day-card:hover .thumb img{opacity:.6}
+.day-card .thumb .grad{position:absolute;inset:0;background:linear-gradient(to top,#000,transparent)}
+.day-card .thumb .lock{position:absolute;top:8px;right:8px;font-size:30px}
+.day-card .thumb .art{position:absolute;bottom:8px;left:12px;font-size:36px}
+.day-card .body{padding:16px}
+.day-card .dayno{font-size:12px;color:#ef4444;font-weight:700;margin-bottom:4px;font-family:'Orbitron'}
+.day-card h3{font-size:18px;font-weight:700;color:#fff;margin:0 0 4px;font-family:'Creepster',cursive}
+.day-card .sub{font-size:14px;color:#6b7280;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.day-card .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#4b5563}
+
+/* toast */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);padding:16px 32px;border-radius:12px;font-size:24px;font-weight:700;z-index:50;animation:fadeIn .4s ease-out;color:#fff;box-shadow:0 0 30px rgba(0,0,0,.5)}
+.toast.bad{background:rgba(139,0,0,.9)}
+.toast.good{background:rgba(0,100,0,.9)}
+
+/* code modal */
+.modal-back{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.9)}
+.modal-box{max-width:448px;width:100%;padding:32px;border-radius:16px;background:rgba(20,0,0,.95);border:1px solid rgba(139,0,0,.5);box-shadow:0 0 15px rgba(139,0,0,.3);animation:fadeIn .4s ease-out}
+.modal-box .big{text-align:center;font-size:60px;margin-bottom:16px;animation:float-slow 3s ease-in-out infinite}
+.modal-box h2{text-align:center;font-size:24px;font-weight:700;color:#f87171;margin:0 0 8px;font-family:'Creepster',cursive}
+.modal-box .hint{text-align:center;color:#9ca3af;font-size:18px;margin:0 0 16px}
+.modal-box input{width:100%;padding:16px 24px;border-radius:12px;background:#111827;border:2px solid #7f1d1d;color:#fff;font-size:24px;text-align:center;letter-spacing:4px;outline:none;font-family:'Orbitron';margin-bottom:16px}
+.modal-box input:focus{border-color:#ef4444}
+.modal-actions{display:flex;gap:12px}
+.modal-actions button{flex:1;padding:12px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;border:none}
+.modal-actions .cancel{background:#1f2937;color:#fff}
+.modal-actions .cancel:hover{background:#374151}
+.modal-actions .unlock{background:linear-gradient(135deg,#8b0000,#dc143c);color:#fff}
+
+/* jumpscare */
+.jumpscare{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(0,0,0,.85);animation:shake .3s ease-in-out}
+.jumpscare .face{font-size:25rem;filter:drop-shadow(0 0 50px rgba(255,0,0,1));animation:splashPulse 3s ease-in-out infinite;line-height:1}
+
+/* DAY VIEW */
+.day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.day-head-center{text-align:center;flex:1}
+.day-head-center .dayno{font-size:14px;color:#ef4444;font-weight:700;font-family:'Orbitron'}
+.day-head-center h1{font-size:24px;font-weight:700;color:#fff;margin:0;font-family:'Creepster',cursive}
+.day-head-right{display:flex;align-items:center;gap:12px}
+.day-art{display:flex;justify-content:center;margin-bottom:12px}
+.day-art .a{font-size:12rem;line-height:1;filter:drop-shadow(0 0 15px #00ff88)}
+.narrator-box{margin-bottom:16px;padding:16px;border-radius:12px;background:rgba(20,0,0,.9);border:1px solid rgba(139,0,0,.5);box-shadow:0 0 15px rgba(139,0,0,.3),inset 0 0 15px rgba(139,0,0,.1)}
+.narrator-box .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.narrator-box .lbl{font-size:18px;font-weight:700;color:#f87171}
+.narrator-box p{color:#d1d5db;font-size:16px;line-height:1.6;font-style:italic;margin:0}
+.tabs{display:flex;overflow-x:auto;gap:4px;margin-bottom:16px;padding-bottom:8px}
+.tab{padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer;border:1px solid rgba(50,50,50,.5);background:#111827;color:#9ca3af;transition:all .2s}
+.tab:hover{background:#1f2937}
+.tab.active{background:#7f1d1d;color:#fff;transform:scale(1.05);border-color:rgba(220,20,60,.5)}
+.panel{padding:20px;border-radius:12px;background:rgba(15,0,0,.9);border:1px solid rgba(139,0,0,.5);box-shadow:0 0 15px rgba(139,0,0,.3),inset 0 0 15px rgba(139,0,0,.1);animation:fadeIn .8s ease-out forwards}
+
+/* lesson tab */
+.lesson-title{font-size:36px;font-weight:700;color:#f87171;margin:0 0 24px;font-family:'Creepster',cursive}
+.lesson-intro{color:#d1d5db;margin:0 0 32px;font-size:20px;line-height:1.6}
+.sec-block{margin-bottom:32px;padding:24px;border-radius:16px;background:rgba(30,30,30,.5);border:1px solid rgba(50,50,50,.3)}
+.sec-block.warning{background:rgba(139,0,0,.2);border-color:rgba(220,20,60,.5)}
+.sec-block.dialogue{background:rgba(100,0,100,.15);border-color:rgba(50,50,50,.3)}
+.sec-block .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-block h3{font-size:28px;font-weight:700;color:#fff;margin:0}
+.sec-block .text{color:#d1d5db;white-space:pre-wrap;font-size:20px;line-height:1.6}
+.dline{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.dline .who{font-weight:700;color:#f87171;min-width:120px}
+.dline .what{flex:1}
+.dline .play{opacity:0;transition:opacity .2s;font-size:20px;cursor:pointer;background:none;border:none}
+.dline:hover .play{opacity:1}
+.charvoice{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.charvoice .nm{font-size:20px;color:#9ca3af}
+.charvoice select{max-width:250px;padding:8px 12px;background:#111827;border:1px solid #374151;color:#fff;font-size:18px;border-radius:8px;cursor:pointer}
+
+/* vocab */
+.vocab-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:768px){.vocab-grid{grid-template-columns:repeat(2,1fr)}}
+.vocab-card{cursor:pointer;padding:16px;border-radius:12px;background:rgba(30,0,0,.5);border:1px solid rgba(139,0,0,.3);transition:all .2s}
+.vocab-card:hover{transform:scale(1.05)}
+.vocab-card.flipped{background:rgba(0,100,0,.2)}
+.vocab-card .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.vocab-card .word{font-size:20px;font-weight:700;color:#fff}
+.vocab-card .pos{font-size:12px;padding:4px 8px;background:#7f1d1d;border-radius:4px;color:#fca5a5}
+.vocab-card .speak{font-size:18px;cursor:pointer;background:none;border:none}
+.vocab-card .flip{color:#d1d5db;margin-bottom:4px}
+.vocab-card .ex{color:#9ca3af;font-style:italic;margin-bottom:4px}
+.vocab-card .hear{font-size:14px;color:#f87171;cursor:pointer;background:none;border:none}
+
+/* grammar */
+.gram-block{margin-bottom:24px;padding:16px;border-radius:12px;background:rgba(30,0,0,.5);border:1px solid rgba(139,0,0,.3)}
+.gram-block h3{font-size:20px;font-weight:700;color:#fff;margin:0 0 8px}
+.gram-block .exp{color:#d1d5db;margin:0 0 12px}
+.gram-examples{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.gram-examples span{padding:4px 12px;background:#1f2937;border-radius:4px;color:#d1d5db;font-size:14px}
+.ex-block{margin-top:12px;padding:12px;border-radius:8px;background:rgba(20,20,20,.5)}
+.ex-block.ok{background:rgba(0,100,0,.2)}
+.ex-block.bad{background:rgba(100,0,0,.2)}
+.ex-block p{color:#d1d5db;margin:0 0 8px}
+.ex-opts{display:flex;flex-wrap:wrap;gap:8px}
+.ex-opt{padding:8px 16px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;background:#1f2937;color:#d1d5db;border:none;transition:all .2s}
+.ex-opt:hover{background:#374151}
+.ex-opt.right{background:#166534;color:#fff}
+.ex-opt.wrongpick{background:#991b1b;color:#fff}
+.ex-inrow{display:flex;gap:8px}
+.ex-inrow input{flex:1;padding:8px 12px;background:#111827;border:1px solid #374151;color:#fff;border-radius:8px;font-size:16px}
+.ex-check{background:#7f1d1d;color:#fff;border:none;border-radius:8px;font-weight:700;padding:8px 16px;cursor:pointer}
+.ex-feedback{margin-top:4px;font-size:14px}
+.ex-feedback.good{color:#4ade80}
+.ex-feedback.bad{color:#f87171}
+
+/* reading */
+.reading-text{padding:20px;border-radius:12px;margin-bottom:16px;background:rgba(20,20,20,.8);border:1px solid rgba(50,50,50,.5);line-height:2.2}
+.rword{display:inline;cursor:pointer;font-size:1.15rem;color:#e5e7eb}
+.rword:hover{background:#374151;border-radius:4px;padding:0 2px}
+.rword.found{text-decoration:line-through;color:#4ade80}
+.q-block{margin-bottom:16px;padding:12px;border-radius:8px;background:rgba(20,20,20,.5)}
+.q-block .q{color:#d1d5db;margin:0 0 8px;font-weight:700}
+.q-opts{display:flex;flex-wrap:wrap;gap:8px}
+.q-opt{padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;background:#1f2937;color:#d1d5db;border:none;transition:all .2s}
+.q-opt:hover{background:#374151}
+.q-opt.right{background:#166534;color:#fff}
+.q-opt.wrongpick{background:#991b1b;color:#fff}
+.q-exp{margin-top:4px;font-size:14px;color:#9ca3af}
+
+/* listening */
+.listen-block{margin-bottom:20px;padding:16px;border-radius:12px;background:rgba(30,0,0,.5);border:1px solid rgba(139,0,0,.3)}
+.listen-block .row{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.listen-block .hint{color:#6b7280;font-size:14px}
+.listen-inrow{display:flex;gap:8px}
+.listen-inrow input{flex:1;padding:12px 16px;background:#111827;border:1px solid #374151;color:#fff;border-radius:8px;font-size:18px}
+.listen-check{background:#7f1d1d;color:#fff;border:none;border-radius:8px;font-weight:700;padding:12px 24px;font-size:18px;cursor:pointer}
+.listen-fb{margin-top:8px;font-size:16px;font-weight:700}
+.listen-fb.good{color:#4ade80}
+.listen-fb.bad{color:#f87171}
+
+/* dialogue tab */
+.dlg-scenario{color:#9ca3af;margin:0 0 24px;font-size:20px}
+.dlg-box{padding:24px;border-radius:16px;margin-bottom:24px;background:rgba(30,0,30,.5);border:1px solid rgba(139,0,0,.3)}
+.dlg-narr{color:#9ca3af;font-style:italic;margin:0 0 16px;font-size:20px;display:flex;align-items:center;gap:8px}
+.dlg-q{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.dlg-q .who{color:#f87171;font-weight:700;font-size:20px}
+.dlg-q .play{font-size:20px;cursor:pointer;background:none;border:none}
+.dlg-question{color:#fff;font-size:30px;margin:0 0 24px;line-height:1.5}
+.dlg-opts{display:flex;flex-direction:column;gap:16px}
+.dlg-opt{width:100%;text-align:left;padding:20px 24px;border-radius:16px;font-size:20px;cursor:pointer;background:rgba(40,0,0,.8);border:1px solid rgba(139,0,0,.3);color:#e5e7eb;transition:all .2s}
+.dlg-opt:hover{transform:scale(1.02)}
+.dlg-result{padding:24px;border-radius:16px;margin-bottom:16px;animation:fadeIn .6s ease-out}
+.dlg-result.survive{background:rgba(0,100,0,.2)}
+.dlg-result.die{background:rgba(139,0,0,.3)}
+.dlg-result.neutral{background:rgba(100,100,0,.2)}
+.dlg-result h3{font-size:28px;font-weight:700;margin:0 0 12px}
+.dlg-result p{color:#fff;font-size:20px;line-height:1.6;margin:0}
+.dlg-next{background:#7f1d1d;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:20px;padding:16px 32px;cursor:pointer;transition:background .2s}
+.dlg-next:hover{background:#991b1b}
+
+/* speaking */
+.speak-words{padding:20px;border-radius:12px;margin-bottom:16px;background:rgba(20,20,20,.8);border:1px solid rgba(50,50,50,.5)}
+.karaoke-word{display:inline-block;padding:2px 4px;margin:2px;border-radius:4px;transition:all .3s;font-size:1.5rem;color:#e5e7eb}
+.karaoke-word.done{color:#00ff88}
+.karaoke-word.wrong{color:#ff0000}
+.speak-row{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.mic-btn{padding:16px 32px;border-radius:12px;font-weight:700;font-size:20px;cursor:pointer;background:#7f1d1d;color:#fff;border:none}
+.mic-btn.live{background:#dc2626;animation:heartbeat 1s ease-in-out infinite}
+.listen-first{background:#1f2937;color:#fff;border:none;border-radius:12px;cursor:pointer;font-size:18px;padding:16px}
+.speak-result{padding:16px;border-radius:12px;animation:fadeIn .6s ease-out}
+.speak-result.good{background:rgba(0,100,0,.2)}
+.speak-result.bad{background:rgba(100,0,0,.2)}
+.speak-result .pct{font-size:24px;font-weight:700}
+.speak-result .said{color:#9ca3af;font-size:14px;margin-top:4px}
+.speak-result .clue{color:#4ade80;margin-top:8px;font-weight:700}
+.speak-dots{display:flex;gap:8px;margin-top:16px}
+.speak-dots button{width:32px;height:32px;border-radius:50%;font-size:14px;font-weight:700;cursor:pointer;border:none}
+.speak-dots .cur{background:#dc2626;color:#fff}
+.speak-dots .oth{background:#1f2937;color:#9ca3af}
+
+/* writing */
+.write-prompt{padding:16px;border-radius:12px;margin-bottom:16px;background:rgba(30,0,0,.5);border:1px solid rgba(139,0,0,.3)}
+.write-prompt p{color:#d1d5db;font-size:18px;margin:0 0 8px}
+.write-keys{color:#6b7280;font-size:14px}
+.write-keys span{display:inline-block;margin:0 4px;padding:2px 8px;border-radius:4px;font-size:12px;background:#1f2937;color:#9ca3af}
+.write-keys span.found{background:#14532d;color:#86efac}
+.write-ta{width:100%;padding:12px 16px;background:#111827;border:1px solid #374151;color:#fff;border-radius:12px;font-size:16px;resize:vertical;margin-bottom:8px;font-family:inherit}
+.write-count{font-size:14px;color:#6b7280;margin-bottom:12px}
+.write-count.good{color:#4ade80}
+.write-submit{width:100%;padding:12px;border-radius:12px;font-weight:700;font-size:18px;cursor:pointer;border:none;background:linear-gradient(135deg,#8b0000,#dc143c);color:#fff}
+.write-submit:disabled{opacity:.3;cursor:default}
+.write-done{padding:16px;border-radius:12px;background:rgba(0,50,0,.3);animation:fadeIn .6s ease-out}
+.write-done .ok{color:#4ade80;font-weight:700;margin:0 0 8px}
+.write-done .sample{color:#9ca3af;font-style:italic;font-size:14px;margin:0}
+
+/* dictation */
+.dict-block{margin-bottom:20px;padding:16px;border-radius:12px;background:rgba(30,0,0,.5);border:1px solid rgba(139,0,0,.3)}
+.dict-block .play{margin-bottom:12px;padding:8px 16px;background:#7f1d1d;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:18px;cursor:pointer}
+.dict-block textarea{width:100%;padding:8px 12px;background:#111827;border:1px solid #374151;color:#fff;border-radius:8px;font-size:16px;margin-bottom:8px;font-family:inherit}
+.dict-fb{font-size:14px}
+.dict-fb.good{color:#4ade80}
+.dict-fb.bad{color:#f87171}
+
+/* quiz */
+.quiz-block{margin-bottom:20px;padding:16px;border-radius:12px;background:rgba(30,0,0,.5);border:1px solid rgba(139,0,0,.3)}
+.quiz-block .q{color:#fff;font-weight:700;font-size:18px;margin:0 0 12px}
+.quiz-opts{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:640px){.quiz-opts{grid-template-columns:repeat(2,1fr)}}
+.quiz-opt{padding:12px 16px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;text-align:left;background:#1f2937;color:#d1d5db;border:none;transition:all .2s}
+.quiz-opt:hover{background:#374151}
+.quiz-opt.right{background:#166534;color:#fff}
+.quiz-opt.wrongpick{background:#991b1b;color:#fff}
+
+/* boss */
+.boss-hp{margin-bottom:16px}
+.boss-hp .row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+.boss-hp .row span:first-child{color:#f87171;font-weight:700}
+.boss-hp .track{height:16px;background:#111827;border-radius:9999px;overflow:hidden;border:1px solid #374151}
+.boss-hp .fill{height:100%;background:linear-gradient(to right,#991b1b,#ef4444);border-radius:9999px;transition:width .5s}
+.boss-art{display:flex;justify-content:center;margin-bottom:16px}
+.boss-art .a{font-size:15rem;line-height:1;filter:drop-shadow(0 0 20px #00ff88)}
+.boss-qrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.boss-qrow .idx{color:#9ca3af}
+.boss-qrow .timer{font-size:24px;font-weight:700;color:#facc15;font-family:'Orbitron'}
+.boss-qrow .timer.warn{color:#ef4444;animation:heartbeat 1s ease-in-out infinite}
+.boss-q{padding:20px;border-radius:12px;margin-bottom:16px;background:rgba(30,0,0,.8);border:1px solid rgba(139,0,0,.5)}
+.boss-q .q{color:#fff;font-size:20px;font-weight:700;margin:0 0 16px}
+.boss-q .opts{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:640px){.boss-q .opts{grid-template-columns:repeat(2,1fr)}}
+.boss-opt{padding:16px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;background:#1f2937;color:#fff;border:none;transition:all .2s}
+.boss-opt:hover{background:#7f1d1d;transform:scale(1.05)}
+.boss-opt.right{background:#15803d;color:#fff;transform:scale(1.05)}
+.boss-opt.dim{background:#1f2937;color:#6b7280}
+.boss-end{text-align:center;padding:32px;border-radius:12px;animation:fadeIn .6s ease-out}
+.boss-end.win{background:rgba(0,100,0,.3)}
+.boss-end.lose{background:rgba(100,0,0,.3)}
+.boss-end .big{font-size:60px;margin-bottom:16px}
+.boss-end h3{font-size:30px;font-weight:700;margin:0 0 8px;font-family:'Creepster',cursive}
+.boss-end p{color:#d1d5db;font-size:18px;margin:0}
+
+/* clues */
+.clues-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:768px){.clues-grid{grid-template-columns:repeat(2,1fr)}}
+.clues-col h3{font-size:18px;font-weight:700;color:#d1d5db;margin:0 0 8px}
+.clue-item{width:100%;text-align:left;padding:12px 16px;border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:16px;background:#1f2937;color:#d1d5db;border:none;transition:all .2s}
+.clue-item:hover{background:#374151}
+.clue-item.sel{background:#7f1d1d;color:#fff;transform:scale(1.05)}
+.clue-item.matched{background:#14532d;color:#86efac;text-decoration:line-through}
+.clues-win{margin-top:16px;padding:16px;border-radius:12px;text-align:center;background:rgba(0,100,0,.3);animation:fadeIn .6s ease-out}
+.clues-win p{color:#4ade80;font-weight:700;font-size:20px;margin:0}
+
+/* complete day */
+.complete-btn{margin-top:24px;width:100%;padding:20px;border-radius:12px;font-weight:700;font-size:24px;cursor:pointer;background:linear-gradient(135deg,#006400,#008000);color:#fff;border:2px solid rgba(0,128,0,.5);animation:pulse-glow 2s ease-in-out infinite;font-family:'Orbitron'}
+
+.mobilenav{display:none}
+@media(max-width:768px){.artifact-float .a{font-size:5rem}.day-art .a{font-size:8rem}.jumpscare .face{font-size:15rem}.lesson-title{font-size:26px}.lesson-intro{font-size:17px}.sec-block .text{font-size:16px}.dlg-question{font-size:22px}}
+</style>
+</head>
+<body>
+<script type="application/json" id="gamified-data">{"themeData":{"id":"escape-room","name":"🪚 SAW: Escape Room","description":"Survive 7 days of deadly language traps. Each wrong answer brings you closer to doom.","icon":"🪚","welcomeTitle":"🪚 Welcome to the Game","welcomeSubtitle":"I want to play a game. For 7 days, your vocabulary is your lifeline. Every word matters. Every mistake... has consequences.","colorPrimary":"#8b0000","colorSecondary":"#1a0000","backgroundImages":["https://loremflickr.com/1920/1080/dark,room,creepy?lock=1","https://loremflickr.com/1920/1080/dark,room,creepy?lock=2","https://loremflickr.com/1920/1080/dark,room,creepy?lock=3","https://loremflickr.com/1920/1080/dark,room,creepy?lock=4","https://loremflickr.com/1920/1080/dark,room,creepy?lock=5","https://loremflickr.com/1920/1080/dark,room,creepy?lock=6","https://loremflickr.com/1920/1080/dark,room,creepy?lock=7"],"soundTheme":"horror","narratorVoicePreference":"Microsoft","masterCode":"FREEDOM","startDate":"2026-09-06","days":[{"dayNumber":0,"title":"The Awakening","subtitle":"You wake up chained to a desk. A screen flickers on...","skill":"vocabulary","narratorIntro":"You open your eyes. The room is dark. Cold metal bites your wrists. A television crackles to life, and a voice speaks: \"Hello. I want to play a game. Before you are the tools of language. Master them, and you will be free. Fail, and the room will consume you.\" The first lesson appears on the screen.","narratorOutro":"The chains loosen slightly. You have earned a moment of respite. But this is only the beginning. Tomorrow, the real test begins.","backgroundImage":"https://loremflickr.com/1920/1080/dark,room,creepy?lock=8","artifactEmoji":"⛓️","artifactName":"Chains of Ignorance","unlockCode":"FREEDOM","codeHint":"What is the opposite of captivity? (7 letters)","lesson":{"title":"Survival Vocabulary: Essential Words for Escape","content":"In this dire situation, you must learn the vocabulary of survival. These words will be your weapons against the traps that await.","sections":[{"title":"The Captor's Message","type":"text","content":"Read the following message carefully. Every word matters. Hidden within this text is the code to your FREEDOM.\n\n\"Dear captive, you have been selected for a special purpose. Your linguistic abilities will be tested. The key to your survival lies in understanding. You must demonstrate mastery of these essential terms: ESCAPE means to break free from confinement. DECIPHER means to decode or interpret something obscure. CLUE is a piece of evidence that leads to solving a mystery. TRAP is a device designed to catch or harm. SURVIVAL is the state of continuing to live despite danger. COURAGE means the ability to face fear. The opposite of captivity is FREEDOM - remember this word, for it may save your life.\""},{"title":"Grammar Trap","type":"exercise","content":"The captor has left grammatical traps. Fix each sentence or face the consequences.\n\n1. \"He don't know where the key is.\" → Correct: \"He doesn't know where the key is.\"\n2. \"The prisoners was scared.\" → Correct: \"The prisoners were scared.\"\n3. \"She runned to the door.\" → Correct: \"She ran to the door.\""},{"title":"⚠️ WARNING","type":"warning","content":"The fear meter is watching. Wrong answers will increase your fear level. At 100%, the game ends. Choose wisely."},{"title":"Dialogue: The Guard","type":"dialogue","content":"Guard: \"You think you can escape? Nobody escapes.\"\nYou: \"I will find a way. Every puzzle has a solution.\"\nGuard: \"Words won't save you here.\"\nYou: \"Words are the only weapon I need.\""}]},"vocabulary":[{"word":"escape","translation":"","definition":"To break free from confinement or control","example":"The prisoner planned to escape at midnight.","partOfSpeech":"verb"},{"word":"decipher","translation":"","definition":"To decode or interpret something difficult to understand","example":"She tried to decipher the ancient text.","partOfSpeech":"verb"},{"word":"clue","translation":"","definition":"A piece of evidence that helps solve a puzzle or mystery","example":"The detective found an important clue.","partOfSpeech":"noun"},{"word":"trap","translation":"","definition":"A device or situation designed to catch someone","example":"They set a trap for the intruder.","partOfSpeech":"noun"},{"word":"survival","translation":"","definition":"The state of continuing to live, especially in danger","example":"Survival depends on quick thinking.","partOfSpeech":"noun"},{"word":"captivity","translation":"","definition":"The state of being imprisoned or confined","example":"The animal was kept in captivity.","partOfSpeech":"noun"},{"word":"courage","translation":"","definition":"The ability to face fear, pain, or danger","example":"It takes courage to speak the truth.","partOfSpeech":"noun"},{"word":"confinement","translation":"","definition":"The state of being enclosed in a space","example":"Solitary confinement is a harsh punishment.","partOfSpeech":"noun"}],"grammar":[{"rule":"Subject-Verb Agreement","explanation":"The verb must agree with the subject in number. Singular subjects take singular verbs.","examples":["He runs (not \"he run\")","They escape (not \"they escapes\")"],"exercises":[{"instruction":"Choose the correct form","sentence":"The prisoner ___ to escape.","answer":"wants","options":["want","wants","wanting"]},{"instruction":"Choose the correct form","sentence":"The guards ___ watching.","answer":"are","options":["is","are","be"]}]}],"reading":{"text":"The room was dark and cold. A single light bulb hanged from the ceiling, casting eerie shadows on the walls. The prisoner looked around desperate, searching for any means of escape. On the table, there was a note writed in red ink. It readed: \"Your freedom depends on your ability to understood these words. Find the errors, fix them, and the door will opens.\" The prisoner picked up the note with trembling hands and began to studied it carefully.","glitchWords":[{"text":"hanged","isGlitch":true,"correction":"hung"},{"text":"desperate","isGlitch":true,"correction":"desperately"},{"text":"writed","isGlitch":true,"correction":"written"},{"text":"readed","isGlitch":true,"correction":"read"},{"text":"understood","isGlitch":true,"correction":"understand"},{"text":"opens","isGlitch":true,"correction":"open"},{"text":"studied","isGlitch":true,"correction":"study"}],"comprehensionQuestions":[{"question":"Where was the prisoner?","options":["In a garden","In a dark room","In a library","In a hospital"],"correct":1,"explanation":"The text says \"The room was dark and cold.\""},{"question":"What was on the table?","options":["A key","A knife","A note","A phone"],"correct":2,"explanation":"The text mentions \"a note written in red ink.\""}]},"listening":[{"text":"The key to escape lies in understanding every word.","hiddenWord":"escape","hint":"To break free (6 letters)"},{"text":"Courage is the weapon against fear.","hiddenWord":"courage","hint":"Bravery (7 letters)"}],"dialogue":{"scenario":"You are chained in a dark room. A masked figure appears on screen. You must negotiate your way to getting information about the escape route.","characters":["Jigsaw","You"],"turns":[{"narrator":"The screen flickers. A puppet with red spirals on its cheeks appears. Its mechanical jaw moves as it speaks.","character":"Jigsaw","question":"The puppet asks: \"I will give you one chance. Choose your words carefully. How do you respond to your captor?\"","options":[{"text":"\"Please let me go! I'll do anything!\"","outcome":"neutral","response":"Begging shows weakness. The puppet laughs. \"Desperation is not a strategy. Try again.\"","points":5},{"text":"\"I understand the game. I'm ready to play.\"","outcome":"survive","response":"The puppet nods slowly. \"Interesting. Intelligence is a valuable tool. You may proceed to the first challenge.\"","points":20},{"text":"\"This is insane! You can't keep me here!\"","outcome":"die","response":"The puppet tilts its head. \"Anger clouds judgment.\" A dart shoots from the wall. You feel dizzy...","points":0}]},{"narrator":"A compartment opens in the wall, revealing a riddle carved into metal.","character":"Jigsaw","question":"\"To proceed, you must answer: What has keys but no locks, space but no room, and you can enter but cannot go inside?\"","options":[{"text":"\"A keyboard!\"","outcome":"survive","response":"\"Correct. The mind is sharper than any blade.\" A panel slides open revealing a hallway.","points":25},{"text":"\"A house?\"","outcome":"die","response":"\"Wrong. The walls begin to close in...\"","points":0},{"text":"\"A map?\"","outcome":"neutral","response":"\"Incorrect, but not entirely foolish. Think harder.\"","points":5}]}]},"speaking":[{"text":"I will escape from this prison and find my freedom","targetAccuracy":70,"clueOnSuccess":"The code starts with F","mode":"normal"},{"text":"Courage is not the absence of fear but the triumph over it","targetAccuracy":65,"clueOnSuccess":"The code ends with M","mode":"shout"}],"writing":[{"prompt":"Write a short message (at least 30 words) to a fellow prisoner explaining your escape plan. Use at least 3 vocabulary words from today's lesson.","minWords":30,"keywords":["escape","courage","survival"],"sampleAnswer":"Dear fellow prisoner, I have devised an escape plan that requires courage and determination. Our survival depends on working together. We must decipher the clues left by our captor and find the hidden key. Tonight, when the guards change shifts, we make our move toward freedom."}],"dictation":[{"text":"The prisoner must find the courage to escape.","speed":"slow"},{"text":"Every clue brings us closer to freedom.","speed":"normal"}],"quiz":[{"question":"What does \"decipher\" mean?","options":["To destroy","To decode or interpret","To build","To run away"],"correct":1,"explanation":"\"Decipher\" means to decode or interpret something obscure.","codeFragment":"F"},{"question":"Which word means \"the state of being imprisoned\"?","options":["Freedom","Courage","Captivity","Escape"],"correct":2,"explanation":"\"Captivity\" means the state of being imprisoned or confined.","codeFragment":"RE"},{"question":"Complete: \"He ___ to escape.\" (Past tense of \"try\")","options":["tryed","tried","tryd","trying"],"correct":1,"explanation":"The past tense of \"try\" is \"tried\" (y changes to i, add -ed).","codeFragment":"ED"},{"question":"What is the noun form of \"survive\"?","options":["Surviving","Survivor","Survival","Survivance"],"correct":2,"explanation":"The noun form of \"survive\" is \"survival\".","codeFragment":"OM"}],"fearMeterImpact":10,"timeLimit":1800,"pointsAvailable":200},{"dayNumber":1,"title":"The Listening Room","subtitle":"Sounds echo through the walls. Decipher them or be silenced forever.","skill":"listening","narratorIntro":"Day two. The room has changed. Speakers line every wall. Strange sounds fill the air - whispers, echoes, fragments of words. A new message appears: \"Today you must listen. The sounds carry secrets. Miss a single word, and the silence will swallow you whole.\" Your ears are your only weapon now.","narratorOutro":"The speakers fall silent. You have proven your ears are sharp. But can your eyes match them? Tomorrow brings a new kind of horror.","backgroundImage":"https://loremflickr.com/1920/1080/dark,room,creepy?lock=9","artifactEmoji":"👂","artifactName":"The Listening Ear","unlockCode":"WHISPER","codeHint":"Speaking very quietly (7 letters)","lesson":{"title":"The Art of Listening: Sounds of Survival","content":"In the listening room, every sound matters. Today you will train your ears to catch crucial information from spoken English.","sections":[{"title":"Audio Transcript","type":"text","content":"The following transcript plays over the speakers in the room. Listen carefully - a WHISPER can be louder than a scream.\n\n\"In moments of crisis, communication becomes essential. The ability to understand spoken language can mean the difference between life and death. Pay attention to tone, pitch, and rhythm. A whisper carries as much meaning as a shout. The hidden frequencies contain your salvation. Listen for the word that means speaking very softly - that is your key to the next room.\""},{"title":"Pronunciation Guide","type":"exercise","content":"Key sounds to distinguish:\n• \"th\" vs \"t\" - \"think\" vs \"tin\"\n• \"l\" vs \"r\" - \"light\" vs \"right\"\n• \"v\" vs \"w\" - \"very\" vs \"wary\"\n• Short vs Long vowels - \"ship\" vs \"sheep\""},{"title":"Dialogue: The Voice in the Walls","type":"dialogue","content":"Voice: \"Can you hear me? Listen closely...\"\nYou: \"Who are you? Where are you speaking from?\"\nVoice: \"I am trapped like you. In the room next door. We must whisper so they don't hear us.\"\nYou: \"How do we get out?\"\nVoice: \"The code... it's hidden in the sounds. Listen to every frequency.\""}]},"vocabulary":[{"word":"whisper","translation":"","definition":"To speak very softly","example":"She whispered the secret code.","partOfSpeech":"verb"},{"word":"echo","translation":"","definition":"A repeated sound caused by reflection","example":"His voice echoed in the empty room.","partOfSpeech":"noun"},{"word":"frequency","translation":"","definition":"The rate of vibration of sound waves","example":"The radio operates on a specific frequency.","partOfSpeech":"noun"},{"word":"deafening","translation":"","definition":"Extremely loud","example":"The explosion was deafening.","partOfSpeech":"adjective"},{"word":"muffled","translation":"","definition":"Made quieter or less clear","example":"The muffled sounds came through the wall.","partOfSpeech":"adjective"},{"word":"eavesdrop","translation":"","definition":"To secretly listen to a conversation","example":"He tried to eavesdrop on their plan.","partOfSpeech":"verb"}],"grammar":[{"rule":"Present Continuous Tense","explanation":"Used for actions happening right now. Form: am/is/are + verb-ing","examples":["I am listening to the sounds.","The speakers are playing strange noises."],"exercises":[{"instruction":"Fill in the blank","sentence":"I ___ (listen) to the echo.","answer":"am listening","options":["am listening","listen","listened"]},{"instruction":"Fill in the blank","sentence":"The voice ___ (whisper) through the wall.","answer":"is whispering","options":["is whispering","whispers","whispered"]}]}],"reading":{"text":"The listening room was filled with speakres mounted on every wall. Strange sounds was playing constantly - some loud, some barely audible. The prisoner had to concentrated on each sound, trying to extract meaning from the chaos. A voice keeped repeating a phrase, but it was to quiet to understand. She pressed her ear against the wall and heared a faint whisper: \"The code is hidded in the frequency.\"","glitchWords":[{"text":"speakres","isGlitch":true,"correction":"speakers"},{"text":"was","isGlitch":true,"correction":"were"},{"text":"concentrated","isGlitch":true,"correction":"concentrate"},{"text":"keeped","isGlitch":true,"correction":"kept"},{"text":"to","isGlitch":true,"correction":"too"},{"text":"heared","isGlitch":true,"correction":"heard"},{"text":"hidded","isGlitch":true,"correction":"hidden"}],"comprehensionQuestions":[{"question":"What was on the walls?","options":["Paintings","Speakers","Windows","Chains"],"correct":1,"explanation":"Speakers were mounted on every wall."}]},"listening":[{"text":"The echo reveals what the eyes cannot see.","hiddenWord":"echo","hint":"A repeated sound (4 letters)"},{"text":"Sometimes a whisper is more powerful than a scream.","hiddenWord":"whisper","hint":"Speaking very softly (7 letters)"},{"text":"The frequency of the signal changes every minute.","hiddenWord":"frequency","hint":"Rate of sound vibration (9 letters)"}],"dialogue":{"scenario":"You hear a voice through the wall. Another prisoner is trying to communicate. You must listen carefully and respond appropriately.","characters":["Mystery Voice","You"],"turns":[{"narrator":"A faint tapping comes from behind the east wall. Then a muffled voice breaks through.","character":"Mystery Voice","question":"The voice whispers: \"Can you hear me? Tap twice if yes.\" What do you do?","options":[{"text":"Tap twice on the wall","outcome":"survive","response":"\"Good. Listen carefully. The guard changes shift in 10 minutes. I have a plan.\"","points":20},{"text":"Shout \"YES I CAN HEAR YOU!\"","outcome":"die","response":"Alarms blare. The guards heard you. Gas fills the room...","points":0},{"text":"Stay silent and listen","outcome":"neutral","response":"\"Hello? Are you there? ...I thought I heard someone.\" The voice fades.","points":5}]}]},"speaking":[{"text":"I can hear the whisper echoing through the walls","targetAccuracy":70,"clueOnSuccess":"The code has 7 letters","mode":"whisper"}],"writing":[{"prompt":"Describe the sounds you hear in the listening room. Use at least 5 descriptive adjectives. (30+ words)","minWords":30,"keywords":["echo","whisper","muffled"],"sampleAnswer":"The listening room is filled with eerie, muffled sounds. A faint whisper echoes from every direction, creating a deafening cacophony of noise. The mysterious, haunting frequencies seem to pulse with a rhythmic pattern, growing louder and softer in an unpredictable cycle."}],"dictation":[{"text":"Listen carefully to every whisper in the room.","speed":"slow"},{"text":"The echo carries a hidden message.","speed":"normal"}],"quiz":[{"question":"What does \"eavesdrop\" mean?","options":["To speak loudly","To secretly listen","To run away","To write a letter"],"correct":1,"explanation":"\"Eavesdrop\" means to secretly listen to a conversation.","codeFragment":"WH"},{"question":"\"The sound was ___\" - choose the word meaning \"very quiet\"","options":["deafening","muffled","echoing","screaming"],"correct":1,"explanation":"\"Muffled\" means made quieter or less clear.","codeFragment":"ISP"},{"question":"Which tense: \"I am listening\"?","options":["Past simple","Present continuous","Future","Past perfect"],"correct":1,"explanation":"\"am listening\" is present continuous tense.","codeFragment":"ER"}],"fearMeterImpact":15,"timeLimit":1800,"pointsAvailable":200},{"dayNumber":5,"title":"The Integration Chamber","subtitle":"All clues converge. Connect the pieces or face the final trap.","skill":"integration","narratorIntro":"Day six. All the rooms you have survived connect to this central chamber. Your clues, your words, your courage - everything must come together. The voice is urgent now: \"This is your penultimate test. Combine what you have learned. Match the clues. Drag the pieces into place. The final code awaits those who can integrate all their knowledge.\"","narratorOutro":"The pieces have fallen into place. Tomorrow is the final day. The boss battle awaits. Rest now, for you will need every ounce of strength.","backgroundImage":"https://loremflickr.com/1920/1080/dark,room,creepy?lock=13","artifactEmoji":"🧩","artifactName":"The Master Puzzle","unlockCode":"COMBINE","codeHint":"To put together; to merge (7 letters)","lesson":{"title":"Integration: Connecting All Skills","content":"Today everything you have learned comes together. Vocabulary, grammar, reading, listening, speaking, and writing unite as one.","sections":[{"title":"The Master Text","type":"text","content":"To COMBINE all your skills, read this comprehensive passage:\n\n\"Language mastery requires the integration of multiple abilities. A skilled communicator must read with comprehension, listen with attention, speak with clarity, and write with precision. These four skills do not exist in isolation - they combine to create true fluency. When you can seamlessly switch between reading a text, discussing its meaning, listening to others' perspectives, and writing your own analysis, you have achieved integration.\""},{"title":"Clue Assembly","type":"exercise","content":"Match each day's clue to its meaning:\n• Day 0: FREEDOM - The goal of escape\n• Day 1: WHISPER - Communication in secrecy\n• Day 2: CHAPTER - Structure of knowledge\n• Day 3: SILENCE - Power of restraint\n• Day 4: WRITTEN - Permanence of words\n• Day 5: COMBINE - Unity of skills"}]},"vocabulary":[{"word":"integrate","translation":"","definition":"To combine parts into a whole","example":"We need to integrate all the data.","partOfSpeech":"verb"},{"word":"synthesize","translation":"","definition":"To combine elements to form a coherent whole","example":"She synthesized information from multiple sources.","partOfSpeech":"verb"},{"word":"converge","translation":"","definition":"To come together from different directions","example":"All paths converge at the center.","partOfSpeech":"verb"},{"word":"comprehensive","translation":"","definition":"Including everything; complete","example":"The test was comprehensive.","partOfSpeech":"adjective"}],"grammar":[{"rule":"Conditional Sentences (If + will)","explanation":"First conditional: If + present simple, will + infinitive. Used for likely future situations.","examples":["If you combine the clues, you will find the answer.","If she studies hard, she will pass."],"exercises":[{"instruction":"Complete the conditional","sentence":"If we ___ (combine) our knowledge, we ___ (escape).","answer":"combine / will escape","options":["combine / will escape","combined / would escape","combining / escaping"]}]}],"reading":{"text":"All the clues was finally coming together. The prisoner had collected fragments from each room - a word here, a symbol there. Now she needed to combinate them into a single solution. If she would integrate all her knowledge, the final door will open. \"I has learned so much,\" she thinked. \"Vocabulary, grammar, listening, speaking, writing - they all connects. The answer is in the combination.\"","glitchWords":[{"text":"was","isGlitch":true,"correction":"were"},{"text":"combinate","isGlitch":true,"correction":"combine"},{"text":"would","isGlitch":true,"correction":"could"},{"text":"will","isGlitch":true,"correction":"would"},{"text":"has","isGlitch":true,"correction":"have"},{"text":"thinked","isGlitch":true,"correction":"thought"},{"text":"connects","isGlitch":true,"correction":"connect"}],"comprehensionQuestions":[{"question":"What did the prisoner collect?","options":["Weapons","Food","Clue fragments","Keys"],"correct":2,"explanation":"The prisoner collected fragments (clues) from each room."}]},"listening":[{"text":"When all skills combine, true mastery emerges.","hiddenWord":"combine","hint":"To put together (7 letters)"}],"dialogue":{"scenario":"All previous characters appear as holograms in the integration chamber. You must navigate a group conversation.","characters":["Jigsaw","Ghost","Voice Judge"],"turns":[{"narrator":"Three holographic figures materialize around you, each representing a past challenge.","character":"Jigsaw","question":"\"You have made it this far. But can you combine everything you've learned? Tell me - what connects all the codes?\"","options":[{"text":"\"Each code represents a language skill - they combine to show the path to mastery.\"","outcome":"survive","response":"\"Impressive. You see the pattern. The integration is complete.\" All three figures bow.","points":30},{"text":"\"I just memorized them. Does it matter?\"","outcome":"neutral","response":"\"Memorization without understanding is a cage of its own.\"","points":5},{"text":"\"Leave me alone! I'm tired of games!\"","outcome":"die","response":"\"Exhaustion leads to errors. Errors lead to consequences.\" The floor opens beneath you...","points":0}]}]},"speaking":[{"text":"I will combine all my knowledge to solve the final puzzle","targetAccuracy":70,"clueOnSuccess":"The code means to merge things together","mode":"normal"}],"writing":[{"prompt":"Write a summary (40+ words) of everything you have learned over the past 5 days. Use vocabulary from each day.","minWords":40,"keywords":["escape","whisper","chapter","silence","written","combine"],"sampleAnswer":"Over five days, I have escaped the chains of ignorance. I learned to whisper secrets and listen carefully. Each chapter of my journey has written new knowledge into my mind. In silence, I found strength. Now I combine all these skills to face the final challenge."}],"dictation":[{"text":"If you combine all the clues, you will find the answer.","speed":"normal"}],"quiz":[{"question":"\"Synthesize\" means:","options":["To destroy","To combine into a whole","To separate","To ignore"],"correct":1,"explanation":"\"Synthesize\" means to combine elements to form a coherent whole.","codeFragment":"COM"},{"question":"First conditional: \"If I study, I ___ pass.\"","options":["would","will","can","should"],"correct":1,"explanation":"First conditional uses \"will\" for likely future outcomes.","codeFragment":"BI"},{"question":"\"Converge\" means:","options":["To separate","To come together","To disappear","To explode"],"correct":1,"explanation":"\"Converge\" means to come together from different directions.","codeFragment":"NE"}],"dragDropClues":[{"clue":"Day 0: FREEDOM","match":"Vocabulary - Breaking free from ignorance"},{"clue":"Day 1: WHISPER","match":"Listening - Hearing the quiet truth"},{"clue":"Day 2: CHAPTER","match":"Reading - Sections of knowledge"},{"clue":"Day 3: SILENCE","match":"Speaking - Knowing when not to speak"},{"clue":"Day 4: WRITTEN","match":"Writing - Permanent expression"},{"clue":"Day 5: COMBINE","match":"Integration - Unity of all skills"}],"fearMeterImpact":20,"timeLimit":1800,"pointsAvailable":300},{"dayNumber":6,"title":"The Final Game","subtitle":"BOSS BATTLE: Face the Language Master in a battle of wits.","skill":"boss-battle","narratorIntro":"The final day. The last door opens to reveal an arena. In its center stands the Language Master - a towering figure made of swirling letters and words. The voice speaks for the last time: \"This is the end game. Answer quickly. Answer correctly. The Language Master attacks with confusion and doubt. Your weapon is everything you have learned. Survive the boss battle, and you earn your freedom. Forever.\"","narratorOutro":"CONGRATULATIONS. You have defeated the Language Master. The doors open. Light floods in. You are free. Your language skills have evolved beyond measure. You are no longer a prisoner - you are a master. 🎉🏆","backgroundImage":"https://loremflickr.com/1920/1080/dark,room,creepy?lock=14","artifactEmoji":"💀","artifactName":"The Language Master's Skull","unlockCode":"VICTORY","codeHint":"The result of winning a battle (7 letters)","lesson":{"title":"Boss Battle: The Ultimate Language Challenge","content":"Everything comes down to this moment. All skills, all vocabulary, all grammar - weaponized for the final confrontation.","sections":[{"title":"The Arena","type":"text","content":"VICTORY awaits the worthy. The Language Master speaks in riddles:\n\n\"I am the sum of all words ever spoken, written, whispered, and screamed. I am grammar and vocabulary, reading and listening, speaking and writing. I am language itself. To defeat me, you must prove you understand me. Answer my questions swiftly, for time is your enemy. Each correct answer weakens me. Each wrong answer... strengthens me.\""},{"title":"⚠️ BOSS MECHANICS","type":"warning","content":"The Boss Battle is timed! Each question has a strict time limit. Wrong answers increase the boss's power (and your fear meter)."}]},"vocabulary":[{"word":"triumph","translation":"","definition":"A great victory or achievement","example":"Their triumph was celebrated by all.","partOfSpeech":"noun"},{"word":"conquer","translation":"","definition":"To overcome or defeat","example":"She conquered her fear of speaking.","partOfSpeech":"verb"},{"word":"persevere","translation":"","definition":"To continue despite difficulty","example":"You must persevere through challenges.","partOfSpeech":"verb"},{"word":"resilient","translation":"","definition":"Able to recover from setbacks","example":"Resilient learners never give up.","partOfSpeech":"adjective"},{"word":"mastery","translation":"","definition":"Complete skill or knowledge","example":"Language mastery requires dedication.","partOfSpeech":"noun"}],"grammar":[{"rule":"Mixed Tenses Review","explanation":"All tenses together: past, present, future, perfect, continuous.","examples":["I learned (past). I am learning (present continuous). I will learn (future). I have learned (present perfect)."],"exercises":[{"instruction":"Identify the tense","sentence":"I have been studying for seven days.","answer":"present perfect continuous","options":["present simple","present perfect continuous","past simple"]}]}],"reading":{"text":"The Language Master was a terrifyng sight. Made entirely of swirling letters and glowing words, it towered over the prisoner. \"You has come far,\" it speaked, its voice echoing from a thousand mouths. \"But the final test is the most hardest of all. Every skill you have learn must be demonstated now. There is no room for error.\" The prisoner standed tall and drawed a deep breath.","glitchWords":[{"text":"terrifyng","isGlitch":true,"correction":"terrifying"},{"text":"has","isGlitch":true,"correction":"have"},{"text":"speaked","isGlitch":true,"correction":"spoke"},{"text":"most hardest","isGlitch":true,"correction":"hardest"},{"text":"learn","isGlitch":true,"correction":"learned"},{"text":"demonstated","isGlitch":true,"correction":"demonstrated"},{"text":"standed","isGlitch":true,"correction":"stood"},{"text":"drawed","isGlitch":true,"correction":"drew"}],"comprehensionQuestions":[{"question":"What was the Language Master made of?","options":["Stone","Metal","Letters and words","Fire"],"correct":2,"explanation":"It was made entirely of swirling letters and glowing words."}]},"listening":[{"text":"Victory belongs to those who never stop learning.","hiddenWord":"victory","hint":"Winning result (7 letters)"}],"dialogue":{"scenario":"The final confrontation with the Language Master. Your responses determine the ending.","characters":["Language Master","You"],"turns":[{"narrator":"The massive figure of the Language Master looms before you. Lightning crackles between the letters that form its body.","character":"Language Master","question":"\"Mortal, you stand before the sum of all language. What is your final answer? What have you learned in these seven days?\"","options":[{"text":"\"I have learned that language is not just words - it is courage, understanding, and connection. I am ready.\"","outcome":"survive","response":"\"Then you have truly understood.\" The Language Master bows and dissolves into a shower of golden letters. VICTORY IS YOURS! 🏆","points":50},{"text":"\"I have learned enough. Let me go.\"","outcome":"neutral","response":"\"Enough? There is always more to learn. But you have earned your partial freedom.\"","points":15},{"text":"\"I haven't learned anything. This was all pointless.\"","outcome":"die","response":"\"Then you must repeat the cycle.\" The world resets to Day 0...","points":0}]}]},"speaking":[{"text":"I have conquered the Language Master and achieved victory","targetAccuracy":65,"clueOnSuccess":"VICTORY is yours!","mode":"shout"}],"writing":[{"prompt":"Write your victory speech (50+ words). Summarize your 7-day journey and what you learned about language.","minWords":50,"keywords":["victory","learned","mastery","courage"],"sampleAnswer":"Today I stand victorious. Over seven days, I have conquered fear, mastered vocabulary, navigated labyrinths of text, and found my voice. Language is more than grammar rules and word lists - it is the key to freedom, connection, and understanding. I have persevered through every challenge, and this victory belongs not just to me, but to every learner who refuses to give up."}],"dictation":[{"text":"Victory belongs to those who persevere.","speed":"normal"},{"text":"The Language Master has been defeated at last.","speed":"fast"}],"quiz":[{"question":"\"Persevere\" means:","options":["To give up","To continue despite difficulty","To sleep","To run"],"correct":1,"explanation":"\"Persevere\" means to continue despite difficulty.","codeFragment":"VIC"},{"question":"\"Resilient\" describes someone who:","options":["Gives up easily","Recovers from setbacks","Is always angry","Is very tall"],"correct":1,"explanation":"\"Resilient\" means able to recover from setbacks.","codeFragment":"TO"},{"question":"Final question: What tense is \"I have been studying\"?","options":["Past simple","Present perfect","Present perfect continuous","Future"],"correct":2,"explanation":"have been + verb-ing = present perfect continuous","codeFragment":"RY"}],"bossBattle":[{"question":"Past tense of \"swim\":","options":["swimmed","swam","swum","swimming"],"correct":1,"timeLimit":8},{"question":"\"She ___ to the store yesterday.\"","options":["goes","going","went","gone"],"correct":2,"timeLimit":8},{"question":"Which is correct?","options":["more better","more good","better","most better"],"correct":2,"timeLimit":6},{"question":"\"They ___ finished the project.\"","options":["has","have","having","had been"],"correct":1,"timeLimit":8},{"question":"\"If I ___ rich, I would travel.\"","options":["am","were","was been","being"],"correct":1,"timeLimit":8},{"question":"Opposite of \"victory\":","options":["triumph","success","defeat","glory"],"correct":2,"timeLimit":6},{"question":"\"She speaks ___ than her brother.\"","options":["more fluently","more fluent","fluentlier","most fluently"],"correct":0,"timeLimit":8},{"question":"Which sentence is CORRECT?","options":["He don't like it","He doesn't likes it","He doesn't like it","He not like it"],"correct":2,"timeLimit":8},{"question":"\"The book was ___ by a famous author.\"","options":["write","wrote","written","writing"],"correct":2,"timeLimit":6},{"question":"\"I have been ___ English for 7 days.\"","options":["study","studied","studying","studies"],"correct":2,"timeLimit":8}],"fearMeterImpact":25,"timeLimit":1200,"pointsAvailable":500}]},"learnerName":"Demo Learner","fileName":"Gamified_Challenge_Welcome_to_the_Game","learnerPhoto":"😎"}</script>
+<script>
+(function(){
+  var el = document.getElementById('gamified-data');
+  var data = null;
+  try { data = JSON.parse(el.textContent); } catch (e) { console.error('Bad gamified payload', e); }
+  window.__GAMIFIED__ = data || {};
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+  var LESSON = window.__GAMIFIED__ || {};
+  var THEME = LESSON.themeData || null;
+  var LEARNER_NAME = LESSON.learnerName || 'Learner';
+  var FILE_NAME = LESSON.fileName || 'gamified-challenge';
+  var TITLE = (THEME && THEME.welcomeTitle) || 'Gamified Challenge';
+
+  var LS_KEY = 'tutorly-gamified-' + FILE_NAME;
+  var PROG_KEY = 'tutorly-gamified-progress-' + LEARNER_NAME;
+
+  var $ = function(s, c){ return (c || document).querySelector(s); };
+  var $$ = function(s, c){ return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+
+  var state = {
+    points: 0, fearMeter: 0, completedDays: [], unlockedDays: [0], badges: [],
+    cluesCollected: [], mysteryBoxes: 0, currentDay: 0,
+    screen: 'game', tab: 'lesson',
+    showBlood: false, isShaking: false, showJumpScare: false
+  };
+  try {
+    var saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (saved) for (var k in saved) if (k !== 'screen' && k !== 'tab' && k !== 'currentDay') state[k] = saved[k];
+  } catch (e) {}
+
+  function save(){
+    try {
+      var c = {};
+      ['points','fearMeter','completedDays','unlockedDays','badges','cluesCollected','mysteryBoxes'].forEach(function(k){ c[k] = state[k]; });
+      localStorage.setItem(LS_KEY, JSON.stringify(c));
+    } catch (e) {}
+    mirrorProgress();
+  }
+  function mirrorProgress(){
+    try {
+      var list = [];
+      try { list = JSON.parse(localStorage.getItem(PROG_KEY) || '[]'); } catch (e) { list = []; }
+      var rec = {
+        fileName: FILE_NAME, title: TITLE, points: state.points, fearMeter: state.fearMeter,
+        completedDays: state.completedDays.slice(), unlockedDays: state.unlockedDays.slice(),
+        badges: state.badges.slice(), cluesCollected: state.cluesCollected.slice(),
+        mysteryBoxes: state.mysteryBoxes, updatedAt: new Date().toISOString()
+      };
+      var others = list.filter(function(r){ return r.fileName !== rec.fileName; });
+      others.unshift(rec);
+      localStorage.setItem(PROG_KEY, JSON.stringify(others.slice(0, 20)));
+    } catch (e) {}
+  }
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function lvl(){ return Math.floor(state.points / 500) + 1; }
+  function fearColor(){ return state.fearMeter < 33 ? '#00ff88' : state.fearMeter < 66 ? '#ffaa00' : '#ff0000'; }
+
+  /* ── audio (WebAudio — all synthesized so it works offline) ── */
+  var AC = null;
+  function ctx(){ try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; } catch (e) { return null; } }
+  function noiseBuffer(dur){ var c = ctx(), n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; return b; }
+  function playScream(){ var c = ctx(); if (!c) return; try { var dur = 1.5, n = c.sampleRate * dur, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (var i = 0; i < n; i++) { var t = i / c.sampleRate; var env = Math.exp(-t * 2) * (1 + 0.5 * Math.sin(t * 80)); var noise = Math.random() * 2 - 1; var tone = Math.sin(t * 800 * (1 + Math.sin(t * 5) * 0.5)); var harm = Math.sin(t * 1200) * 0.3 + Math.sin(t * 400) * 0.5; d[i] = (noise * 0.3 + tone * 0.5 + harm * 0.2) * env * 0.7; } var s = c.createBufferSource(); s.buffer = b; var ws = c.createWaveShaper(); var curve = new Float32Array(256); for (var j = 0; j < 256; j++) { var x = (j * 2) / 256 - 1; curve[j] = (Math.PI + 50) * x / (Math.PI + 50 * Math.abs(x)); } ws.curve = curve; s.connect(ws); ws.connect(c.destination); s.start(); } catch (e) {} }
+  function playBreathing(){ var c = ctx(); if (!c) return; try { var dur = 3, n = c.sampleRate * dur, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (var i = 0; i < n; i++) { var t = i / c.sampleRate; var bc = Math.sin(t * Math.PI * 1.5); var noise = (Math.random() * 2 - 1) * 0.3; var f = noise * Math.abs(bc); var rumble = Math.sin(t * 60) * 0.15 * Math.abs(bc); d[i] = (f + rumble) * 0.5; } var s = c.createBufferSource(); s.buffer = b; var fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 600; s.connect(fl); fl.connect(c.destination); s.start(); } catch (e) {} }
+  function playHeartbeat(bpm){ var c = ctx(); if (!c) return; try { bpm = bpm || 90; var iv = 60 / bpm, dur = iv * 6, n = c.sampleRate * dur, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (var beat = 0; beat < 6; beat++) { var bs = beat * iv * c.sampleRate; for (var i = 0; i < c.sampleRate * 0.15; i++) { var idx = Math.floor(bs + i); if (idx < n) { var t = i / c.sampleRate; d[idx] = Math.sin(t * 200) * Math.exp(-t * 30) * 0.6; } } var s2 = bs + c.sampleRate * 0.2; for (var k = 0; k < c.sampleRate * 0.1; k++) { var idx2 = Math.floor(s2 + k); if (idx2 < n) { var t2 = k / c.sampleRate; d[idx2] = Math.sin(t2 * 250) * Math.exp(-t2 * 40) * 0.4; } } } var s = c.createBufferSource(); s.buffer = b; var fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 150; var g = c.createGain(); g.gain.value = 1.5; s.connect(fl); fl.connect(g); g.connect(c.destination); s.start(); } catch (e) {} }
+  function playHorrorDrone(dur){ var c = ctx(); if (!c) return; try { var o1 = c.createOscillator(), o2 = c.createOscillator(), o3 = c.createOscillator(), g = c.createGain(); o1.type = 'sawtooth'; o1.frequency.value = 55; o2.type = 'sine'; o2.frequency.value = 57; o3.type = 'triangle'; o3.frequency.value = 110; g.gain.value = 0; g.gain.linearRampToValueAtTime(0.15, c.currentTime + 1); g.gain.linearRampToValueAtTime(0, c.currentTime + (dur || 5)); o1.connect(g); o2.connect(g); o3.connect(g); g.connect(c.destination); o1.start(); o2.start(); o3.start(); o1.stop(c.currentTime + (dur || 5)); o2.stop(c.currentTime + (dur || 5)); o3.stop(c.currentTime + (dur || 5)); } catch (e) {} }
+  function playSuccess(){ var c = ctx(); if (!c) return; try { [523, 659, 784, 1047].forEach(function(f, i){ var o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = 0.3; g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + i * 0.15 + 0.5); o.connect(g); g.connect(c.destination); o.start(c.currentTime + i * 0.15); o.stop(c.currentTime + i * 0.15 + 0.5); }); } catch (e) {} }
+  function playWrong(){ var c = ctx(); if (!c) return; try { var o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.value = 150; g.gain.value = 0.25; g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.3); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.3); } catch (e) {} }
+  function playUnlock(){ var c = ctx(); if (!c) return; try { [880, 1108, 1318].forEach(function(f, i){ var o = c.createOscillator(), g = c.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.value = 0.25; g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + i * 0.12 + 0.4); o.connect(g); g.connect(c.destination); o.start(c.currentTime + i * 0.12); o.stop(c.currentTime + i * 0.12 + 0.4); }); } catch (e) {} }
+  function playJumpScare(){ var c = ctx(); if (!c) return; try { var dur = 0.7, n = c.sampleRate * dur, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (var i = 0; i < n; i++) { var t = i / c.sampleRate; var env = Math.exp(-t * 4); var tone = Math.sin(t * 1000 * (1 + Math.sin(t * 40) * 0.4)); d[i] = (Math.random() * 2 - 1) * 0.2 + tone * 0.6 * env; } var s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(); } catch (e) {} }
+
+  /* ── TTS ── */
+  function getVoices(){ try { return window.speechSynthesis.getVoices() || []; } catch (e) { return []; } }
+  function findVoice(uri){ var vs = getVoices(); if (!uri) return null; for (var i = 0; i < vs.length; i++) if (vs[i].voiceURI === uri || vs[i].name === uri) return vs[i]; return null; }
+  function speakText(text, uri, rate, pitch){
+    try {
+      if (!window.speechSynthesis || !text) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      var v = findVoice(uri || '');
+      if (v) u.voice = v;
+      u.rate = rate || 1; u.pitch = pitch || 1;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function stopSpeaking(){ try { window.speechSynthesis.cancel(); } catch (e) {} }
+  function startSpeechRecognition(onResult, onEnd){
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return null;
+    try {
+      var r = new SR();
+      r.lang = 'en-US'; r.interimResults = false; r.maxAlternatives = 1; r.continuous = false;
+      r.onresult = function(e){ try { onResult(e.results[0][0].transcript); } catch (err) {} };
+      r.onend = function(){ if (onEnd) onEnd(); };
+      r.onerror = function(){ if (onEnd) onEnd(); };
+      r.start();
+      return function(){ try { r.stop(); } catch (e2) {} };
+    } catch (e) { return null; }
+  }
+
+  function triggerBlood(){ state.showBlood = true; renderFx(); setTimeout(function(){ state.showBlood = false; renderFx(); }, 2000); }
+  function triggerShake(){ state.isShaking = true; renderFx(); setTimeout(function(){ state.isShaking = false; renderFx(); }, 600); }
+  function triggerJumpScare(){ state.showJumpScare = true; renderFx(); setTimeout(function(){ state.showJumpScare = false; renderFx(); }, 850); }
+  function renderFx(){
+    var blood = $('#fx-blood'), shake = $('#fx-shake'), js = $('#fx-jumpscare');
+    if (blood) blood.style.display = state.showBlood ? 'block' : 'none';
+    if (shake) shake.className = state.isShaking ? 'animate-shake' : '';
+    if (js) js.style.display = state.showJumpScare ? 'flex' : 'none';
+    var fb = $('#fx-fearborder');
+    if (fb) fb.className = 'fear-border' + (state.fearMeter > 50 ? ' active' : '');
+  }
+
+  function dayByNum(n){ for (var i = 0; i < THEME.days.length; i++) if (THEME.days[i].dayNumber === n) return THEME.days[i]; return null; }
+  function isUnlocked(dayNum){ if (dayNum === 0) return true; return state.unlockedDays.indexOf(dayNum) >= 0; }
+  function isAvailableByDate(dayNum){
+    if (!THEME.startDate) return true;
+    var start = new Date(THEME.startDate), d = new Date(start);
+    d.setDate(d.getDate() + dayNum);
+    var today = new Date(); today.setHours(0,0,0,0); d.setHours(0,0,0,0);
+    return today >= d;
+  }
+  function canAccess(dayNum){ return isUnlocked(dayNum) && isAvailableByDate(dayNum); }
+
+  var toastTimer = null;
+  function toast(msg, bad){
+    var t = $('#fx-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = 'toast ' + (bad ? 'bad' : 'good');
+    t.style.display = 'block';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.style.display = 'none'; }, 3000);
+  }
+
+  /* ── HUB (GameHub) ── */
+  function hubHTML(){
+    var h = '';
+    h += '<div class="content">';
+    h += '<div class="topbar"><div class="topbar-left">';
+    h += '<button class="bigbtn" data-act="back">🔙 Back</button>';
+    h += '<button class="bigbtn" data-act="settings">⚙️ Settings</button>';
+    h += '<div class="learner-chip"><span class="photo">' + (LESSON.learnerPhoto && LESSON.learnerPhoto.length <= 4 ? LESSON.learnerPhoto : '😎') + '</span><span class="name">' + esc(LEARNER_NAME) + '</span></div>';
+    h += '</div><div class="stats">';
+    h += '<span class="stat yellow">⭐ ' + state.points + '</span>';
+    h += '<span class="stat purple">🏅 ' + state.badges.length + '</span>';
+    h += '<span class="stat blue">🎁 ' + state.mysteryBoxes + '</span>';
+    h += '<span class="stat green">🔍 ' + state.cluesCollected.length + '</span>';
+    h += '</div></div>';
+    h += '<div class="theme-title"><h1>' + esc(THEME.welcomeTitle) + '</h1><p>' + esc(THEME.welcomeSubtitle) + '</p></div>';
+    h += '<div class="fearmeter"><div class="row"><span class="lbl" style="color:' + fearColor() + '">😱 FEAR METER</span><span class="lbl" style="color:' + fearColor() + '">' + Math.round(state.fearMeter) + '%</span></div>';
+    h += '<div class="track"><div class="fill" style="width:' + state.fearMeter + '%;background:linear-gradient(90deg,' + fearColor() + ',' + (state.fearMeter > 66 ? '#ff0000' : fearColor()) + ');box-shadow:0 0 10px ' + fearColor() + '"></div></div></div>';
+    h += '<div class="artifact-float"><div class="a animate-float perspective-3d" style="filter:drop-shadow(0 0 30px ' + fearColor() + ')">' + (THEME.days[0] ? THEME.days[0].artifactEmoji : '💎') + '</div></div>';
+    h += '<div class="days-grid">';
+    THEME.days.forEach(function(day){
+      var unlocked = isUnlocked(day.dayNumber), available = isAvailableByDate(day.dayNumber);
+      var completed = state.completedDays.indexOf(day.dayNumber) >= 0;
+      var accessible = unlocked && available;
+      h += '<button class="day-card' + (completed ? ' completed' : accessible ? ' accessible' : ' locked') + '" data-day="' + day.dayNumber + '">';
+      h += '<div class="thumb"><img src="' + esc(day.backgroundImage) + '" alt="" onerror="this.remove()"><div class="grad"></div>';
+      h += '<div class="lock">' + (completed ? '✅' : accessible ? '🔓' : '🔒') + '</div>';
+      h += '<div class="art">' + day.artifactEmoji + '</div></div>';
+      h += '<div class="body"><div class="dayno">DAY ' + day.dayNumber + '</div>';
+      h += '<h3>' + esc(day.title) + '</h3><p class="sub">' + esc(day.subtitle) + '</p>';
+      h += '<div class="meta"><span>🎯 ' + esc(day.skill) + '</span><span>⭐ ' + day.pointsAvailable + 'pts</span></div></div>';
+      h += '</button>';
+    });
+    h += '</div></div>';
+    return h;
+  }
+
+  function handleDayClick(dayNum){
+    if (canAccess(dayNum)) { state.currentDay = dayNum; state.tab = 'lesson'; state.screen = 'day'; save(); render(); playHorrorDrone(2); }
+    else if (!isAvailableByDate(dayNum)) {
+      playWrong();
+      var d = new Date(new Date(THEME.startDate).getTime() + dayNum * 86400000);
+      toast('🔒 This day opens on ' + d.toLocaleDateString(), true);
+    } else {
+      openCodeModal(dayNum);
+    }
+  }
+
+  /* code modal */
+  var codeTarget = null;
+  function openCodeModal(dayNum){
+    codeTarget = dayNum;
+    var prev = dayByNum(dayNum - 1);
+    var m = $('#fx-modal');
+    if (!m) return;
+    m.style.display = 'flex';
+    $('#fx-code-input').value = '';
+    $('#fx-code-hint').textContent = (prev && prev.codeHint) || 'Find the code in the previous day\'s content';
+    setTimeout(function(){ try { $('#fx-code-input').focus(); } catch (e) {} }, 50);
+  }
+  function closeCodeModal(){ var m = $('#fx-modal'); if (m) m.style.display = 'none'; codeTarget = null; }
+  function submitCode(){
+    if (codeTarget === null || !THEME) return;
+    var prev = dayByNum(codeTarget - 1);
+    var expected = prev ? String(prev.unlockCode || '').toUpperCase() : '';
+    var master = String(THEME.masterCode || '').toUpperCase();
+    var input = $('#fx-code-input').value.trim().toUpperCase();
+    if (input === expected || input === master) {
+      playSuccess(); playUnlock();
+      state.unlockedDays.push(codeTarget);
+      state.points += 50;
+      closeCodeModal();
+      toast('✅ Day Unlocked!', false);
+      save(); render();
+    } else {
+      if (Math.random() > 0.5) { playJumpScare(); triggerJumpScare(); } else { playScream(); playBreathing(); triggerBlood(); triggerShake(); }
+      state.fearMeter = Math.min(100, state.fearMeter + 15);
+      toast('💀 WRONG CODE! Fear rising...', true);
+      save(); renderFx();
+    }
+  }
+
+  /* ── DAY VIEW ── */
+  function tabsFor(day){
+    var t = [
+      { id: 'lesson', label: '📖 Lesson' }, { id: 'vocab', label: '📝 Vocab' }, { id: 'grammar', label: '📐 Grammar' },
+      { id: 'reading', label: '📕 Reading' }, { id: 'listening', label: '🎧 Listening' }, { id: 'dialogue', label: '🎭 Dialogue' },
+      { id: 'speaking', label: '🎤 Speaking' }, { id: 'writing', label: '✍️ Writing' }, { id: 'dictation', label: '📢 Dictation' },
+      { id: 'quiz', label: '❓ Quiz' }
+    ];
+    if (day.bossBattle && day.bossBattle.length) t.push({ id: 'boss', label: '💀 Boss' });
+    if (day.dragDropClues && day.dragDropClues.length) t.push({ id: 'clues', label: '🧩 Clues' });
+    return t;
+  }
+
+  function dayHTML(){
+    var day = dayByNum(state.currentDay);
+    if (!day) return '';
+    var tabs = tabsFor(day);
+    var h = '';
+    h += '<div class="content">';
+    h += '<div class="day-head">';
+    h += '<div class="topbar-left"><button class="bigbtn" data-act="back">🔙 Back</button><button class="bigbtn" data-act="hub">⬅️</button><button class="bigbtn" data-act="settings">⚙️ Settings</button></div>';
+    h += '<div class="day-head-center"><div class="dayno">DAY ' + day.dayNumber + ' • ' + esc(day.skill.toUpperCase()) + '</div><h1>' + esc(day.title) + '</h1></div>';
+    h += '<div class="day-head-right"><span class="stat yellow">⭐ ' + state.points + '</span><span class="stat" style="color:' + fearColor() + '">😱 ' + Math.round(state.fearMeter) + '%</span></div>';
+    h += '</div>';
+    h += '<div class="day-art"><div class="a ' + (state.fearMeter > 50 ? 'animate-rotate' : 'animate-float-slow') + '" style="filter:drop-shadow(0 0 15px ' + fearColor() + ')">' + day.artifactEmoji + '</div></div>';
+    h += '<div class="narrator-box"><div class="row"><span class="lbl">🔊 Narrator</span><button class="btn red" data-act="narr-intro">▶️ Read Aloud</button></div><p>"' + esc(day.narratorIntro) + '"</p></div>';
+    h += '<div class="tabs">';
+    tabs.forEach(function(t){ h += '<button class="tab' + (state.tab === t.id ? ' active' : '') + '" data-tab="' + t.id + '">' + t.label + '</button>'; });
+    h += '</div>';
+    h += '<div class="panel" id="tabpanel">' + tabHTML(day, state.tab) + '</div>';
+    if (state.completedDays.indexOf(day.dayNumber) < 0) {
+      h += '<button class="complete-btn" data-act="complete">✅ Complete Day ' + day.dayNumber + '</button>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  /* tab renderers */
+  function tabHTML(day, tab){
+    if (tab === 'lesson') return lessonTab(day);
+    if (tab === 'vocab') return vocabTab(day);
+    if (tab === 'grammar') return grammarTab(day);
+    if (tab === 'reading') return readingTab(day);
+    if (tab === 'listening') return listeningTab(day);
+    if (tab === 'dialogue') return dialogueTab(day);
+    if (tab === 'speaking') return speakingTab(day);
+    if (tab === 'writing') return writingTab(day);
+    if (tab === 'dictation') return dictationTab(day);
+    if (tab === 'quiz') return quizTab(day);
+    if (tab === 'boss' && day.bossBattle) return bossTab(day);
+    if (tab === 'clues' && day.dragDropClues) return cluesTab(day);
+    return '';
+  }
+
+  function lessonTab(day){
+    var h = '<h2 class="lesson-title">' + esc(day.lesson.title) + '</h2>';
+    h += '<p class="lesson-intro">' + esc(day.lesson.content) + '</p>';
+    day.lesson.sections.forEach(function(sec){
+      h += '<div class="sec-block ' + (sec.type === 'warning' ? 'warning' : sec.type === 'dialogue' ? 'dialogue' : '') + '">';
+      h += '<div class="row"><h3>' + esc(sec.title) + '</h3><button class="btn red" data-act="sec-read" data-idx="' + day.lesson.sections.indexOf(sec) + '">🔊 Read</button></div>';
+      if (sec.type === 'dialogue') {
+        var chars = [];
+        sec.content.split('\n').forEach(function(line){ var m = line.match(/^([^:]+):/); if (m && chars.indexOf(m[1].trim()) < 0) chars.push(m[1].trim()); });
+        chars.forEach(function(ch){
+          h += '<div class="charvoice"><span class="nm">' + esc(ch) + ':</span><select data-charvoice="' + esc(ch) + '"><option value="">Default</option>' + voiceOptions() + '</select></div>';
+        });
+        sec.content.split('\n').filter(function(l){ return l.trim(); }).forEach(function(line){
+          var m = line.match(/^([^:]+):\s*"?(.+)"?$/);
+          if (m) h += '<div class="dline"><span class="who">' + esc(m[1]) + ':</span><span class="what">' + esc(m[2]) + '</span><button class="play" data-speak-line="' + esc(m[2]) + '" data-char="' + esc(m[1].trim()) + '">🔊</button></div>';
+          else h += '<p class="text">' + esc(line) + '</p>';
+        });
+      } else {
+        h += '<div class="text">' + esc(sec.content) + '</div>';
+      }
+      h += '</div>';
+    });
+    return h;
+  }
+  function voiceOptions(){
+    var vs = getVoices(), h = '';
+    vs.forEach(function(v){ h += '<option value="' + esc(v.voiceURI) + '">' + esc(v.name.slice(0, 30)) + '</option>'; });
+    return h;
+  }
+
+  function vocabTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:24px">📝 Vocabulary</h2><div class="vocab-grid">';
+    day.vocabulary.forEach(function(v, i){
+      h += '<div class="vocab-card" data-vocab="' + i + '">';
+      h += '<div class="row"><span class="word">' + esc(v.word) + '</span><div style="display:flex;gap:8px;align-items:center"><span class="pos">' + esc(v.partOfSpeech) + '</span><button class="speak" data-speak="' + esc(v.word) + '">🔊</button></div></div>';
+      h += '<div class="flip-content" style="display:none">';
+      h += '<p class="flip"><strong>Definition:</strong> ' + esc(v.definition) + '</p>';
+      h += '<p class="ex"><strong>Example:</strong> ' + esc(v.example) + '</p>';
+      h += '<button class="hear" data-speak="' + esc(v.example) + '">🔊 Hear example</button>';
+      h += '</div></div>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  function grammarTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:24px">📐 Grammar</h2>';
+    day.grammar.forEach(function(g, gi){
+      h += '<div class="gram-block"><h3>' + esc(g.rule) + '</h3><p class="exp">' + esc(g.explanation) + '</p>';
+      h += '<div class="gram-examples">' + g.examples.map(function(ex){ return '<span>"' + esc(ex) + '"</span>'; }).join('') + '</div>';
+      g.exercises.forEach(function(ex, ei){
+        var key = gi + '-' + ei;
+        var ans = (state.gramAns && state.gramAns[key]) || '';
+        var checked = state.gramChecked && state.gramChecked[key];
+        var right = checked && String(ans).toLowerCase().trim() === String(ex.answer).toLowerCase().trim();
+        h += '<div class="ex-block' + (checked ? (right ? ' ok' : ' bad') : '') + '" data-gram="' + key + '">';
+        h += '<p>' + esc(ex.instruction) + ': <strong>' + esc(ex.sentence) + '</strong></p>';
+        if (ex.options) {
+          h += '<div class="ex-opts">';
+          ex.options.forEach(function(opt){
+            var cls = checked && String(opt).toLowerCase().trim() === String(ex.answer).toLowerCase().trim() ? ' right' : (checked && ans === opt ? ' wrongpick' : '');
+            h += '<button class="ex-opt' + cls + '" data-gram-opt="' + key + '" data-val="' + esc(opt) + '"' + (checked ? ' disabled' : '') + '>' + esc(opt) + '</button>';
+          });
+          h += '</div>';
+        } else {
+          h += '<div class="ex-inrow"><input data-gram-in="' + key + '" value="' + esc(ans) + '"' + (checked ? ' disabled' : '') + '/>';
+          if (!checked) h += '<button class="ex-check" data-gram-check="' + key + '" data-answer="' + esc(ex.answer) + '">Check</button>';
+          h += '</div>';
+        }
+        if (checked) h += '<p class="ex-feedback ' + (right ? 'good' : 'bad') + '">' + (right ? '✅ Correct!' : '❌ Answer: ' + esc(ex.answer)) + '</p>';
+        h += '</div>';
+      });
+      h += '</div>';
+    });
+    return h;
+  }
+
+  function readingTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:24px">📕 Glitch Hunter</h2>';
+    var foundN = 0;
+    state.foundGlitches = state.foundGlitches || [];
+    state.foundGlitches.forEach(function(f){ if (f.day === day.dayNumber) foundN++; });
+    h += '<p style="color:#9ca3af;margin:0 0 16px">Click on corrupted words! Found: ' + foundN + '/' + day.reading.glitchWords.length + '</p>';
+    h += '<button class="btn red" style="margin-bottom:12px" data-act="read-aloud">🔊 Read Aloud</button>';
+    var gmap = {};
+    day.reading.glitchWords.forEach(function(g){ gmap[g.text.toLowerCase()] = g; });
+    var words = day.reading.text.split(/(\s+)/);
+    h += '<div class="reading-text">';
+    words.forEach(function(w, i){
+      var clean = w.replace(/[.,!?\"'\';:()]/g, '');
+      var gw = gmap[clean.toLowerCase()];
+      var isFound = state.foundGlitches.some(function(f){ return f.day === day.dayNumber && f.idx === i; });
+      h += '<span class="rword' + (isFound ? ' found' : '') + '" data-word="' + i + '" data-glitch="' + (gw && gw.isGlitch ? '1' : '') + '">' + (isFound && gw ? esc(gw.correction || w) : esc(w)) + '</span>';
+    });
+    h += '</div>';
+    h += '<h3 style="color:#d1d5db;font-size:18px;margin:0 0 12px">Comprehension</h3>';
+    day.reading.comprehensionQuestions.forEach(function(q, qi){
+      var picked = state.cqAns && state.cqAns[day.dayNumber] && state.cqAns[day.dayNumber][qi];
+      h += '<div class="q-block"><p class="q">' + esc(q.question) + '</p><div class="q-opts">';
+      q.options.forEach(function(opt, oi){
+        var cls = picked !== undefined && oi === q.correct ? ' right' : (picked === oi ? ' wrongpick' : '');
+        h += '<button class="q-opt' + cls + '" data-cq="' + qi + '" data-oi="' + oi + '" data-day="' + day.dayNumber + '"' + (picked !== undefined ? ' disabled' : '') + '>' + esc(opt) + '</button>';
+      });
+      h += '</div>';
+      if (picked !== undefined) h += '<p class="q-exp">💡 ' + esc(q.explanation) + '</p>';
+      h += '</div>';
+    });
+    return h;
+  }
+
+  function listeningTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:24px">🎧 Echo Locator</h2>';
+    day.listening.forEach(function(l, i){
+      var ans = (state.listAns && state.listAns[i]) || '';
+      var checked = state.listChecked && state.listChecked[i];
+      h += '<div class="listen-block">';
+      h += '<div class="row"><button class="btn red" data-list-play="' + i + '">🔊 Play</button><button class="btn dark" data-list-play="' + i + '" data-slow="1">🐢 Slow</button><span class="hint">💡 ' + esc(l.hint) + '</span></div>';
+      h += '<div class="listen-inrow"><input data-list-in="' + i + '" value="' + esc(ans) + '" placeholder="Type the hidden word..."' + (checked ? ' disabled' : '') + '>';
+      if (!checked) h += '<button class="listen-check" data-list-check="' + i + '" data-answer="' + esc(l.hiddenWord) + '">Check</button>';
+      h += '</div>';
+      if (checked) {
+        var good = String(ans).toLowerCase().trim() === l.hiddenWord.toLowerCase();
+        h += '<p class="listen-fb ' + (good ? 'good' : 'bad') + '">' + (good ? '✅ "' + esc(l.hiddenWord) + '"' : '❌ "' + esc(l.hiddenWord) + '"') + '</p>';
+      }
+      h += '</div>';
+    });
+    return h;
+  }
+
+  function dialogueTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:36px">🎭 Interrogation</h2>';
+    h += '<p class="dlg-scenario">Scenario: ' + esc(day.dialogue.scenario) + '</p>';
+    var charVoices = state.charVoices || {};
+    day.dialogue.characters.forEach(function(rawChar){
+      var ch = rawChar.trim();
+      h += '<div class="charvoice"><span class="nm">' + esc(ch) + ':</span><select data-charvoice="' + esc(ch) + '"><option value="">Default</option>' + voiceOptions() + '</select></div>';
+    });
+    var tIdx = state.dlgTurn && state.dlgTurn[day.dayNumber] !== undefined ? state.dlgTurn[day.dayNumber] : 0;
+    var turn = day.dialogue.turns[tIdx];
+    h += '<div class="dlg-box">';
+    h += '<p class="dlg-narr"><span>' + esc(turn.narrator) + '</span><button class="play" data-speak="' + esc(turn.narrator) + '">🔊</button></p>';
+    h += '<div class="dlg-q"><span class="who">' + esc(turn.character || 'Narrator') + ':</span><button class="play" data-speak="' + esc(turn.question) + '" data-char="' + esc((turn.character || 'Narrator').trim()) + '">🔊</button></div>';
+    h += '<p class="dlg-question">' + esc(turn.question) + '</p>';
+    var chosen = state.dlgChoice && state.dlgChoice[day.dayNumber] !== undefined ? state.dlgChoice[day.dayNumber] : undefined;
+    if (chosen === undefined) {
+      h += '<div class="dlg-opts">';
+      turn.options.forEach(function(opt, oi){
+        h += '<button class="dlg-opt" data-dlg-opt="' + oi + '" data-day="' + day.dayNumber + '">' + esc(opt.text) + '</button>';
+      });
+      h += '</div>';
+    } else {
+      var c = turn.options[chosen];
+      h += '<div class="dlg-result ' + c.outcome + '">';
+      h += '<h3 style="color:' + (c.outcome === 'survive' ? '#00ff88' : c.outcome === 'die' ? '#ff4444' : '#ffcc00') + '">' + (c.outcome === 'survive' ? '✅ SURVIVED!' : c.outcome === 'die' ? '💀 ELIMINATED!' : '⚠️ CLOSE CALL...') + '</h3>';
+      h += '<p>' + esc(c.response) + '</p></div>';
+      if (tIdx < day.dialogue.turns.length - 1) h += '<button class="dlg-next" data-dlg-next="' + day.dayNumber + '">Next Turn →</button>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function speakingTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:24px">🎤 ' + (day.speaking[0].mode === 'whisper' ? 'Whisper' : day.speaking[0].mode === 'shout' ? 'SHOUT' : 'Speak') + ' Challenge</h2>';
+    var idx = state.spkIdx && state.spkIdx[day.dayNumber] !== undefined ? state.spkIdx[day.dayNumber] : 0;
+    var ch = day.speaking[idx];
+    h += '<p style="color:#9ca3af;margin:0 0 16px">Read aloud. ' + ch.targetAccuracy + '% accuracy required.</p>';
+    h += '<div class="speak-words">';
+    var spoken = (state.spkResult && state.spkResult[day.dayNumber] && state.spkResult[day.dayNumber][idx]) ? state.spkResult[day.dayNumber][idx].toLowerCase().split(/\s+/) : [];
+    ch.text.split(/\s+/).forEach(function(w){
+      var cls = '';
+      if (state.spkResult && state.spkResult[day.dayNumber] && state.spkResult[day.dayNumber][idx]) cls = spoken.indexOf(w.toLowerCase()) >= 0 ? 'done' : 'wrong';
+      h += '<span class="karaoke-word ' + cls + '">' + esc(w) + '</span>';
+    });
+    h += '</div>';
+    h += '<div class="speak-row"><button class="mic-btn' + (state.spkListening ? ' live' : '') + '" data-act="spk-mic" data-day="' + day.dayNumber + '" data-idx="' + idx + '">' + (state.spkListening ? '⏹️ Stop' : '🎙️ Start Speaking') + '</button>';
+    h += '<button class="listen-first" data-speak="' + esc(ch.text) + '">🔊 Listen First</button></div>';
+    var acc = state.spkAcc && state.spkAcc[day.dayNumber] && state.spkAcc[day.dayNumber][idx];
+    if (acc !== undefined) {
+      var good = acc >= ch.targetAccuracy;
+      h += '<div class="speak-result ' + (good ? 'good' : 'bad') + '">';
+      h += '<span class="pct" style="color:' + (good ? '#00ff88' : '#ff4444') + '">' + (good ? '🎉' : '😰') + ' ' + acc + '%</span>';
+      if (state.spkResult && state.spkResult[day.dayNumber] && state.spkResult[day.dayNumber][idx]) h += '<p class="said">You said: "' + esc(state.spkResult[day.dayNumber][idx]) + '"</p>';
+      if (good) h += '<p class="clue">🔍 Clue: ' + esc(ch.clueOnSuccess) + '</p>';
+      h += '</div>';
+    }
+    if (day.speaking.length > 1) {
+      h += '<div class="speak-dots">';
+      day.speaking.forEach(function(_, i){ h += '<button class="' + (i === idx ? 'cur' : 'oth') + '" data-act="spk-dot" data-idx="' + i + '" data-day="' + day.dayNumber + '">' + (i + 1) + '</button>'; });
+      h += '</div>';
+    }
+    return h;
+  }
+
+  function writingTab(day){
+    var p = day.writing[0];
+    if (!p) return '';
+    var h = '<h2 class="lesson-title" style="font-size:24px">✍️ Writing Challenge</h2>';
+    h += '<div class="write-prompt"><p>' + esc(p.prompt) + '</p><div class="write-keys">Keywords: ';
+    var text = (state.writeText && state.writeText[day.dayNumber]) || '';
+    p.keywords.forEach(function(k){
+      h += '<span class="' + (text.toLowerCase().indexOf(k.toLowerCase()) >= 0 ? 'found' : '') + '">' + esc(k) + '</span>';
+    });
+    h += '</div></div>';
+    var wc = text.trim().split(/\s+/).filter(Boolean).length;
+    var submitted = state.writeDone && state.writeDone[day.dayNumber];
+    h += '<textarea class="write-ta" rows="6" data-write="' + day.dayNumber + '" placeholder="Write here..."' + (submitted ? ' disabled' : '') + '>' + esc(text) + '</textarea>';
+    h += '<div class="write-count ' + (wc >= p.minWords ? 'good' : '') + '">Words: ' + wc + '/' + p.minWords + '</div>';
+    if (!submitted) h += '<button class="write-submit" data-act="write-submit" data-day="' + day.dayNumber + '"' + (wc < p.minWords ? ' disabled' : '') + '>Submit ✅</button>';
+    else h += '<div class="write-done"><p class="ok">✅ Submitted!</p><p class="sample">' + esc(p.sampleAnswer) + '</p></div>';
+    return h;
+  }
+
+  function dictationTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:24px">📢 Dictation</h2>';
+    day.dictation.forEach(function(d, i){
+      var ans = (state.dictAns && state.dictAns[i]) || '';
+      var checked = state.dictChecked && state.dictChecked[i];
+      h += '<div class="dict-block">';
+      h += '<button class="play" data-dict-play="' + i + '" data-speed="' + d.speed + '">🔊 Play (' + d.speed + ')</button>';
+      h += '<textarea rows="2" data-dict-in="' + i + '" placeholder="Type what you hear..."' + (checked ? ' disabled' : '') + '>' + esc(ans) + '</textarea>';
+      if (!checked) h += '<button class="listen-check" data-dict-check="' + i + '" data-answer="' + esc(d.text) + '">Check</button>';
+      else {
+        var good = norm(ans) === norm(d.text);
+        h += '<p class="dict-fb ' + (good ? 'good' : 'bad') + '">' + (good ? '✅ Perfect!' : '❌ "' + esc(d.text) + '"') + '</p>';
+      }
+      h += '</div>';
+    });
+    return h;
+  }
+  function norm(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').trim(); }
+
+  function quizTab(day){
+    var h = '<h2 class="lesson-title" style="font-size:24px">❓ Quiz</h2>';
+    day.quiz.forEach(function(q, qi){
+      var picked = state.quizAns && state.quizAns[day.dayNumber] && state.quizAns[day.dayNumber][qi];
+      h += '<div class="quiz-block"><p class="q">' + esc(q.question) + '</p><div class="quiz-opts">';
+      q.options.forEach(function(opt, oi){
+        var cls = picked !== undefined && oi === q.correct ? ' right' : (picked === oi ? ' wrongpick' : '');
+        h += '<button class="quiz-opt' + cls + '" data-quiz="' + qi + '" data-oi="' + oi + '" data-day="' + day.dayNumber + '"' + (picked !== undefined ? ' disabled' : '') + '>' + esc(opt) + '</button>';
+      });
+      h += '</div>';
+      if (picked !== undefined) h += '<p class="q-exp">💡 ' + esc(q.explanation) + '</p>';
+      h += '</div>';
+    });
+    return h;
+  }
+
+  function bossTab(day){
+    var questions = day.bossBattle || [];
+    var qIdx = (state.bossQ && state.bossQ[day.dayNumber] !== undefined) ? state.bossQ[day.dayNumber] : 0;
+    var bossHP = (state.bossHP && state.bossHP[day.dayNumber] !== undefined) ? state.bossHP[day.dayNumber] : 100;
+    var score = (state.bossScore && state.bossScore[day.dayNumber] !== undefined) ? state.bossScore[day.dayNumber] : 0;
+    var gameOver = state.bossOver && state.bossOver[day.dayNumber];
+    var h = '';
+    if (gameOver) {
+      var won = bossHP <= 0;
+      h += '<div class="boss-end ' + (won ? 'win' : 'lose') + '"><div class="big">' + (won ? '🏆' : '💀') + '</div>';
+      h += '<h3 style="color:' + (won ? '#00ff88' : '#ff4444') + '">' + (won ? 'BOSS DEFEATED!' : 'BOSS SURVIVED') + '</h3>';
+      h += '<p>Score: ' + score + '/' + questions.length + '</p></div>';
+      return h;
+    }
+    var q = questions[qIdx];
+    if (!q) return '';
+    h += '<h2 class="lesson-title" style="font-size:24px">💀 BOSS BATTLE</h2>';
+    h += '<div class="boss-hp"><div class="row"><span>BOSS HP</span><span>' + Math.round(bossHP) + '%</span></div>';
+    h += '<div class="track"><div class="fill" style="width:' + bossHP + '%"></div></div></div>';
+    h += '<div class="boss-art"><div class="a ' + (bossHP < 30 ? 'animate-glitch' : bossHP < 60 ? 'animate-rotate' : 'animate-float-slow') + '" style="filter:drop-shadow(0 0 20px ' + fearColor() + ')">' + day.artifactEmoji + '</div></div>';
+    var timer = (state.bossTimer && state.bossTimer[day.dayNumber] !== undefined) ? state.bossTimer[day.dayNumber] : q.timeLimit;
+    var answered = state.bossAnswered && state.bossAnswered[day.dayNumber];
+    h += '<div class="boss-qrow"><span class="idx">Q' + (qIdx + 1) + '/' + questions.length + '</span><span class="timer' + (timer <= 3 ? ' warn' : '') + '">⏱️ ' + timer + 's</span></div>';
+    h += '<div class="boss-q"><p class="q">' + esc(q.question) + '</p><div class="opts">';
+    q.options.forEach(function(opt, oi){
+      var cls = answered && oi === q.correct ? ' right' : answered ? ' dim' : '';
+      h += '<button class="boss-opt' + cls + '" data-boss-opt="' + oi + '" data-day="' + day.dayNumber + '"' + (answered ? ' disabled' : '') + '>' + esc(opt) + '</button>';
+    });
+    h += '</div></div>';
+    return h;
+  }
+
+  function cluesTab(day){
+    var clues = day.dragDropClues || [];
+    var matched = state.clueMatched && state.clueMatched[day.dayNumber] ? state.clueMatched[day.dayNumber] : [];
+    var sel = state.clueSel && state.clueSel[day.dayNumber] !== undefined ? state.clueSel[day.dayNumber] : null;
+    var h = '<h2 class="lesson-title" style="font-size:24px">🧩 Connect the Clues</h2><div class="clues-grid">';
+    h += '<div class="clues-col"><h3>Clues</h3>';
+    clues.forEach(function(c, i){
+      h += '<button class="clue-item' + (matched.indexOf(i) >= 0 ? ' matched' : sel === i ? ' sel' : '') + '" data-clue="' + i + '" data-day="' + day.dayNumber + '">' + esc(c.clue) + '</button>';
+    });
+    h += '</div><div class="clues-col"><h3>Meanings</h3>';
+    clues.forEach(function(c, i){
+      var isMatched = matched.some(function(mi){ return clues[mi].match === c.match; });
+      h += '<button class="clue-item' + (isMatched ? ' matched' : '') + '" data-match="' + i + '" data-day="' + day.dayNumber + '">' + esc(c.match) + '</button>';
+    });
+    h += '</div></div>';
+    if (matched.length === clues.length) h += '<div class="clues-win"><p>🎉 All clues matched!</p></div>';
+    return h;
+  }
+
+  /* ── render ── */
+  function render(){
+    var root = $('#app');
+    if (!root) return;
+    root.className = 'app' + (state.isShaking ? ' animate-shake' : '');
+    var html = '';
+    html += '<div class="bg-layer"><img src="' + esc((state.screen === 'day' && dayByNum(state.currentDay)) ? dayByNum(state.currentDay).backgroundImage : (THEME.backgroundImages[0] || '')) + '" alt="" onerror="this.remove()"><div class="shade"></div></div>';
+    html += '<div class="fog-layer"></div>';
+    for (var i = 0; i < 8; i++) html += '<div class="ember-particle" style="left:' + (Math.random() * 100) + '%;animation-delay:' + (Math.random() * 4) + 's;animation-duration:' + (3 + Math.random() * 3) + 's"></div>';
+    html += state.screen === 'day' ? dayHTML() : hubHTML();
+    html += '<div class="blood-overlay" id="fx-blood" style="display:none"></div>';
+    html += '<div class="fear-border" id="fx-fearborder"></div>';
+    html += '<div class="jumpscare" id="fx-jumpscare" style="display:none"><div class="face">' + ['🐦\u200d⬛', '🕷️', '💀', '👻', '🤡', '👁️'][Math.floor(Math.random() * 6)] + '</div></div>';
+    html += '<div class="toast" id="fx-toast" style="display:none"></div>';
+    html += '<div class="modal-back" id="fx-modal" style="display:none"><div class="modal-box"><div class="big">🔐</div><h2>Enter Unlock Code</h2><p class="hint" id="fx-code-hint"></p><input id="fx-code-input" placeholder="Type the code..." /><div class="modal-actions"><button class="cancel" data-act="modal-cancel">Cancel</button><button class="unlock" data-act="modal-unlock">🔓 Unlock</button></div></div></div>';
+    html += '<div class="mobilenav"></div>';
+    root.innerHTML = html;
+    bind();
+  }
+
+  function bind(){
+    var root = $('#app');
+    $$('[data-act]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var act = b.getAttribute('data-act');
+        if (act === 'back') { if (window.location.hash === '#/') {} else { window.location.hash = '#/'; } }
+        else if (act === 'hub') { stopSpeaking(); state.screen = 'game'; render(); }
+        else if (act === 'settings') { toast('⚙️ Voice & narration controls are on each screen — see the speaker buttons.', false); }
+        else if (act === 'narr-intro') { var d = dayByNum(state.currentDay); if (d) speakText(d.narratorIntro); }
+        else if (act === 'sec-read') { var dd = dayByNum(state.currentDay); var sec = dd.lesson.sections[+b.getAttribute('data-idx')]; if (sec) speakText(sec.content); }
+        else if (act === 'read-aloud') { var d2 = dayByNum(state.currentDay); if (d2) speakText(d2.reading.text); }
+        else if (act === 'spk-mic') { handleMic(b); }
+        else if (act === 'spk-dot') { var day = +b.getAttribute('data-day'), idx = +b.getAttribute('data-idx'); state.spkIdx = state.spkIdx || {}; state.spkIdx[day] = idx; state.spkResult = state.spkResult || {}; state.spkResult[day] = state.spkResult[day] || {}; delete state.spkResult[day][idx]; state.spkAcc = state.spkAcc || {}; state.spkAcc[day] = state.spkAcc[day] || {}; delete state.spkAcc[day][idx]; render(); }
+        else if (act === 'write-submit') { var wd = +b.getAttribute('data-day'); state.writeDone = state.writeDone || {}; state.writeDone[wd] = true; playSuccess(); state.points += 30; save(); render(); }
+        else if (act === 'complete') { var cd = dayByNum(state.currentDay); state.completedDays.push(cd.dayNumber); if (state.badges.indexOf('day' + cd.dayNumber + '_complete') < 0) state.badges.push('day' + cd.dayNumber + '_complete'); state.mysteryBoxes++; playSuccess(); state.screen = 'game'; save(); render(); }
+        else if (act === 'modal-cancel') { closeCodeModal(); }
+        else if (act === 'modal-unlock') { submitCode(); }
+      });
+    });
+    $$('.day-card', root).forEach(function(c){
+      c.addEventListener('click', function(){ handleDayClick(+c.getAttribute('data-day')); });
+    });
+    $$('.tab', root).forEach(function(t){
+      t.addEventListener('click', function(){ state.tab = t.getAttribute('data-tab'); render(); });
+    });
+    $$('.vocab-card', root).forEach(function(c){
+      c.addEventListener('click', function(){
+        var fc = $('.flip-content', c);
+        if (fc) fc.style.display = fc.style.display === 'none' ? 'block' : 'none';
+        c.className = 'vocab-card' + (fc && fc.style.display === 'block' ? ' flipped' : '');
+      });
+    });
+    $$('[data-speak]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var txt = b.getAttribute('data-speak'), ch = b.getAttribute('data-char');
+        var uri = ch ? ((state.charVoices || {})[ch] || '') : '';
+        speakText(txt, uri);
+      });
+    });
+    $$('[data-speak-line]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var ch = b.getAttribute('data-char');
+        speakText(b.getAttribute('data-speak-line'), (state.charVoices || {})[ch] || '');
+      });
+    });
+    $$('[data-charvoice]', root).forEach(function(sel){
+      sel.addEventListener('change', function(){
+        state.charVoices = state.charVoices || {};
+        state.charVoices[sel.getAttribute('data-charvoice')] = sel.value;
+        save();
+      });
+      var ch = sel.getAttribute('data-charvoice'), cv = (state.charVoices || {})[ch];
+      if (cv) sel.value = cv;
+    });
+    $$('[data-gram-opt]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var key = b.getAttribute('data-gram-opt'), val = b.getAttribute('data-val');
+        var ex = grammarExercise(key);
+        state.gramAns = state.gramAns || {}; state.gramAns[key] = val;
+        state.gramChecked = state.gramChecked || {}; state.gramChecked[key] = true;
+        if (String(val).toLowerCase().trim() === String(ex.answer).toLowerCase().trim()) { playSuccess(); state.points += 10; }
+        else { if (Math.random() > 0.8) { playJumpScare(); triggerJumpScare(); } else { playWrong(); triggerShake(); } state.fearMeter = Math.min(100, state.fearMeter + 5); }
+        save(); render();
+      });
+    });
+    $$('[data-gram-check]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var key = b.getAttribute('data-gram-check');
+        var inp = $('input[data-gram-in="' + key + '"]');
+        var val = inp ? inp.value : '';
+        var ex = grammarExercise(key);
+        state.gramAns = state.gramAns || {}; state.gramAns[key] = val;
+        state.gramChecked = state.gramChecked || {}; state.gramChecked[key] = true;
+        if (String(val).toLowerCase().trim() === String(ex.answer).toLowerCase().trim()) { playSuccess(); state.points += 10; }
+        else { if (Math.random() > 0.8) { playJumpScare(); triggerJumpScare(); } else { playWrong(); triggerShake(); } state.fearMeter = Math.min(100, state.fearMeter + 5); }
+        save(); render();
+      });
+    });
+    $$('[data-cq]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var day = +b.getAttribute('data-day'), qi = +b.getAttribute('data-cq'), oi = +b.getAttribute('data-oi');
+        var d = dayByNum(day); if (!d) return;
+        var q = d.reading.comprehensionQuestions[qi];
+        state.cqAns = state.cqAns || {}; state.cqAns[day] = state.cqAns[day] || {};
+        state.cqAns[day][qi] = oi;
+        if (oi === q.correct) { playSuccess(); state.points += 10; }
+        else { if (Math.random() > 0.8) { playJumpScare(); triggerJumpScare(); } else { playWrong(); triggerShake(); } state.fearMeter = Math.min(100, state.fearMeter + 5); }
+        save(); render();
+      });
+    });
+    $$('.rword', root).forEach(function(w){
+      w.addEventListener('click', function(){
+        var idx = +w.getAttribute('data-word');
+        var d = dayByNum(state.currentDay); if (!d) return;
+        if (w.getAttribute('data-glitch') === '1') {
+          state.foundGlitches = state.foundGlitches || [];
+          if (!state.foundGlitches.some(function(f){ return f.day === state.currentDay && f.idx === idx; })) {
+            state.foundGlitches.push({ day: state.currentDay, idx: idx });
+            playSuccess(); state.points += 15; state.fearMeter = Math.max(0, state.fearMeter - 2);
+          }
+        } else {
+          if (Math.random() > 0.7) { playJumpScare(); triggerJumpScare(); } else { playWrong(); triggerShake(); }
+          state.fearMeter = Math.min(100, state.fearMeter + 5);
+        }
+        save(); render();
+      });
+    });
+    $$('[data-list-play]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var i = +b.getAttribute('data-list-play'), d = dayByNum(state.currentDay);
+        if (!d) return;
+        speakText(d.listening[i].text, '', b.getAttribute('data-slow') ? 0.5 : 0.8);
+      });
+    });
+    $$('[data-list-check]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var i = +b.getAttribute('data-list-check'), d = dayByNum(state.currentDay);
+        if (!d) return;
+        var inp = $('input[data-list-in="' + i + '"]');
+        var v = inp ? inp.value : '';
+        state.listAns = state.listAns || {}; state.listAns[i] = v;
+        state.listChecked = state.listChecked || {}; state.listChecked[i] = true;
+        if (String(v).toLowerCase().trim() === d.listening[i].hiddenWord.toLowerCase()) {
+          playSuccess(); state.points += 20; state.cluesCollected.push(d.listening[i].hiddenWord);
+        } else {
+          if (Math.random() > 0.6) { playJumpScare(); triggerJumpScare(); } else { playScream(); triggerBlood(); triggerShake(); }
+          state.fearMeter = Math.min(100, state.fearMeter + 10);
+        }
+        save(); render();
+      });
+    });
+    $$('[data-dict-play]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var i = +b.getAttribute('data-dict-play'), d = dayByNum(state.currentDay);
+        if (!d) return;
+        var sp = b.getAttribute('data-speed');
+        speakText(d.dictation[i].text, '', sp === 'slow' ? 0.6 : sp === 'fast' ? 1.3 : 0.9);
+      });
+    });
+    $$('[data-dict-check]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var i = +b.getAttribute('data-dict-check'), d = dayByNum(state.currentDay);
+        if (!d) return;
+        var ta = $('textarea[data-dict-in="' + i + '"]');
+        var v = ta ? ta.value : '';
+        state.dictAns = state.dictAns || {}; state.dictAns[i] = v;
+        state.dictChecked = state.dictChecked || {}; state.dictChecked[i] = true;
+        if (norm(v) === norm(d.dictation[i].text)) { playSuccess(); state.points += 20; }
+        else { playWrong(); state.fearMeter = Math.min(100, state.fearMeter + 5); }
+        save(); render();
+      });
+    });
+    $$('[data-dlg-opt]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var day = +b.getAttribute('data-day'), oi = +b.getAttribute('data-dlg-opt');
+        var d = dayByNum(day); if (!d) return;
+        var tIdx = (state.dlgTurn && state.dlgTurn[day] !== undefined) ? state.dlgTurn[day] : 0;
+        var turn = d.dialogue.turns[tIdx], opt = turn.options[oi];
+        state.dlgChoice = state.dlgChoice || {}; state.dlgChoice[day] = oi;
+        state.points += opt.points;
+        if (opt.outcome === 'survive') { playSuccess(); state.fearMeter = Math.max(0, state.fearMeter - 5); }
+        else if (opt.outcome === 'die') {
+          if (Math.random() > 0.5) { playJumpScare(); triggerJumpScare(); } else { playScream(); playBreathing(); triggerBlood(); triggerShake(); }
+          state.fearMeter = Math.min(100, state.fearMeter + 20);
+        } else { playHeartbeat(100); state.fearMeter = Math.min(100, state.fearMeter + 5); }
+        speakText(opt.response, (state.charVoices || {})[(turn.character || 'Narrator').trim()] || '');
+        save(); render();
+      });
+    });
+    $$('[data-dlg-next]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var day = +b.getAttribute('data-day');
+        state.dlgTurn = state.dlgTurn || {};
+        var tIdx = (state.dlgTurn[day] !== undefined ? state.dlgTurn[day] : 0) + 1;
+        state.dlgTurn[day] = tIdx;
+        state.dlgChoice = state.dlgChoice || {}; delete state.dlgChoice[day];
+        render();
+      });
+    });
+    $$('[data-quiz]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var day = +b.getAttribute('data-day'), qi = +b.getAttribute('data-quiz'), oi = +b.getAttribute('data-oi');
+        var d = dayByNum(day); if (!d) return;
+        var q = d.quiz[qi];
+        state.quizAns = state.quizAns || {}; state.quizAns[day] = state.quizAns[day] || {};
+        state.quizAns[day][qi] = oi;
+        if (oi === q.correct) { playSuccess(); state.points += 15; if (q.codeFragment && state.cluesCollected.indexOf(q.codeFragment) < 0) state.cluesCollected.push(q.codeFragment); }
+        else { playScream(); triggerBlood(); triggerShake(); playBreathing(); state.fearMeter = Math.min(100, state.fearMeter + 10); }
+        save(); render();
+      });
+    });
+    $$('[data-boss-opt]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var day = +b.getAttribute('data-day'), oi = +b.getAttribute('data-boss-opt');
+        var d = dayByNum(day); if (!d) return;
+        if (state.bossAnswered && state.bossAnswered[day]) return;
+        var questions = d.bossBattle || [];
+        var qIdx = (state.bossQ && state.bossQ[day] !== undefined) ? state.bossQ[day] : 0;
+        var q = questions[qIdx];
+        state.bossAnswered = state.bossAnswered || {}; state.bossAnswered[day] = true;
+        if (state.bossTimer && state.bossTimer[day] !== undefined) clearInterval(state.bossTimer[day]._iv);
+        if (oi === q.correct) {
+          playSuccess();
+          state.bossScore = state.bossScore || {}; state.bossScore[day] = (state.bossScore[day] || 0) + 1;
+          state.bossHP = state.bossHP || {}; state.bossHP[day] = Math.max(0, (state.bossHP[day] !== undefined ? state.bossHP[day] : 100) - (100 / questions.length));
+          state.points += 20; state.fearMeter = Math.max(0, state.fearMeter - 3);
+        } else {
+          playScream(); playBreathing(); triggerBlood(); triggerShake();
+          state.fearMeter = Math.min(100, state.fearMeter + 15);
+        }
+        save(); render();
+        setTimeout(function(){ bossNext(day); }, 1500);
+      });
+    });
+    $$('[data-clue]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var day = +b.getAttribute('data-day'), i = +b.getAttribute('data-clue');
+        state.clueMatched = state.clueMatched || {};
+        if ((state.clueMatched[day] || []).indexOf(i) >= 0) return;
+        state.clueSel = state.clueSel || {}; state.clueSel[day] = i;
+        render();
+      });
+    });
+    $$('[data-match]', root).forEach(function(b){
+      b.addEventListener('click', function(){
+        var day = +b.getAttribute('data-day'), i = +b.getAttribute('data-match');
+        var d = dayByNum(day); if (!d) return;
+        var clues = d.dragDropClues || [];
+        var sel = (state.clueSel && state.clueSel[day] !== undefined) ? state.clueSel[day] : null;
+        if (sel === null) return;
+        state.clueMatched = state.clueMatched || {}; state.clueMatched[day] = state.clueMatched[day] || [];
+        if (clues[sel].match === clues[i].match) {
+          if (state.clueMatched[day].indexOf(sel) < 0) state.clueMatched[day].push(sel);
+          playSuccess(); state.points += 15;
+        } else { playWrong(); triggerShake(); state.fearMeter = Math.min(100, state.fearMeter + 5); }
+        state.clueSel = state.clueSel || {}; delete state.clueSel[day];
+        save(); render();
+      });
+    });
+    $$('[data-write]', root).forEach(function(ta){
+      ta.addEventListener('input', function(){
+        state.writeText = state.writeText || {};
+        state.writeText[+ta.getAttribute('data-write')] = ta.value;
+        save();
+        var btn = $('[data-act="write-submit"][data-day="' + ta.getAttribute('data-write') + '"]');
+        var wc = ta.value.trim().split(/\s+/).filter(Boolean).length;
+        var d = dayByNum(+ta.getAttribute('data-write'));
+        if (btn && d && d.writing[0]) btn.disabled = wc < d.writing[0].minWords;
+        var cnt = $('.write-count');
+        if (cnt) { cnt.textContent = 'Words: ' + wc + '/' + (d && d.writing[0] ? d.writing[0].minWords : 0); cnt.className = 'write-count' + (d && d.writing[0] && wc >= d.writing[0].minWords ? ' good' : ''); }
+      });
+    });
+    var modalInput = $('#fx-code-input');
+    if (modalInput) modalInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') submitCode(); });
+    var modalBack = $('#fx-modal');
+    if (modalBack) modalBack.addEventListener('click', function(e){ if (e.target === modalBack) closeCodeModal(); });
+    renderFx();
+  }
+
+  function grammarExercise(key){
+    var d = dayByNum(state.currentDay); if (!d) return null;
+    var parts = key.split('-');
+    var g = d.grammar[+parts[0]];
+    return g ? g.exercises[+parts[1]] : null;
+  }
+
+  function handleMic(b){
+    var day = +b.getAttribute('data-day'), idx = +b.getAttribute('data-idx');
+    var d = dayByNum(day); if (!d) return;
+    var ch = d.speaking[idx];
+    if (state.spkListening) {
+      if (state.spkStopFn) { state.spkStopFn(); state.spkStopFn = null; }
+      state.spkListening = false; render(); return;
+    }
+    var stop = startSpeechRecognition(function(text){
+      state.spkListening = false;
+      state.spkResult = state.spkResult || {}; state.spkResult[day] = state.spkResult[day] || {};
+      state.spkResult[day][idx] = text;
+      var target = ch.text.toLowerCase().split(/\s+/);
+      var spoken = text.toLowerCase().split(/\s+/);
+      var matches = 0;
+      target.forEach(function(w){ if (spoken.indexOf(w) >= 0) matches++; });
+      var acc = Math.round((matches / target.length) * 100);
+      state.spkAcc = state.spkAcc || {}; state.spkAcc[day] = state.spkAcc[day] || {};
+      state.spkAcc[day][idx] = acc;
+      if (acc >= ch.targetAccuracy) { playSuccess(); state.points += 25; state.cluesCollected.push(ch.clueOnSuccess); }
+      else { playWrong(); state.fearMeter = Math.min(100, state.fearMeter + 5); }
+      save(); render();
+    }, function(){ state.spkListening = false; render(); });
+    if (!stop) { toast('🎤 Speech recognition not supported here — read aloud and check with your tutor.', true); return; }
+    state.spkStopFn = stop;
+    state.spkListening = true;
+    render();
+  }
+
+  function bossNext(day){
+    var d = dayByNum(day); if (!d) return;
+    var questions = d.bossBattle || [];
+    var qIdx = (state.bossQ && state.bossQ[day] !== undefined) ? state.bossQ[day] : 0;
+    state.bossQ = state.bossQ || {};
+    if (qIdx >= questions.length - 1) {
+      state.bossOver = state.bossOver || {}; state.bossOver[day] = true;
+      save(); render(); return;
+    }
+    state.bossQ[day] = qIdx + 1;
+    state.bossAnswered = state.bossAnswered || {}; delete state.bossAnswered[day];
+    state.bossTimer = state.bossTimer || {};
+    var nextQ = questions[state.bossQ[day]];
+    state.bossTimer[day] = nextQ.timeLimit;
+    save(); render();
+    startBossTimer(day);
+  }
+
+  function startBossTimer(day){
+    var d = dayByNum(day); if (!d) return;
+    var questions = d.bossBattle || [];
+    var qIdx = (state.bossQ && state.bossQ[day] !== undefined) ? state.bossQ[day] : 0;
+    var q = questions[qIdx];
+    if (!q) return;
+    state.bossTimer = state.bossTimer || {};
+    state.bossTimer[day] = q.timeLimit;
+    var iv = setInterval(function(){
+      if (state.bossOver && state.bossOver[day]) { clearInterval(iv); return; }
+      if (state.bossAnswered && state.bossAnswered[day]) { clearInterval(iv); return; }
+      state.bossTimer[day]--;
+      var tEl = $('.boss-qrow .timer');
+      if (tEl) { tEl.textContent = '⏱️ ' + state.bossTimer[day] + 's'; tEl.className = 'timer' + (state.bossTimer[day] <= 3 ? ' warn' : ''); }
+      if (state.bossTimer[day] <= 0) {
+        clearInterval(iv);
+        playScream(); triggerShake(); state.fearMeter = Math.min(100, state.fearMeter + 10);
+        state.bossAnswered = state.bossAnswered || {}; state.bossAnswered[day] = true;
+        save(); render();
+        setTimeout(function(){ bossNext(day); }, 1500);
+      }
+    }, 1000);
+    state.bossTimer[day]._iv = iv;
+  }
+
+  /* ── boot ── */
+  function boot(){
+    if (!THEME) { document.body.innerHTML = '<div style="color:#fff;padding:40px;text-align:center;font-family:sans-serif">No gamified challenge data found.</div>'; return; }
+    document.body.innerHTML = '<div id="app" class="app"></div>';
+    // ensure a startDate so date gating behaves like the React version with a fresh theme
+    if (!THEME.startDate) THEME.startDate = new Date().toISOString().slice(0, 10);
+    // resume any in-flight boss timer
+    if (state.screen === 'day') {
+      var d = dayByNum(state.currentDay);
+      if (d && d.bossBattle && state.tab === 'boss' && !(state.bossOver && state.bossOver[state.currentDay]) && !(state.bossAnswered && state.bossAnswered[state.currentDay])) {
+        startBossTimer(state.currentDay);
+      }
+    }
+    playHorrorDrone(3);
+    render();
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

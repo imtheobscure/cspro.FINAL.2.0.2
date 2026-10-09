@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Around Town — Directions & Places • LinguaCat-style Game</title>
+<style>
+:root{--duo-green:#58CC02;--duo-green-2:#46a302;--duo-blue:#1CB0F6;--duo-red:#FF4B4B;--duo-yellow:#FFC800;--duo-orange:#FF9600;--ink:#3c3c3c;--line:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:linear-gradient(165deg,#edf9e8 0%,#e9f3ff 40%,#f5ecff 75%,#fdeef6 100%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Nunito',sans-serif;color:var(--ink)}
+#lav2-root{max-width:1200px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:rgba(255,255,255,.72)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.hud{background:#fff;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:30;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 14px rgba(0,0,0,.06)}
+.hud-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.hud-cat{font-size:30px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.12))}
+.hud-title{display:flex;flex-direction:column;min-width:0;max-width:220px}
+.hud-title .ht-main{font-weight:900;font-size:15px;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-title .ht-sub{font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xp-wrap{flex:1;min-width:90px;max-width:230px}
+.xp-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:900;color:#6b7280}
+.xp-bar{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:3px}
+.xp-fill{height:100%;background:linear-gradient(90deg,#58CC02,#84e026);border-radius:99px;transition:width .4s cubic-bezier(.2,1.4,.4,1);width:0}
+.hud-hearts{font-size:15px;white-space:nowrap}
+.hud-pill{display:flex;align-items:center;gap:5px;font-weight:900;font-size:13px;padding:4px 12px;border-radius:99px;border:2px solid transparent}
+.pill-blue{background:#e6f6ff;color:#1CB0F6;border-color:#bae6fd}
+.pill-orange{background:#fff3e0;color:#ff9600;border-color:#ffe0b2}
+.hud-gear{font-size:19px;color:#9ca3af;background:#f3f4f6;border-radius:99px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.hud-gear:hover{background:#e5e7eb;color:#374151}
+.chips{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.8);border-bottom:1px solid var(--line);flex-wrap:wrap;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:99px;font-size:12px;font-weight:900;white-space:nowrap;color:#9ca3af;background:#f3f4f6;border:2px solid transparent;transition:all .15s}
+.chip:hover{border-color:#58CC02;color:#58CC02}
+.chip.active{color:#fff;border-color:rgba(255,255,255,.35);box-shadow:0 3px 0 rgba(0,0,0,.2);transform:translateY(-1px)}
+.chip.done{color:#4b5563;background:#e5e7eb}
+.main{flex:1;display:flex;min-height:0}
+.main-content{flex:1;overflow-y:auto;min-width:0;scrollbar-width:thin}
+.sidebar{display:none;width:300px;border-left:2px solid var(--line);background:#fff;overflow-y:auto;padding:14px}
+@media (min-width:1100px){.sidebar{display:flex;flex-direction:column}.mobile-nav{display:none!important}}
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--line);display:flex;z-index:25;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+.mobile-nav button{flex:1;padding:9px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:800;color:#9ca3af;min-height:58px;border-top:3px solid transparent}
+.mobile-nav button.on{color:#58CC02;border-top-color:#58CC02}
+.mobile-nav .mnav-ico{font-size:19px}
+/* slides */
+.slides-head{background:#58CC02;color:#fff;font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:.06em;padding:12px 20px;display:flex;align-items:center;gap:8px}
+.slide-dots{display:flex;gap:6px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line)}
+.slide-dot{flex:1;height:10px;border-radius:99px;background:#e5e7eb;transition:background .3s}
+.slide-dot.on{background:var(--sect,#58CC02);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.slides-body{padding:20px;overflow-y:auto;max-width:760px;margin:0 auto;width:100%}
+.slide-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.slide-num{color:#fff;font-size:12px;font-weight:900;padding:4px 12px;border-radius:99px;background:var(--sect,#58CC02);box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.slide-read{color:#6b7280;font-weight:800;font-size:13px;background:#f3f4f6;border-radius:99px;padding:7px 14px;transition:all .15s}
+.slide-read:hover{background:#e5e7eb;color:#374151}
+.slide-title{color:#fff;font-weight:900;font-size:clamp(20px,5vw,26px);padding:22px;border-radius:24px;background:linear-gradient(135deg,var(--sect,#58CC02),var(--sect2,#58CC02cc));line-height:1.35;box-shadow:0 10px 26px -10px var(--sect,#58CC02);display:flex;align-items:flex-start;gap:12px}
+.slide-title:before{content:'📘';font-size:.9em;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.slide-body{background:#fff;border:2px solid #f3f4f6;border-radius:18px;padding:18px;color:#4b5563;line-height:1.7;font-size:15px;margin-top:16px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.slide-example{background:#fff;border-left:6px solid var(--sect,#58CC02);border-radius:0 16px 16px 0;padding:14px 16px;color:#374151;font-style:italic;font-size:14px;margin-top:16px}
+.slide-mode{display:flex;gap:10px;margin-top:16px}
+.slide-mode div{flex:1;background:#fff;border:2px solid var(--line);border-radius:14px;text-align:center;padding:12px 8px;font-size:11px;font-weight:800;color:#6b7280}
+.slide-nav{display:flex;gap:10px;padding:14px 20px;background:#fff;border-top:1px solid var(--line);max-width:760px;margin:0 auto;width:100%}
+.btn{font-weight:900;border-radius:16px;padding:14px 18px;font-size:15px;transition:transform .08s,filter .15s;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:#58CC02;color:#fff;box-shadow:0 4px 0 #46a302}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-ghost{background:#f3f4f6;color:#6b7280}
+.btn-blue{background:#1CB0F6;color:#fff;box-shadow:0 4px 0 #17a0e0}
+.btn-red{background:#FF4B4B;color:#fff;box-shadow:0 4px 0 #c73a3a}
+/* activity */
+.act-wrap{padding:16px;max-width:760px;margin:0 auto;width:100%}
+.act-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.act-skill{color:#fff;font-size:11px;font-weight:900;padding:5px 12px;border-radius:99px}
+.act-mode{font-size:11px;font-weight:800;padding:4px 10px;border-radius:99px}
+.mode-class{background:#dbeafe;color:#1d4ed8}
+.mode-home{background:#f3e8ff;color:#7e22ce}
+.act-title{font-size:19px;font-weight:900;margin-bottom:4px}
+.act-sub{font-size:12px;color:#9ca3af;font-weight:700}
+.progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:10px 0 16px}
+.progress-fill{height:100%;border-radius:99px;transition:width .4s}
+.timer{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.timer-track{flex:1;height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden}
+.timer-fill{height:100%;transition:width .3s,background .3s}
+.timer-num{font-weight:900;min-width:36px;text-align:right}
+.cat-msg{display:flex;align-items:center;gap:10px;background:#58cc0210;border:2px solid #58cc0233;border-radius:16px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:700;color:#374151;animation:popIn .25s}
+@keyframes popIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.card{background:#fff;border:2px solid #f3f4f6;border-radius:26px;padding:18px;box-shadow:0 4px 18px rgba(0,0,0,.05)}
+.q{font-size:16px;font-weight:800;line-height:1.45;margin-bottom:14px}
+.ctx{background:#eff6ff;border:1px solid #dbeafe;border-radius:14px;padding:12px;font-size:13px;color:#374151;line-height:1.6;margin-bottom:14px}
+.ctx b{color:#2563eb;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.audio-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;background:#e6f6ff;border:2px solid #7dd3fc;color:#0284c7;font-weight:800;border-radius:14px;margin-bottom:14px;font-size:14px}
+.option{display:block;width:100%;text-align:left;padding:15px;border-radius:16px;border:2px solid #e5e7eb;background:#fff;font-weight:700;font-size:14px;color:#374151;margin-bottom:10px;transition:all .15s;min-height:52px}
+.option:hover{border-color:#58CC02;background:#f0fdf4;box-shadow:0 3px 0 rgba(88,204,2,.25);transform:translateY(-1px)}
+.option.ok{background:#f0fdf4;border-color:#58CC02;color:#166534}
+.option.bad{background:#fef2f2;border-color:#f87171;color:#b91c1c}
+.option.dim{background:#f9fafb;border-color:#e5e7eb;color:#9ca3af}
+.fb{border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.55;margin-top:12px;animation:popIn .25s}
+.fb-ok{background:#f0fdf4;border:2px solid #bbf7d0;color:#166534}
+.fb-bad{background:#fef2f2;border:2px solid #fecaca;color:#b91c1c}
+.fb-ok{background:#f0fdf4;border:2px solid #bbf7d0;color:#166534}
+.fb-bad{background:#fef2f2;border:2px solid #fecaca;color:#b91c1c}
+.fb-mid{background:#fff7ed;border:2px solid #fed7aa;color:#9a3412}
+.fb-mid{background:#fff7ed;border:2px solid #fed7aa;color:#9a3412}
+.fb-ok{background:#f0fdf4;border:2px solid #bbf7d0;color:#166534}
+.fb-bad{background:#fef2f2;border:2px solid #fecaca;color:#b91c1c}
+.fb-mid{background:#fff7ed;border:2px solid #fed7aa;color:#9a3412}
+/* matching */
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mcol{display:flex;flex-direction:column;gap:8px}
+.mitem{border:2px solid #e5e7eb;border-radius:14px;padding:12px;font-size:13px;font-weight:700;background:#f9fafb;color:#4b5563;min-height:52px;display:flex;align-items:center;gap:8px;transition:all .15s}
+.mitem{border:2px solid #e5e7eb}
+.mitem.sel{background:#58CC02;border-color:#46a302;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.mitem.done{background:#f0fdf4;border-color:#86efac;color:#166534;opacity:.75}
+.mitem.wrong{background:#fef2f2;border-color:#f87171;color:#b91c1c;animation:shake .3s}
+.mitem.speaker{font-size:16px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* cloze */
+.cloze-box{background:#f9fafb;border:2px solid #e5e7eb;border-radius:16px;padding:16px;line-height:2.2;font-size:15px;font-weight:600;color:#374151}
+.gap-input{border:none;border-bottom:3px solid #9ca3af;background:transparent;text-align:center;font-weight:900;font-size:15px;color:#374151;width:120px;max-width:100%;outline:none;padding:2px}
+.gap-input{outline:none}
+.gap-input{outline:none}
+.gap-input{outline:none}
+.gap-input:focus{border-bottom-color:#58CC02}
+.gap-input.ok{border-bottom-color:#22c55e;background:#f0fdf4;color:#16a34a}
+.gap-input.bad{border-bottom-color:#ef4444;background:#fef2f2;color:#dc2626}
+.gap-correct{color:#16a34a;font-weight:900;font-size:13px}
+.gap-correct{color:#16a34a}
+/* scramble */
+.scramble-zone{background:#f9fafb;border:2px dashed #d1d5db;border-radius:14px;padding:12px;minheight:72px;display:flex;flexwrap:wrap;gap:8px;align-items:center}
+.scramble-zone{background:#f9fafb;border:2px dashed #d1d5db;border-radius:14px;padding::12px;min-height:72px;display:flex;flex-wrap:wrap;gap::8px;align-items:center}
+.scram-zone{background:#f9fafb;border:2px dashed #d1d5db;border-radius:14px;padding:12px;min-height:72px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.scram-zone{background:#f9fafb;border:2px dashed #d1d5db;border-radius:14px;padding:12px;min-height:72px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.scram-ndata{color:#9ca3af;font-size:13px;font-weight:700;font-style:italic}
+.chunk-block{background:#1CB0F6;border:2px solid #17a0e0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.12);cursor:pointer}
+.chunk-block{background:#1CB0F6;border:2px solid #17a0e0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.12);cursor:pointer}
+.chunk-block{background:#1CB0F6;border:2px solid #17a0e0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.12);cursor:pointer}
+.chunk-avail{background:#fff;border:2px solid #d1d5db;color:#374151;border-radius:12px;padding:10px 14px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 1px 0 #e5e7eb}
+.chunk-avail:hover{border-color:#58CC02;background:#f0fdf4}
+/* dictation */
+.dict-note{font-size:12px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;text-align:center;margin-bottom:12px}
+.dict-note{font-size:12px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;text-align:center;margin-bottom:12px}
+.dict-note{font-size:12px}
+.dict-btn-row{display:flex;gap:10px;margin-bottom:12px}
+.dict-btn-row{display:flex;gap:10px;margin-bottom:12px}
+.dict-row{display:flex;gap:10px;margin-bottom:12px}
+.dict-row{display:flex;gap:10px;margin-bottom:12px}
+.dict-ta{width:100%;border:2px solid #e5e7eb;border-radius:14px;padding:12px;font-family:inherit;font-size:14px;resize:none;min-height:80px}
+.dict-ta{width:100%;border:2px solid #e5e7eb;border-radius:14px;padding:12px;font-family:inherit;font-size:14px;resize:none;min-height:80px}
+.dict-ta.ok{border-color:#4ade80;background:#f0fdf4}
+.dict-ta.bad{border-color:#f87171;background:#fef2f2}
+.dict-hl{line-height:2;font-size:14px}
+.dict-hl{line-height:2;font-size:14px}
+.dict-hl{line-height:2;font-size:14px}
+.dict-hl .w-ok{color:#16a34a;font-weight:800}
+.dict-hl .w-ok{color:#16a34a}
+.dict-hl .w-bad{color:#dc2626;font-weight:900;text-decoration:underline}
+/* html5 raw activity */
+.html5-zone{margin-bottom:12px;font-size:14px;line-height:1.6;color:#374151}
+.html5-zone button{font-family:inherit;cursor:pointer}
+.html5-zone img{max-width:100%;border-radius:12px}
+.html5-zone table{width:100%;border-collapse:collapse}
+.html5-zone td,.html5-zone th{border:1px solid #e5e7eb;padding:8px;text-align:left}
+/* pronunciation */
+.pro-box{background:#faf5ff;border:2px solid #e9d5ff;border-radius:16px;padding:16px;text-align:center}
+.pro-sent{font-size:17px;font-weight:900;line-height:1.5;margin-bottom:8px}
+.pro-sent{font-size:17px}
+.pro-phon{color:#9333ea;font-family:monospace;font-size:13px;font-weight:700}
+.pro-phon{color:#9333ea;font-family:monospace;font-size:13px;font-weight:700}
+.pro-tip{margin-top:8px;font-size:12px;color:#6b7280}
+.pro-tip{margin-top:8px;font-size:12px;color:#6b7280}
+.pro-rec{background:#ef4444;color:#fff;font-weight:900;padding:14px;border-radius:14px;text-align:center;font-size:15px;animation:pulse 1s infinite}
+.pro-rec{background:#ef4444;color:#fff;font-weight:900;padding:14px;border-radius:14px;text-align:center;font-size:15px;animation:pulse 1s infinite}
+.pro-rec{background:#ef4444;color:#fff;font-weight:900;padding:14px;border-radius:14px;text-align:center;font-size:15px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.self-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* xp float + modals */
+.xp-float{position:fixed;top:90px;left:50%;transform:translateX(-50%);background:#58CC02;color:#fff;font-weight:900;font-size:18px;padding:10px 18px;border-radius:99px;box-shadow:0 8px 24px rgba(88,204,2,.4);z-index:60;pointer-events:none;animation:floatUp 1.3s ease-out forwards}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,0) scale(.8)}15%{opacity:1;transform:translate(-50%,-12px) scale(1.05)}100%{opacity:0;transform:translate(-50%,-70px) scale(1)}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;border-radius:24px;padding:24px 20px;max-width:400px;width:100%;max-height:88vh;overflow-y:auto;text-align:center;animation:modalIn .25s cubic-bezier(.2,1.4,.4,1)}
+@keyframes modalIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.modal h3{font-size:22px;font-weight:900;margin-bottom:6px}
+.modal p{color:#6b7280;font-size:13px;font-weight:600}
+.big-emoji{font-size:64px;margin:8px 0}
+.big-emoji.bounce{animation:catBounce .5s ease infinite alternate}
+@keyframes catBounce{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+.reward-box{background:#fefce8;border:2px solid #fde68a;border-radius:14px;padding:12px;margin:14px 0}
+.reward-box b{font-size:20px;color:#a16207}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.stat{padding:10px;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:14px}
+.stat.red{background:#fef2f2;border-color:#fecaca}
+.stat.blue{background:#eff6ff;border-color:#dbeafe}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11px;color:#6b7280}
+/* panels */
+.panel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.badge-cell{background:#fff;border:2px solid #e5e7eb;border-radius:14px;padding:10px 6px;text-align:center}
+.badge-cell.got{border-color:#fde047;background:#fffbeb}
+.badge-cell .bc-ico{font-size:24px;filter:grayscale(1);opacity:.4}
+.badge-cell.got .bc-ico{filter:none;opacity:1}
+.badge-cell .bc-lbl{font-size:9px;font-weight:800;margin-top:4px;color:#6b7280;line-height:1.2}
+.panel-title{font-size:15px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#1f2937}
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;margin-bottom:6px;background:#f9fafb;font-size:13px;border:2px solid transparent}
+.lb-row.me{background:#f0fdf4;border-color:#bbf7d0}
+.lb-row .lb-xp{margin-left:auto;font-weight:900;color:#58CC02}
+.access-row{display:flex;align-items:center;gap:10px;padding:8px;border:2px solid #e5e7eb;border-radius:12px;margin-bottom:8px}
+.access-row button{padding:6px 12px;border-radius:99px;font-weight:900;font-size:12px;background:#1CB0F6;color:#fff;margin-left:auto}
+.access-row .eq{font-size:22px}
+.season-track{height:12px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:10px 0}
+.season-fill{height:100%;background:linear-gradient(90deg,#FFC800,#FF9600);border-radius:99px}
+/* settings */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #f3f4f6;text-align:left}
+.set-row .st{font-size:14px;font-weight:800}
+.set-row .sd{font-size:11px;color:#9ca3af}
+.switch{width:48px;height:26px;border-radius:99px;background:#d1d5db;position:relative;transition:background .2s;flex-shrink:0}
+.switch.on{background:#58CC02}
+.switch:before{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch.on:before{left:25px}
+.settings label{font-size:12px;font-weight:800;color:#6b7280;display:block;margin:8px 0 4px}
+.settings select,.settings input[type=range]{width:100%}
+.settings select{padding:10px;border:2px solid #e5e7eb;border-radius:12px;font-size:13px;background:#fff}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* settings btn */
+.set-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px;border-radius:14px;background:#e6f6ff;border:2px solid #bae6fd;color:#0284c7;font-weight:800;font-size:13px;justify-content:center;margin-top:14px}
+/* RESPONSIVE AUDIT */
+@media (max-width:1100px){
+  .hud-title{max-width:150px}
+}
+@media (max-width:640px){
+  .hud{padding:8px 10px;gap:8px}
+  .hud-pill{font-size:12px;padding:3px 9px}
+  .hud-cat{font-size:24px}
+  .hud-title{max-width:110px}
+  .hud-title .ht-main{font-size:13px}
+  .hud-title .ht-sub{display:none}
+  .act-wrap{padding:10px;padding-bottom:80px}
+  .card{padding:14px;border-radius:20px}
+  .option,.btn{min-height:48px}
+  .btn{padding:12px 14px;font-size:14px}
+  .match-grid{gap:6px}
+  .mcol{gap:6px}
+  .mcol .mitem{font-size:12px;padding:10px 8px;min-height:48px}
+  .chips{padding:8px 10px}
+  .gap-input{width:90px}
+  .slides-body{padding:14px;padding-bottom:12px}
+  .q{font-size:15px}
+  .modal{padding:18px 14px;border-radius:18px}
+  .panel-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .stat-grid{gap:6px}
+  .stat b{font-size:17px}
+  .slide-nav{padding:12px 14px;padding-bottom:72px}
+  .slide-title{font-size:clamp(18px,5vw,22px)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="lav2-root"></div>
+<script type="application/json" id="lav2-data">{"title":"Around Town — Directions & Places","description":"Help the cat explore the city: places, directions, and polite questions! 🐱🗺️ Prepared for Test Student Alpha.","sections":[{"title":"🗺️ City Sights","colour":"#1CB0F6","xpReward":100,"slides":[{"heading":"Welcome to the City!","body":"Today you are a traveler exploring a new city. You will learn the names of places and how to ask for help. 🧳","example":"Excuse me, where is the museum?","colour":"#1CB0F6"},{"heading":"Places in Town","body":"Supermarket, bank, park, museum, hospital, train station — these are the places you need every day.","example":"The bank is next to the park.","colour":"#1CB0F6"},{"heading":"Your Mission","body":"Help the cat find its way to the museum! Answer every question to earn XP. 🐱🗺️","example":"","colour":"#1CB0F6"}],"activities":[{"type":"multiple_choice","title":"Vocabulary: Places Around Town","skillLabel":"Vocabulary","skillIcon":"📚","mode":"in-class","content":"[{\"question\":\"Where can you buy food and milk?\",\"options\":[\"Supermarket\",\"Museum\",\"Library\"],\"answer\":\"Supermarket\",\"feedback\":\"Yes! A supermarket is a big shop for food and drinks. 🛒\",\"context\":\"You are hungry after your trip.\",\"contextTitle\":\"Story\",\"audioScript\":\"Where can you buy food and milk?\",\"audioLabel\":\"🔊 Listen\"},{\"question\":\"Where do sick people go to see a doctor?\",\"options\":[\"Bank\",\"Hospital\",\"Park\"],\"answer\":\"Hospital\",\"feedback\":\"Exactly! A hospital is where doctors and nurses help sick people. 🏥\",\"audioScript\":\"Where do sick people go to see a doctor?\"},{\"question\":\"Where can you see old paintings and history?\",\"options\":[\"Museum\",\"Train station\",\"Supermarket\"],\"answer\":\"Museum\",\"feedback\":\"Right! A museum is a building where you see art and history. 🖼️\",\"audioScript\":\"Where can you see old paintings and history?\"},{\"question\":\"Where do trains arrive and leave?\",\"options\":[\"Library\",\"Train station\",\"Café\"],\"answer\":\"Train station\",\"feedback\":\"Perfect! Trains arrive at and leave from a train station. 🚉\",\"audioScript\":\"Where do trains arrive and leave?\"}]"},{"type":"audio_matching","title":"Listening: Words & Sounds","skillLabel":"Listening","skillIcon":"👂","mode":"in-class","content":"[{\"word\":\"bakery\",\"definition\":\"A shop that sells bread and cakes\",\"audioScript\":\"A bakery sells fresh bread and cakes.\"},{\"word\":\"bookshop\",\"definition\":\"A shop that sells books\",\"audioScript\":\"A bookshop is full of stories.\"},{\"word\":\"pharmacy\",\"definition\":\"A shop where you buy medicine\",\"audioScript\":\"You buy medicine at a pharmacy.\"},{\"word\":\"café\",\"definition\":\"A small restaurant for coffee and snacks\",\"audioScript\":\"Let's get a coffee at the café.\"}]"},{"type":"true_false","title":"Reading: A City Day","skillLabel":"Reading","skillIcon":"📖","mode":"homework","content":"[{\"statement\":\"Lily goes to the bakery to buy fresh bread.\",\"isTrue\":true,\"feedback\":\"Correct! Lily’s first stop is the bakery for fresh bread. 🥖\",\"context\":\"Lily’s day: bakery → supermarket → pharmacy → park.\",\"contextTitle\":\"Story\",\"audioScript\":\"Lily goes to the bakery to buy fresh bread.\"},{\"statement\":\"The pharmacy sells apples and milk.\",\"isTrue\":false,\"feedback\":\"No — the pharmacy sells medicine. The supermarket sells apples and milk. 🛒\",\"context\":\"Lily’s day: bakery → supermarket → pharmacy → park.\",\"audioScript\":\"The pharmacy sells apples and milk.\"},{\"statement\":\"Lily relaxes in the park at the end of her day.\",\"isTrue\":true,\"feedback\":\"Correct! After shopping, Lily relaxes in the park. 🌳\",\"context\":\"Lily’s day: bakery → supermarket → pharmacy → park.\",\"audioScript\":\"Lily relaxes in the park at the end of her day.\"}]"}]},{"title":"📍 Getting There","colour":"#58CC02","xpReward":120,"slides":[{"heading":"Ask for Directions","body":"Politely ask: \"Excuse me, how do I get to...?\" — then listen carefully!","example":"Excuse me, how do I get to the station?","colour":"#58CC02"},{"heading":"Direction Words","body":"Go straight, turn left, turn right, cross the street, it’s on your right.","example":"Turn left at the bank, then go straight.","colour":"#58CC02"},{"heading":"Mini-Mission","body":"Help the cat cross the city! Use the direction words to reach the museum. 🐱","example":"","colour":"#58CC02"}],"activities":[{"type":"cloze","title":"Grammar: Giving Directions","skillLabel":"Grammar","skillIcon":"📐","mode":"in-class","content":"[{\"sentence\":\"Go straight ahead, then ___ left at the bank.\",\"blanks\":[\"turn\"],\"feedback\":\"Great! 'Turn left' means change direction to your left. ↩️\",\"audioScript\":\"Go straight ahead, then turn left at the bank.\"},{\"sentence\":\"The museum is ___ the right, next to the park.\",\"blanks\":[\"on\"],\"feedback\":\"Exactly! We say 'on the right' or 'on the left'. 👉\",\"audioScript\":\"The museum is on the right, next to the park.\"},{\"sentence\":\"Excuse me, ___ do I get to the train station?\",\"blanks\":[\"how\"],\"feedback\":\"Perfect! 'How do I get to...?' is the classic way to ask for directions. 🗺️\",\"audioScript\":\"Excuse me, how do I get to the train station?\"}]"},{"type":"scramble","title":"Sentence Builder","skillLabel":"Writing","skillIcon":"✍️","mode":"in-class","content":"[{\"chunks\":[\"Turn\",\"left\",\"at\",\"the\",\"hospital.\"],\"answer\":\"Turn left at the hospital.\",\"feedback\":\"Great sentence! Turn left at the hospital. 🏥\"},{\"chunks\":[\"The\",\"park\",\"is\",\"on\",\"your\",\"right.\"],\"answer\":\"The park is on your right.\",\"feedback\":\"Exactly — the park is on your right! 🌳\"},{\"chunks\":[\"How\",\"do\",\"I\",\"get\",\"to\",\"the\",\"museum?\"],\"answer\":\"How do I get to the museum?\",\"feedback\":\"Perfect question! How do I get to the museum? 🖼️\"}]"},{"type":"dictation","title":"Listening: Dictation","skillLabel":"Listening","skillIcon":"👂","mode":"homework","content":"[{\"audioScript\":\"Go straight and turn right at the café.\",\"answer\":\"Go straight and turn right at the café.\",\"feedback\":\"Beautiful listening! You caught every direction word. 👏\"},{\"audioScript\":\"The bank is across the street from the park.\",\"answer\":\"The bank is across the street from the park.\",\"feedback\":\"Superb! 'Across the street from' — that's a great phrase. 🌟\"}]"},{"type":"html5","title":"Flip Cards: Direction Phrases","skillLabel":"Vocabulary","skillIcon":"🃏","mode":"in-class","content":"[{\"html\":\"\u003cstyle>\\n.fc{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}\\n.fcard{flex:1 1 45%;min-height:130px;perspective:800px;cursor:pointer}\\n.fcard-in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s}\\n.fcard.flip .fcard-in{transform:rotateY(180deg)}\\n.fcard-f,.fcard-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;font-weight:800;font-size:14px;line-height:1.4}\\n.fcard-f{background:#e6f6ff;border:2px solid #7dd3fc;color:#0284c7}\\n.fcard-b{background:#1CB0F6;color:#fff;transform:rotateY(180deg)}\\n\u003c/style>\\n\u003cdiv style=\\\"font-weight:900;color:#374151\\\">👆 Tap each card to flip it — English on the front, your language on the back!\u003c/div>\\n\u003cdiv class=\\\"fc\\\" id=\\\"fdeck\\\">\\n  \u003cdiv class=\\\"fcard\\\" onclick=\\\"this.classList.toggle('flip')\\\">\u003cdiv class=\\\"fcard-in\\\">\u003cdiv class=\\\"fcard-f\\\">🚶 go straight\u003c/div>\u003cdiv class=\\\"fcard-b\\\">seguir recto\u003cbr>\u003cspan style=\\\"font-size:11px;opacity:.9\\\">Go straight to the end of the street.\u003c/span>\u003c/div>\u003c/div>\u003c/div>\\n  \u003cdiv class=\\\"fcard\\\" onclick=\\\"this.classList.toggle('flip')\\\">\u003cdiv class=\\\"fcard-in\\\">\u003cdiv class=\\\"fcard-f\\\">↩️ turn left\u003c/div>\u003cdiv class=\\\"fcard-b\\\">girar a la izquierda\u003cbr>\u003cspan style=\\\"font-size:11px;opacity:.9\\\">Turn left at the bank.\u003c/span>\u003c/div>\u003c/div>\u003c/div>\\n  \u003cdiv class=\\\"fcard\\\" onclick=\\\"this.classList.toggle('flip')\\\">\u003cdiv class=\\\"fcard-in\\\">\u003cdiv class=\\\"fcard-f\\\">↪️ turn right\u003c/div>\u003cdiv class=\\\"fcard-b\\\">girar a la derecha\u003cbr>\u003cspan style=\\\"font-size:11px;opacity:.9\\\">Turn right at the traffic lights.\u003c/span>\u003c/div>\u003c/div>\u003c/div>\\n  \u003cdiv class=\\\"fcard\\\" onclick=\\\"this.classList.toggle('flip')\\\">\u003cdiv class=\\\"fcard-in\\\">\u003cdiv class=\\\"fcard-f\\\">🚸 cross the street\u003c/div>\u003cdiv class=\\\"fcard-b\\\">cruzar la calle\u003cbr>\u003cspan style=\\\"font-size:11px;opacity:.9\\\">Cross the street at the zebra crossing.\u003c/span>\u003c/div>\u003c/div>\u003c/div>\\n\u003c/div>\",\"feedback\":\"Great flipping! You now know the four key direction phrases. 🗺️\"}]"}]},{"title":"🎪 City Adventure","colour":"#FF9600","xpReward":150,"slides":[{"heading":"The Grand Finale","body":"Now you’re ready for the City Adventure! Use everything you learned: places, directions, and polite questions.","example":"Excuse me, is the zoo near the museum?","colour":"#FF9600"},{"heading":"Polite Phrases","body":"\"Excuse me\", \"thank you\", \"you’re welcome\" — politeness opens every door.","example":"Thank you so much for your help!","colour":"#FF9600"},{"heading":"Boss Challenge","body":"The cat must reach the zoo before sunset! Complete every activity to win. 🏆","example":"","colour":"#FF9600"}],"activities":[{"type":"matching","title":"Vocabulary Review","skillLabel":"Vocabulary","skillIcon":"📚","mode":"homework","content":"[{\"word\":\"zoo\",\"definition\":\"a place where you see animals\"},{\"word\":\"library\",\"definition\":\"a quiet place with books to read\"},{\"word\":\"market\",\"definition\":\"an outdoor place with many small shops\"},{\"word\":\"bus stop\",\"definition\":\"a place where buses pick up people\"},{\"word\":\"parking lot\",\"definition\":\"a place where you leave your car\"}]"},{"type":"multiple_choice","title":"Boss Challenge: City Quiz","skillLabel":"Grammar","skillIcon":"🧠","mode":"in-class","content":"[{\"question\":\"Excuse me, ___ is the nearest bus stop?\",\"options\":[\"where\",\"what\",\"who\"],\"answer\":\"where\",\"feedback\":\"Perfect! We ask 'where is...' for places. 📍\",\"audioScript\":\"Excuse me, where is the nearest bus stop?\"},{\"question\":\"The zoo is ___ the left, next to the museum.\",\"options\":[\"at\",\"on\",\"in\"],\"answer\":\"on\",\"feedback\":\"Correct! 'On the left' / 'on the right' are fixed phrases. 👈\",\"audioScript\":\"The zoo is on the left, next to the museum.\"},{\"question\":\"You want to read quietly for an hour. Where do you go?\",\"options\":[\"The library\",\"The market\",\"The parking lot\"],\"answer\":\"The library\",\"feedback\":\"Right! A library is quiet and full of books. 📚\",\"context\":\"The cat wants a quiet afternoon.\",\"contextTitle\":\"Story\",\"audioScript\":\"You want to read quietly for an hour. Where do you go?\"}]"},{"type":"pronunciation","title":"Speak Like a Local","skillLabel":"Speaking","skillIcon":"🎤","mode":"in-class","content":"[{\"sentence\":\"Excuse me, how do I get to the zoo?\",\"phonetic\":\"/ɪkˈskjuːz miː, haʊ daɪ ɡet tə ðə zuː/\",\"tip\":\"Stress the words 'get' and 'zoo' — and keep 'Excuse me' soft and polite.\",\"feedback\":\"Lovely intonation! Your question sounds super natural. 🎙️\"},{\"sentence\":\"Turn right at the traffic lights.\",\"phonetic\":\"/tɜːn raɪt æt ðə ˈtræfɪk laɪts/\",\"tip\":\"Link 'turn' and 'right' together: 'turn-right'.\",\"feedback\":\"Beautiful rhythm! The lights are green for you. 🚦\"}]"},{"type":"html5","title":"Mini-Game: Memory Match","skillLabel":"Game","skillIcon":"🎮","mode":"homework","content":"[{\"html\":\"\u003cstyle>\\n.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}\\n.mcard{min-height:64px;background:#fff;border:2px solid #e5e7eb;border-radius:14px;font-size:26px;transition:all .15s}\\n.mcard.on{background:#fff7ed;border-color:#FF9600}\\n.mcard.ok{background:#f0fdf4;border-color:#58CC02}\\n.mcard span{pointer-events:none}\\n\u003c/style>\\n\u003cdiv style=\\\"font-weight:900;color:#374151\\\">🧠 Find all the animal pairs! Tap two cards at a time.\u003c/div>\\n\u003cdiv class=\\\"mg\\\" id=\\\"mg\\\">\u003c/div>\\n\u003cdiv id=\\\"mg-msg\\\" style=\\\"text-align:center;font-weight:900;margin-top:12px;color:#9ca3af\\\">Pairs found: 0 / 6\u003c/div>\\n\u003cscript>\\n(function(){\\n  var em=['🐶','🐱','🐵','🦊','🐻','🐼'], cards=[];\\n  em.forEach(function(e){ cards.push(e,e); });\\n  for(var i=cards.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=cards[i]; cards[i]=cards[j]; cards[j]=t; }\\n  var open=[], lock=false, done=0;\\n  var box=document.getElementById('mg');\\n  box.innerHTML=cards.map(function(c,i){ return '\u003cbutton class=\\\"mcard\\\" data-i=\\\"'+i+'\\\">\u003cspan style=\\\"opacity:0\\\">'+c+'\u003c/span>\u003c/button>'; }).join('');\\n  box.onclick=function(ev){\\n    var b=ev.target.closest('.mcard');\\n    if(!b||lock||b.classList.contains('on')||b.classList.contains('ok')) return;\\n    b.classList.add('on'); open.push(b);\\n    if(open.length===2){\\n      lock=true;\\n      if(open[0].textContent===open[1].textContent){\\n        done++; open.forEach(function(o){ o.classList.add('ok'); });\\n        var msg=document.getElementById('mg-msg');\\n        if(msg){ msg.textContent=done===6?'🎉 You found all 6 pairs! Perfect memory!':'Pairs found: '+done+' / 6'; }\\n        open=[]; lock=false;\\n      } else {\\n        setTimeout(function(){ open.forEach(function(o){ o.classList.remove('on'); }); open=[]; lock=false; }, 700);\\n      }\\n    }\\n  };\\n})();\\n\u003c/script>\",\"feedback\":\"Amazing memory! You matched every pair like a champion. 🧠\"}]"}]},{"title":"🏆 Mastery Review","colour":"#A855F7","xpReward":200,"slides":[{"heading":"The Mastery Gauntlet","body":"One final arena to prove you can handle the whole city: places, directions, listening, and speaking — all together. 🏆","example":"You know more English than you think!","colour":"#A855F7"},{"heading":"Your Weak Spots","body":"The game remembers your mistakes. Turn them into wins and walk out stronger!","example":"Open ⚙️ Settings → Self-Study Mode to redo only your incorrect answers.","colour":"#A855F7"},{"heading":"Final Boss","body":"Complete every review round to earn the Mastery crown. The cat is counting on you! 🐱👑","example":"","colour":"#A855F7"}],"activities":[{"type":"multiple_choice","title":"Weak-Spot Review: Tricky Choices","skillLabel":"Review","skillIcon":"🧠","mode":"homework","content":"[{\"question\":\"You have a headache. Where do you go?\",\"options\":[\"Pharmacy\",\"Supermarket\",\"Café\"],\"answer\":\"Pharmacy\",\"feedback\":\"Exactly! Medicine comes from the pharmacy — not the supermarket. 💊\",\"context\":\"Your head hurts after the long walk.\",\"contextTitle\":\"Story\",\"audioScript\":\"You have a headache. Where do you go?\"},{\"question\":\"The museum is ___ the left, next to the train station.\",\"options\":[\"on\",\"at\",\"in\"],\"answer\":\"on\",\"feedback\":\"Correct! It's always 'on the left' or 'on the right'. 👈\",\"audioScript\":\"The museum is on the left, next to the train station.\"},{\"question\":\"Excuse me, ___ can I buy a bus ticket?\",\"options\":[\"where\",\"what\",\"who\"],\"answer\":\"where\",\"feedback\":\"'Where' asks for a place — the ticket office! 🎫\",\"audioScript\":\"Excuse me, where can I buy a bus ticket?\"},{\"question\":\"Lily's first stop was the bakery. What did she buy there?\",\"options\":[\"Fresh bread\",\"Medicine\",\"A book\"],\"answer\":\"Fresh bread\",\"feedback\":\"Right! The bakery sells fresh bread — that was her first stop. 🥖\",\"context\":\"Lily's day: bakery → supermarket → pharmacy → park.\",\"contextTitle\":\"Story\",\"audioScript\":\"Lily's first stop was the bakery. What did she buy there?\"}]"},{"type":"matching","title":"Boss Round: The Whole City","skillLabel":"Vocabulary","skillIcon":"🗺️","mode":"in-class","content":"[{\"word\":\"bakery\",\"definition\":\"a shop that sells bread and cakes\"},{\"word\":\"bookshop\",\"definition\":\"a shop that sells books\"},{\"word\":\"pharmacy\",\"definition\":\"a shop where you buy medicine\"},{\"word\":\"café\",\"definition\":\"a small restaurant for coffee and snacks\"},{\"word\":\"museum\",\"definition\":\"a building where you see art and history\"},{\"word\":\"hospital\",\"definition\":\"a place where doctors help sick people\"},{\"word\":\"train station\",\"definition\":\"a place where trains arrive and leave\"},{\"word\":\"park\",\"definition\":\"a green place to relax outside\"}]"},{"type":"scramble","title":"Boss Sentences","skillLabel":"Writing","skillIcon":"✍️","mode":"in-class","content":"[{\"chunks\":[\"Excuse\",\"me,\",\"where\",\"is\",\"the\",\"nearest\",\"pharmacy?\"],\"answer\":\"Excuse me, where is the nearest pharmacy?\",\"feedback\":\"Perfect polite question! The nearest pharmacy is just around the corner. 💊\"},{\"chunks\":[\"Cross\",\"the\",\"street\",\"at\",\"the\",\"zebra\",\"crossing.\"],\"answer\":\"Cross the street at the zebra crossing.\",\"feedback\":\"Safety first — always cross at the zebra crossing! 🚸\"}]"},{"type":"dictation","title":"Final Listening Boss","skillLabel":"Listening","skillIcon":"👂","mode":"homework","content":"[{\"audioScript\":\"Turn left at the museum and go straight to the park.\",\"answer\":\"Turn left at the museum and go straight to the park.\",\"feedback\":\"Flawless! You followed the whole route in English. 🗺️\"},{\"audioScript\":\"The best café in town is next to the bookshop.\",\"answer\":\"The best café in town is next to the bookshop.\",\"feedback\":\"Superb! You caught 'next to' perfectly — that's the key phrase. ☕\"}]"},{"type":"html5","title":"Boss Arena: Quiz Showdown","skillLabel":"Game","skillIcon":"⚔️","mode":"in-class","content":"[{\"html\":\"\u003cstyle>\\n.qz{margin-top:10px}\\n.qz-q{font-weight:900;color:#374151;margin-bottom:10px}\\n.qz-opt{display:block;width:100%;text-align:left;padding:12px;border:2px solid #e5e7eb;border-radius:12px;background:#fff;font-weight:700;font-size:14px;color:#374151;margin-bottom:8px;cursor:pointer}\\n.qz-opt.ok{background:#f0fdf4;border-color:#58CC02;color:#166534}\\n.qz-opt.bad{background:#fef2f2;border-color:#f87171;color:#b91c1c}\\n.qz-opt:disabled{opacity:.75;cursor:default}\\n.qz-score{font-weight:900;color:#6b7280;margin:10px 0}\\n.qz-done{background:#fffbeb;border:2px solid #fde68a;border-radius:14px;padding:12px;text-align:center;font-weight:900;color:#a16207;margin-top:10px}\\n\u003c/style>\\n\u003cdiv style=\\\"font-weight:900;color:#374151\\\">⚔️ Five questions. No mercy. Answer them all!\u003c/div>\\n\u003cdiv class=\\\"qz\\\" id=\\\"qz\\\">\u003c/div>\\n\u003cdiv class=\\\"qz-score\\\" id=\\\"qz-score\\\">Score: 0 / 5\u003c/div>\\n\u003cscript>\\n(function(){\\n  var QS=[\\n    {q:\\\"1. Which word means to travel to work or school?\\\",o:[\\\"commute\\\",\\\"sleep\\\",\\\"eat\\\"],a:0},\\n    {q:\\\"2. Choose the polite question:\\\",o:[\\\"Where museum?\\\",\\\"Excuse me, where is the museum?\\\",\\\"Museum where?\\\"],a:1},\\n    {q:\\\"3. She ___ up at 6 AM every day.\\\",o:[\\\"wake\\\",\\\"wakes\\\",\\\"waking\\\"],a:1},\\n    {q:\\\"4. On the left means:\\\",o:[\\\"your left side\\\",\\\"your right side\\\",\\\"straight ahead\\\"],a:0},\\n    {q:\\\"5. The train station is ___ the right.\\\",o:[\\\"at\\\",\\\"in\\\",\\\"on\\\"],a:2}\\n  ];\\n  var qz=document.getElementById('qz'), sc=document.getElementById('qz-score'), qi=0, score=0, locked=false;\\n  function render(){\\n    if(qi>=QS.length){ qz.innerHTML='\u003cdiv class=\\\"qz-done\\\">'+(score===QS.length?'👑 PERFECT! You aced the Boss Arena!':'🎉 Boss defeated! Score: '+score+'/'+QS.length)+'\u003c/div>'; sc.textContent='Final score: '+score+' / '+QS.length; return; }\\n    var it=QS[qi];\\n    var html='\u003cdiv class=\\\"qz-q\\\">'+it.q+'\u003c/div>';\\n    it.o.forEach(function(o,i){ html+='\u003cbutton class=\\\"qz-opt\\\" data-i=\\\"'+i+'\\\">'+String.fromCharCode(65+i)+'. '+o+'\u003c/button>'; });\\n    qz.innerHTML=html;\\n  }\\n  qz.onclick=function(ev){\\n    if(locked) return;\\n    var b=ev.target.closest('.qz-opt'); if(!b) return;\\n    var i=+b.getAttribute('data-i'), it=QS[qi];\\n    locked=true;\\n    if(i===it.a){ score++; b.classList.add('ok'); }\\n    else { b.classList.add('bad'); qz.querySelectorAll('.qz-opt')[it.a].classList.add('ok'); }\\n    sc.textContent='Score: '+score+' / '+QS.length;\\n    setTimeout(function(){ qi++; locked=false; render(); }, 900);\\n  };\\n  render();\\n})();\\n\u003c/script>\",\"feedback\":\"Boss defeated! You cleared the whole city challenge. 👑\"}]"}]}]}</script>
+<script>
+(function(){
+  var DATA = {};
+  try { DATA = JSON.parse(document.getElementById('lav2-data').textContent || '{}'); } catch(e) {}
+  var sections = Array.isArray(DATA.sections) ? DATA.sections : [];
+  var TITLE = esc(DATA.title || 'Learning App V2');
+  var LEVEL_NAMES = ['Foundations','Integrated Skills','Complex Integration','Mastery'];
+
+  // ── state ──
+  var S = {
+    section:0, activity:0, q:0, phase:'slides',
+    xp:0, totalXp:0, hearts:5, maxHearts:5, gems:0, streak:0,
+    completed:[], incorrect:[], chestCount:0, sessionXp:0,
+    correctStreak:0, perfectRun:true,
+    catMood:'happy', catMsg:'', xpGain:null, fb:null, showChest:false,
+    showSectionDone:false, showAllDone:false, showSettings:false,
+    panel:'none', timeAttack:false, selfStudy:false,
+    tts:true, voice:'', pitch:1, rate:1, heartsModal:false,
+    league:'Bronze', seasonProg:0
+  };
+  var LEAGUES = ['Bronze','Silver','Gold','Ruby','Diamond'];
+  var LEAGUE_EMOJI = {'Bronze':'🥉','Silver':'🥈','Gold':'🥇','Ruby':'💎','Diamond':'💠'};
+  var LEAGUE_COLOR = {'Bronze':'#CD7F32','Silver':'#9ca3af','Gold':'#f59e0b','Ruby':'#e0115f','Diamond':'#38bdf8'};
+  var CAT_MSGS = ['Purr-fect! 😸','Meow-velous! 🌟','That\'s my human! 😺','Brilliant! 🎉','You\'re on fire! 🔥'];
+  var NPC = [
+    {n:'Alex K.',a:'🐶',x:640},{n:'Maria S.',a:'🐱',x:512},{n:'John D.',a:'🦊',x:433},
+    {n:'Yuki T.',a:'🐻',x:371},{n:'Emma W.',a:'🐼',x:305},{n:'Raj P.',a:'🐨',x:244},
+    {n:'Sofia L.',a:'🦁',x:198},{n:'Chen W.',a:'🐯',x:141},{n:'Anna B.',a:'🐺',x:92},{n:'Luis M.',a:'🦝',x:51}
+  ];
+  var BADGES = [
+    ['first','First Steps','👣'],['streak','Streak Star','🔥'],['xp100','Century Club','💯'],
+    ['xp500','XP Hunter','🎯'],['perfect','Perfectionist','✨'],['grammar','Grammar Guru','📝'],
+    ['vocab','Vocab Virtuoso','📚'],['listen','Listening Pro','👂'],['read','Book Worm','📖'],
+    ['speak','Speaking Star','🌟'],['cloze','Cloze King','🔑'],['match','Matching Ace','♟️'],
+    ['tf','Truth Seeker','🔍'],['scram','Scramble Star','🔀'],['audio','Audio Ace','🎵'],
+    ['dict','Scribe Supreme','✍️'],['pro','Smooth Talker','🎤'],['heart','Heart Saver','❤️'],
+    ['gem','Gem Collector','💎'],['all','Activity All-Star','🌈']
+  ];
+  var ACCS = [
+    ['top_hat','Top Hat','🎩',10],['graduation','Grad Cap','🎓',15],['crown','Crown','👑',25],
+    ['wizard','Wizard Hat','🧙',20],['sunglasses','Sunglasses','😎',8],['monocle','Monocle','🧐',10],
+    ['party','Party Outfit','🎉',18],['superhero','Cape','🦸',20]
+  ];
+  var equipped = {};
+  var unlocked = {};
+
+  // ── persistence ──
+  function save(){ try{ localStorage.setItem('linguacat-v2', JSON.stringify({xp:S.xp,totalXp:S.totalXp,hearts:S.hearts,gems:S.gems,streak:S.streak,completed:S.completed,incorrect:S.incorrect,tts:S.tts,voice:S.voice,pitch:S.pitch,rate:S.rate,badges:earnedBadges,unlocked:unlocked,equipped:equipped,league:S.league,seasonProg:S.seasonProg})); }catch(e){} }
+  function load(){
+    try{
+      var raw = localStorage.getItem('linguacat-v2'); if(!raw) return;
+      var d = JSON.parse(raw);
+      S.xp=d.xp||0; S.totalXp=d.totalXp||0; S.hearts=d.hearts||5; S.gems=d.gems||0; S.streak=d.streak||0;
+      S.completed=d.completed||[]; S.incorrect=d.incorrect||[];
+      S.tts=d.tts!==false; S.voice=d.voice||''; S.pitch=d.pitch||1; S.rate=d.rate||1;
+      S.league=d.league||'Bronze'; S.seasonProg=d.seasonProg||0;
+      if(d.badges) earnedBadges = d.badges; if(d.unlocked) unlocked = d.unlocked; if(d.equipped) equipped = d.equipped;
+    }catch(e){}
+  }
+
+  // ── helpers ──
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function norm(s){ return String(s||'').toLowerCase().replace(/[.,!?;:'"\-]/g,'').replace(/\s+/g,' ').trim(); }
+  function shuffle(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i];b[i]=b[j];b[j]=t; } return b; }
+  function section(){ return sections[S.section] || {title:'',colour:'#58CC02',xpReward:100,activities:[]}; }
+  function activities(){ return section().activities || []; }
+  function activity(){ return activities()[S.activity] || {type:'',title:'',parsedContent:[]}; }
+  function parseItems(act){ try{ var inner = JSON.parse(act.content || '[]'); return Array.isArray(inner)?inner:(inner.items||inner.pairs||[]); }catch(e){ return []; } }
+  function isWholeSet(){ var t=activity().type; return t==='matching' || t==='audio_matching'; }
+  function items(){ return activity()._items || (activity()._items = parseItems(activity())); }
+  function effectiveItems(){ if(!S.selfStudy) return items(); return items().filter(function(_,i){ return S.incorrect.indexOf(S.section+'-'+S.activity+'-'+i)>=0; }); }
+  function item(){ return effectiveItems()[S.q]; }
+  function speak(t, r){ try{ speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(t); u.rate=r!=null?r:(S.rate||1); u.pitch=S.pitch||1; u.lang='en-US'; if(S.voice) u.voice = pickVoice(S.voice); speechSynthesis.speak(u); }catch(e){} }
+  function pickVoice(name){ try{ var vs=speechSynthesis.getVoices(); for(var i=0;i<vs.length;i++) if(vs[i].name===name) return vs[i]; }catch(e){} return null; }
+  function say(f){ if(S.tts && f) speak(f); }
+  function sectionMult(){ return S.section===3?1.5:(S.section===2?1.25:1); }
+  function addXp(n){ S.xp+=n; S.totalXp+=n; S.sessionXp+=n; if(S.totalXp>=100) earnB('xp100'); if(S.totalXp>=500) earnB('xp500'); if(S.totalXp>=1000) earnB('xp100'); if(S.gems>=50) earnB('gem'); }
+  function loseHeart(){ S.hearts=Math.max(0,S.hearts-1); S.perfectRun=false; if(S.hearts<=1) S.catMood='sad'; }
+  function markComplete(k){ if(S.completed.indexOf(k)<0){ S.completed.push(k); earnB('first'); } }
+
+  var earnedBadges = {};
+  function earnB(id){ if(!earnedBadges[id]){ earnedBadges[id]=Date.now(); } }
+
+  // ── flow handlers ──
+  function handleCorrect(){
+    var base = S.timeAttack ? 20 : 10;
+    var total = Math.round(base * sectionMult() * (S.correctStreak>=3?1.2:1));
+    addXp(total); S.correctStreak++; S.chestCount++;
+    S.xpGain = total;
+    setTimeout(function(){ S.xpGain=null; render(); }, 1400);
+    var key = S.section+'-'+S.activity+'-'+S.q;
+    var ix = S.incorrect.indexOf(key); if(ix>=0) S.incorrect.splice(ix,1);
+    S.catMsg = CAT_MSGS[Math.floor(Math.random()*CAT_MSGS.length)]; S.catMood='excited';
+    S.seasonProg = Math.min(30, S.seasonProg+1);
+    var t=activity().type;
+    if(t==='cloze') earnB('cloze'); if(t==='matching') earnB('match');
+    if(t==='true_false') earnB('tf'); if(t==='scramble') earnB('scram');
+    if(t==='audio_matching'){ earnB('audio'); earnB('listen'); }
+    if(t==='dictation'){ earnB('dict'); earnB('listen'); }
+    if(t==='pronunciation') earnB('pro');
+    if(t==='multiple_choice'){ earnB('grammar'); earnB('vocab'); }
+    if(S.timeAttack) earnB('streak');
+    if(S.chestCount>=3){ S.chestCount=0; S.showChest=true; }
+    save(); render();
+  }
+  function handleIncorrect(){
+    S.correctStreak=0; loseHeart(); S.catMsg='Don\'t worry! Every mistake is a lesson. 📚'; S.catMood='sad';
+    var key = S.section+'-'+S.activity+'-'+S.q;
+    if(S.incorrect.indexOf(key)<0) S.incorrect.push(key);
+    if(S.hearts<=0) S.heartsModal=true;
+    save(); render();
+  }
+  function advanceQ(){
+    var keys = effectiveItems();
+    if(S.q < keys.length-1){ S.q++; S.catMsg=''; } else { advanceActivity(); }
+    S.fb=null;
+    render();
+  }
+  function advanceActivity(){
+    var k = S.section+'-'+S.activity;
+    markComplete(k);
+    var acts = activities();
+    if(S.activity < acts.length-1){ S.activity++; S.q=0; S.catMsg=''; if(S.tts) speak('Great work! Moving to the next activity.'); }
+    else {
+      if(S.perfectRun){ var bonus=Math.round((section().xpReward||100)*1.5); addXp(bonus); S.xpGain=bonus; earnB('perfect'); setTimeout(function(){S.xpGain=null;render();},1400); }
+      else { addXp(section().xpReward||100); }
+      S.gems+=5; S.showSectionDone=true;
+    }
+    save(); render();
+  }
+  function advanceSection(){
+    if(S.section < sections.length-1){ S.section++; S.activity=0; S.q=0; S.phase='slides'; S.perfectRun=true; S.sessionXp=0; S.correctStreak=0; }
+    else { S.showSectionDone=false; S.showAllDone=true; earnB('all'); }
+    save(); render();
+  }
+  function openChest(rewardIdx){
+    var REW = [['xp','⚡','+15 Bonus XP',15],['xp','⚡','+25 Bonus XP',25],['gems','💎','+3 Gems',3],['gems','💎','+5 Gems',5],['heart','❤️','+1 Heart',1]];
+    var r = REW[rewardIdx!=null?rewardIdx:Math.floor(Math.random()*REW.length)];
+    if(r[0]==='xp') addXp(r[3]); if(r[0]==='gems') S.gems+=r[3]; if(r[0]==='heart') S.hearts=Math.min(S.maxHearts,S.hearts+1);
+    earnB('gem');
+    S.showChest=false; save(); render();
+    var box=$('chest-reward'); if(box){ box.innerHTML='<div class="big-emoji">'+r[1]+'</div><div class="reward-box"><b>'+r[2]+'</b><p style="margin-top:4px">Added to your account!</p></div>'; }
+  }
+
+  // ── activity renderers ──
+  function renderActivity(){
+    var a = activity(), t = a.type, root = $('act-slot');
+    if(!a || !t){ root.innerHTML='<div class="card" style="text-align:center;color:#9ca3af"><div style="font-size:40px">😿</div><p style="font-weight:800;margin-top:8px">No lesson loaded — generate JSON in the Lesson Creator first.</p></div>'; return; }
+    var acts = activities();
+    var skill = a.skillIcon||'📚', label = a.skillLabel||'', mode = a.mode||'';
+    var head = '<div class="act-meta"><div class="act-skill" style="background:'+(section().colour||'#58CC02')+'">'+esc(skill)+' '+esc(label)+'</div>'+
+      '<div style="display:flex;gap:6px">'+(mode?('<span class="act-mode '+(mode==='in-class'?'mode-class':'mode-home')+'">'+(mode==='in-class'?'🏫 In-Class':'📋 Homework')+'</span>'):'')+
+      (S.selfStudy?'<span class="act-mode mode-class">📚 Self-Study</span>':'')+'</div></div>';
+    var title = '<div class="act-title">'+esc(a.title||'Activity')+'</div>';
+    var sub = '<div class="act-sub">Activity '+(S.activity+1)+' of '+acts.length + (isWholeSet()?'':' • Question '+(S.q+1)+' of '+effectiveItems().length)+'</div>';
+    var prog = '';
+    if(!isWholeSet() && effectiveItems().length>1){
+      prog = '<div class="progress"><div class="progress-fill" style="width:'+Math.round(((S.q+1)/effectiveItems().length)*100)+'%;background:'+(section().colour||'#58CC02')+'"></div></div>';
+    }
+    var timer = '';
+    if(S.timeAttack && !isWholeSet() && S.phase==='activity'){
+      timer = '<div class="timer"><span>⏱️</span><div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%;background:#58CC02"></div></div><span class="timer-num" id="timer-num">10s</span></div>';
+    }
+    var cat = S.catMsg ? '<div class="cat-msg"><span style="font-size:22px">'+(S.catMood==='sad'?'😿':'😸')+'</span><span>'+esc(S.catMsg)+'</span></div>' : '';
+    var body = '';
+    if(t==='multiple_choice') body = mcHTML();
+    else if(t==='true_false') body = tfHTML();
+    else if(t==='cloze') body = clozeHTML();
+    else if(t==='scramble') body = scramHTML();
+    else if(t==='dictation') body = dictHTML();
+    else if(t==='matching') body = matchHTML(false);
+    else if(t==='audio_matching') body = matchHTML(true);
+    else if(t==='pronunciation') body = proHTML();
+    else if(t==='html5' || t==='rich_html') body = html5HTML();
+    else body = '<div class="card" style="text-align:center;color:#9ca3af"><div style="font-size:36px">🔧</div><p style="font-weight:800">Activity type "'+esc(t)+'"</p><p style="font-size:12px">No renderer for this type.</p></div>';
+
+    var fb = '', next = '';
+    if(isWholeSet()) next = '<button class="btn btn-ghost" data-act="next" style="width:100%;margin-top:12px">Continue →</button>';
+    else if(isAnswered()){
+      if(S.fb) fb = '<div class="fb '+(S.fb.ok?'fb-ok':'fb-bad')+'">'+S.fb.text+'</div>';
+      next = '<button class="btn btn-primary" data-act="nextq" style="width:100%;margin-top:12px">Continue →</button>';
+    }
+    root.innerHTML = head+title+sub+prog+timer+cat+'<div class="card">'+body+fb+'</div>'+next;
+    if(t==='html5' || t==='rich_html') runHtmlScripts(root);
+    if(!isWholeSet()) buildTimer();
+    wireAct();
+  }
+  /* html5 / rich_html — the AI authors a RAW HTML5 fragment (its own inline
+     styles, buttons with onclick handlers, and <script> blocks are allowed and
+     re-executed here). This is the "AI designs HTML5 interactive code" mode:
+     custom flip-cards, mini-games, sliders, tabs — full creative freedom. */
+  function isAnswered(){
+    var t = activity().type;
+    if(t==='scramble'){ var k=scramKey(); return !!(scramState[k] && scramState[k].revealed); }
+    if(t==='dictation'){ return !!(S._dictState && S._dictState.q===S.q); }
+    return !!S.fb;
+  }
+  function html5HTML(){
+    var it = item(); if(!it) return '';
+    var raw = String(it.html||it.content||'');
+    return '<div class="html5-zone">'+raw+'</div>'+
+      '<button class="btn btn-primary" data-act="hnext" style="width:100%;margin-top:14px">Continue →</button>';
+  }
+  function runHtmlScripts(container){
+    try{
+      var scs = container.querySelectorAll('.html5-zone script');
+      [].forEach.call(scs, function(s){
+        var ns = document.createElement('script');
+        if(s.src){ ns.src = s.src; } else { ns.textContent = s.textContent; }
+        s.parentNode.replaceChild(ns, s);
+      });
+    }catch(e){}
+  }
+  function ctxHTML(it){ return it.context ? '<div class="ctx"><b>📖 '+(it.contextTitle||'Context')+'</b><br>'+esc(it.context)+'</div>' : ''; }
+  function audioHTML(it){ return it.audioScript ? '<button class="audio-btn" data-act="aplay" data-i="'+S.q+'"><span style="font-size:22px">🔊</span><span>'+(it.audioLabel||'Listen to the audio')+'</span></button>' : ''; }
+  function fbHTML(ok, text, warm){ return '<div class="fb '+(warm?'fb-mid':(ok?'fb-ok':'fb-bad'))+'">'+text+'</div>'; }
+
+  function mcHTML(){
+    var it = item(); if(!it) return '';
+    var opts = (it.options||[]).map(function(o,i){
+      return '<button class="option" data-act="mc" data-i="'+i+'"><b style="color:#9ca3af;margin-right:8px">'+String.fromCharCode(65+i)+'.</b>'+esc(o)+'</button>';
+    }).join('');
+    return ctxHTML(it)+audioHTML(it)+'<div class="q">'+esc(it.question)+'</div>'+opts+'<div id="mc-fb"></div>';
+  }
+  function tfHTML(){
+    var it = item(); if(!it) return '';
+    return ctxHTML(it)+audioHTML(it)+'<div class="card" style="border:none;padding:0;margin-bottom:10px"><p style="font-weight:700;color:#374151;line-height:1.6">'+esc(it.statement)+'</p></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<button class="btn btn-ghost" data-act="tf" data-v="1" style="background:#fff;border:2px solid #e5e7eb;color:#16a34a;font-size:18px">✅ TRUE</button>'+
+      '<button class="btn btn-ghost" data-act="tf" data-v="0" style="background:#fff;border:2px solid #e5e7eb;color:#dc2626;font-size:18px">❌ FALSE</button></div><div id="tf-fb"></div>';
+  }
+  function clozeHTML(){
+    var it = item(); if(!it) return '';
+    var blanks = it.blanks||[];
+    var parts = String(it.sentence||'').split('___');
+    var html = '';
+    for(var i=0;i<parts.length;i++){
+      html += esc(parts[i]);
+      if(i<blanks.length){
+        html += '<input class="gap-input" data-blank="'+i+'" placeholder="___" autocomplete="off">';
+      }
+    }
+    return ctxHTML(it)+audioHTML(it)+'<div class="cloze-box">'+html+'</div>'+
+      '<button class="btn btn-primary" data-act="cloze-check" style="width:100%;margin-top:14px">Check Answer ✓</button><div id="cloze-fb"></div>';
+  }
+  var scramState = {};
+  function scramHTML(){
+    var it = item(); var key = S.phase+'/'+S.activity+'/'+S.q;
+    if(!scramState[key]) {
+      var chunks = it.chunks || String(it.sentence||'').split(' ');
+      scramState[key] = { avail: shuffle(chunks), arr: [] };
+    }
+    var st = scramState[key];
+    var hint = '', reveal = '';
+    if(st.revealed){ reveal = it.answer ? ('<div class="fb '+(st.isOk?'fb-ok':'fb-bad')+'"><b>'+(st.isOk?'🎉 Perfect!':'❌ Not quite!')+'</b><br>Correct answer: <b>'+esc(it.answer)+'</b><br>'+esc(it.feedback||'')+'</div>') : (st.isOk?'':'<div class="fb fb-bad">❌ Not quite! '+esc(it.feedback||'')+'</div>'); }
+    var arr = st.arr.length ? st.arr.map(function(c,i){ return '<button class="chunk-block" data-act="scram-pop" data-i="'+i+'">'+esc(c)+'</button>'; }).join('') : '<span class="scram-ndata">Tap chunks below to build the sentence...</span>';
+    var avail = st.avail.length ? st.avail.map(function(c,i){ return '<button class="chunk-avail" data-act="scram-push" data-i="'+i+'">'+esc(c)+'</button>'; }).join('') : '<span class="scram-ndata">All used!</span>';
+    if(st.misses>=2 && !st.revealed) hint = '<div class="fb fb-mid">💡 Hint: <b>'+esc(String(it.answer||'').split(' ').slice(0,1).join(' '))+'</b> is the first word.</div>';
+    return '<div class="scram-zone" id="scram-zone">'+arr+'</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">'+avail+'</div>'+
+      (st.arr.length && !st.revealed ? '<button class="btn btn-primary" data-act="scram-check" style="width:100%;margin-top:14px">Check Answer ✓</button>':'')+
+      hint+reveal;
+  }
+  function dictHTML(){
+    var it = item(); if(!it) return '';
+    var played = S._dictPlayed === S.q;
+    var state = S._dictState && S._dictState.q===S.q ? S._dictState : null;
+    var ta = '';
+    if(state){ ta = '<textarea class="dict-ta '+(state.ok?'ok':'bad')+'" rows="3" disabled>'+esc(state.typed)+'</textarea>'+(state.ok?'':'<div class="dict-hl" style="margin-top:8px"><b style="font-size:12px;color:#6b7280">Correct answer:</b><br>'+dictHL(state.typed, it.answer)+'</div>'); }
+    else { ta = '<textarea class="dict-ta" rows="3" id="dict-ta" placeholder="Type what you hear..."></textarea>'; }
+    return '<p class="dict-note">👂 Listen carefully, then type what you hear</p>'+
+      '<div class="dict-row"><button class="btn btn-blue" data-act="dplay" style="flex:1">🔊 '+(played?'Play Again':'Play Audio')+'</button>'+(played?'<button class="btn btn-ghost" data-act="dslow">🐢 Slow</button>':'')+'</div>'+
+      ta+
+      (state?'':'<button class="btn btn-primary" data-act="dcheck" style="width:100%;margin-top:14px">'+(played?'Check Answer ✓':'▶ Play Audio First')+'</button>')+
+      (state?'<div class="fb '+(state.ok?'fb-ok':'fb-bad')+'" style="margin-top:12px"><b>'+(state.ok?'🎉 Excellent transcription!':'❌ Not quite right')+'</b><br>'+esc(it.feedback||'')+'</div>':'');
+  }
+  function dictHL(typed, correct){
+    var tw = norm(typed).split(' '), cw = norm(correct).split(' '), cWords = String(correct).split(' ');
+    var h='';
+    for(var i=0;i<cWords.length;i++){
+      var ok = tw[i]===cw[i];
+      h += '<span class="'+(ok?'w-ok':'w-bad')+'">'+esc(cWords[i])+'</span> ';
+    }
+    return h;
+  }
+  var matchState = null;
+  function matchHTML(audio){
+    var it = items();
+    if(!matchState || matchState.audio!==audio || matchState.key!==S.section+'-'+S.activity){
+      matchState = { audio:audio, key:S.section+'-'+S.activity, sel:null, matched:{}, wrong:null, right: shuffle(it) };
+    }
+    var st = matchState;
+    var left = it.map(function(x,i){
+      var done = st.matched[i]!=null;
+      var cls = 'mcol mitem';
+      if(done) cls += ' done'; else if(st.sel===i) cls += ' sel';
+      return '<button class="'+cls+'" data-act="msel" data-i="'+i+'">'+(done?'✅ ':'')+(audio?'<span class="speaker" data-act="maudio" data-i="'+i+'" style="font-size:16px">🔊</span>':'')+esc(x.word)+'</button>';
+    }).join('');
+    var right = st.right.map(function(x,i){
+      var done = Object.keys(st.matched).some(function(k){ return st.matched[k]===i; });
+      var cls = 'mcol mitem'+(done?' done':(st.wrong&&st.wrong[1]===i?' wrong':''));
+      return '<button class="'+cls+'" data-act="mright" data-i="'+i+'">'+esc(x.definition||'')+'</button>';
+    }).join('');
+    var allDone = Object.keys(st.matched).length === it.length;
+    return '<p class="dict-note">'+(audio?'🎧 Tap 🔊 to listen, select a word, then match its definition':'Tap a word on the left, then its definition on the right')+'</p>'+
+      '<div class="match-grid"><div class="mcol">'+left+'</div><div class="mcol">'+right+'</div></div>'+
+      (st.fb?'<div class="fb '+(st.fbOk?'fb-ok':'fb-bad')+'" style="margin-top:10px">'+(st.fbOk?'<b>✅ Matched!</b><br>':'')+esc(st.fb)+'</div>':'')+
+      (allDone?'<div class="fb fb-ok" style="margin-top:10px;text-align:center"><b>🎊 All matched! Brilliant work!</b></div>':'');
+  }
+  function proHTML(){
+    var it = item(); if(!it) return '';
+    var rec = S._proRec===S.q;
+    var self = S._proSelf===S.q;
+    return '<div class="pro-box"><p class="pro-sent">'+esc(it.sentence)+'</p>'+(it.phonetic?'<p class="pro-phon">'+esc(it.phonetic)+'</p>':'')+(it.tip?'<p class="pro-tip">💡 '+esc(it.tip)+'</p>':'')+'</div>'+
+      '<button class="audio-btn" data-act="pplay" style="margin-top:14px"><span style="font-size:22px">🔊</span> Listen to Model Pronunciation</button>'+
+      (rec ? '<div class="pro-rec">🔴 Recording... Read the sentence aloud!</div>' : (!self ? '<button class="btn btn-red" data-act="prec" style="width:100%;margin-top:14px">🎤 Record Yourself</button>' :
+        '<div style="margin-top:14px"><p style="text-align:center;font-weight:800;color:#374151;margin-bottom:10px">How did you do? Self-assess:</p><div class="self-grid">'+
+        '<button class="btn btn-primary" data-act="pself" data-v="1">😊 Got it!</button>'+
+        '<button class="btn btn-red" data-act="pself" data-v="0">😅 Needs work</button></div></div>'))+
+      ($('pro-fb') ? '' : '<div id="pro-fb"></div>');
+  }
+
+  // ── wiring ──
+  function wireAct(){
+    var root = $('act-slot');
+    if(!root || root.__wired) return;
+    root.__wired = true;
+    root.addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-act]'); if(!b) return;
+      var act = b.getAttribute('data-act'), i = +b.getAttribute('data-i');
+      if(act==='next') { advanceActivity(); return; }
+      if(act==='aplay' || act==='dplay' || act==='dslow' || act==='pplay'){
+        var it = item();
+        if(act==='aplay') speak(it.audioScript, S.rate*0.9);
+        else if(act==='dplay'){ S._dictPlayed=S.q; speak(it.audioScript, S.rate*0.85); save(); render(); }
+        else if(act==='dslow'){ speak(it.audioScript, S.rate*0.6); }
+        else speak(it.sentence, S.rate*0.85);
+        return;
+      }
+      if(act==='nextq'){ advanceQ(); return; }
+      if(act==='hnext'){
+        var hIt=item();
+        S.catMsg = 'Awesome exploration! 😸';
+        say(hIt.feedback);
+        handleCorrect();
+        setTimeout(function(){ advanceQ(); }, 900);
+        return;
+      }
+      if(act==='maudio'){ var mi=items()[i]; if(mi.audioScript) speak(mi.audioScript, S.rate*0.9); ev.stopPropagation(); return; }
+      if(act==='mc'){
+        var mcIt=item(), sel=+b.getAttribute('data-i'), ok = mcIt.options[sel]===mcIt.answer;
+        S.fb = {ok:ok, text:'<b>'+(ok?'🎉 Correct!':'❌ Not quite!')+'</b><br>'+esc(mcIt.feedback||'')};
+        say(mcIt.feedback);
+        if(ok) handleCorrect(); else handleIncorrect();
+        return;
+      }
+      if(act==='tf'){
+        var tfIt=item(), val=+b.getAttribute('data-v')===1, ok = val===tfIt.isTrue;
+        S.fb = {ok:ok, text:'<b>'+(ok?'🎉 Correct!':'❌ Not quite!')+'</b> The statement is <b>'+(tfIt.isTrue?'TRUE':'FALSE')+'</b>.<br>'+esc(tfIt.feedback||'')};
+        say(tfIt.feedback);
+        if(ok) handleCorrect(); else handleIncorrect();
+        return;
+      }
+      if(act==='cloze-check'){
+        var cIt=item(), blanks=cIt.blanks||[], okCount=0;
+        [].forEach.call(root.querySelectorAll('.gap-input'), function(inp, idx){
+          var ok = norm(inp.value)===norm(blanks[idx]||'');
+          inp.classList.add(ok?'ok':'bad'); inp.disabled=true;
+          if(ok) okCount++;
+          else if(blanks[idx]){ var sp=document.createElement('span'); sp.className='gap-correct'; sp.innerHTML=' → '+esc(blanks[idx]); inp.parentNode.appendChild(sp); }
+        });
+        var allOk = okCount===blanks.length && blanks.length>0;
+        S.fb = {ok:allOk, text:'<b>'+(allOk?'🎉 All correct!':'✏️ '+okCount+'/'+blanks.length+' correct')+'</b><br>'+esc(cIt.feedback||'')};
+        say(cIt.feedback);
+        if(allOk) handleCorrect(); else handleIncorrect();
+        return;
+      }
+      if(act==='scram-push'){
+        var sk = scramKey(); if(!sk) return; var st=scramState[sk];
+        st.arr.push(st.avail.splice(+b.getAttribute('data-i'),1)[0]); renderActivity(); return;
+      }
+      if(act==='scram-pop'){
+        var sk2 = scramKey(); if(!sk2) return; var st2=scramState[sk2];
+        st2.avail.push(st2.arr.splice(+b.getAttribute('data-i'),1)[0]); renderActivity(); return;
+      }
+      if(act==='scram-check'){
+        var sk3 = scramKey(); if(!sk3) return; var st3=scramState[sk3], sIt=item();
+        var ok = st3.arr.join(' ').trim() === String(sIt.answer||'').trim();
+        st3.revealed=true; st3.isOk=ok; if(!ok) st3.misses=(st3.misses||0)+1;
+        say(sIt.feedback);
+        if(ok) handleCorrect(); else handleIncorrect();
+        return;
+      }
+      if(act==='dcheck'){
+        var dIt=item(); var ta=$('dict-ta');
+        if(S._dictPlayed !== S.q){ speak(dIt.audioScript, S.rate*0.85); S._dictPlayed=S.q; render(); return; }
+        var typed=ta.value;
+        var ok = norm(typed)===norm(dIt.answer);
+        S._dictState={q:S.q,typed:typed,ok:ok};
+        say(dIt.feedback);
+        if(ok) handleCorrect(); else handleIncorrect();
+        return;
+      }
+      if(act==='prec'){
+        S._proRec=S.q; save(); render();
+        setTimeout(function(){ S._proRec=null; S._proSelf=S.q; save(); render(); }, 3000);
+        return;
+      }
+      if(act==='pself'){
+        var pIt=item(), ok=+b.getAttribute('data-v')===1;
+        S.fb = {ok:ok, text:'<b>'+(ok?'🎉 Great job!':'💪 Keep practicing!')+'</b><br>'+esc(pIt.feedback||'')};
+        say(pIt.feedback);
+        if(ok) handleCorrect(); else handleIncorrect();
+        return;
+      }
+    });
+  }
+  function scramKey(){ return S.phase+'/'+S.activity+'/'+S.q; }
+  function buildTimer(){
+    if(!S.timeAttack || isWholeSet() || S.phase!=='activity') return;
+    var t=10;
+    var iv=setInterval(function(){
+      t--;
+      var f=$('timer-fill'), n=$('timer-num');
+      if(f){ f.style.width=(t/10*100)+'%'; f.style.background=t>6?'#58CC02':(t>3?'#FF9600':'#FF4B4B'); }
+      if(n) n.textContent=t+'s';
+      if(t<=0){ clearInterval(iv); S.fb={ok:false,text:'<b>⏱️ Time up!</b><br>Don\'t worry — speed comes with practice!'}; handleIncorrect(); }
+    },1000);
+  }
+
+  // ── slides viewer ──
+  function renderSlides(){
+    var sec = section(), slides = sec.slides && sec.slides.length ? sec.slides : [{heading:sec.title||'Let\'s Begin', body:'Get ready for your activities!', example:''}];
+    if(S.slideIdx==null) S.slideIdx=0;
+    if(S.slideIdx>=slides.length) S.slideIdx=0;
+    var sl = slides[S.slideIdx];
+    var dots = slides.map(function(_,i){ return '<div class="slide-dot '+(i===S.slideIdx?'on':'')+'"></div>'; }).join('');
+    var mode = '<div class="slide-mode"><div><b>🏫 In-Class</b><br>Activities 1-3</div><div><b>📋 Homework</b><br>Activities 4-6</div></div>';
+    $('main-slot').innerHTML =
+      '<div class="slides-head" style="background:'+esc(sec.colour||'#58CC02')+'">🎯 '+esc(sec.title)+' — Lesson Slides</div>'+
+      '<div class="slide-dots">'+dots+'</div>'+
+      '<div class="slides-body" style="--sect:'+esc(sec.colour||'#58CC02')+';--sect2:'+esc(sec.colour||'#58cc02')+'cc">'+
+        '<div class="slide-top"><span class="slide-num" style="background:'+esc(sec.colour||'#58CC02')+'">'+(S.slideIdx+1)+' / '+slides.length+'</span>'+
+        '<button class="slide-read" data-gact="sread">🔊 Read aloud</button></div>'+
+        '<div class="slide-title">'+esc(sl.heading)+'</div>'+
+        '<div class="slide-body">'+esc(sl.body)+'</div>'+
+        (sl.example?'<div class="slide-example"><b style="color:#9ca3af;font-size:11px;text-transform:uppercase;display:block">📌 Example</b>\u201c'+esc(sl.example)+'\u201d</div>':'')+
+        mode+
+      '</div>'+
+      '<div class="slide-nav"><button class="btn btn-ghost" data-gact="sprev"'+(S.slideIdx===0?' style="visibility:hidden"':'')+'>← Prev</button>'+
+      '<button class="btn btn-primary" data-gact="snext" style="flex:1;background:'+esc(sec.colour||'#58CC02')+';box-shadow:0 4px 0 '+esc(sec.colour||'#58cc02')+'99">'+(S.slideIdx===slides.length-1?'🎮 Start Activities!':'Next →')+'</button></div>';
+  }
+  function wireGlobal(){
+    var root=$('lav2-root');
+    root.addEventListener('click', function(ev){
+      var b=ev.target.closest('[data-gact]'); if(!b) return;
+      var g=b.getAttribute('data-gact');
+      if(g==='sread'){ var sec=section(); var sl=(sec.slides||[])[S.slideIdx]; if(sl) speak(sl.heading+'. '+sl.body+(sl.example?'. Example: '+sl.example:''), S.rate*0.95); }
+      else if(g==='sprev'){ S.slideIdx--; renderSlides(); }
+      else if(g==='snext'){ if(S.slideIdx >= ((section().slides||[]).length-1)) { S.phase='activity'; S.slideIdx=0; render(); } else { S.slideIdx++; renderSlides(); } }
+      else if(g==='goto'){ var si=+b.getAttribute('data-i'); if(si<=S.section){ S.section=si; S.activity=0; S.q=0; S.phase='slides'; S.perfectRun=true; S.slideIdx=0; render(); } }
+      else if(g==='next'){ advanceQ(); }
+      else if(g==='settings'){ S.showSettings=true; render(); }
+      else if(g==='close-settings'){ S.showSettings=false; render(); }
+      else if(g==='panel'){ var p=b.getAttribute('data-p'); S.panel = S.panel===p?'none':p; render(); }
+      else if(g==='close-panel'){ S.panel='none'; render(); }
+      else if(g==='chest-open'){ openChest(); }
+      else if(g==='chest-close'){ S.showChest=false; render(); }
+      else if(g==='sec-next'){ advanceSection(); }
+      else if(g==='all-new'){ S.showAllDone=false; location.reload(); }
+      else if(g==='all-restart'){ S.showAllDone=false; resetGame(); render(); }
+      else if(g==='hm-gems'){ if(S.gems>=5){ S.gems-=5; S.hearts=S.maxHearts; S.heartsModal=false; render(); } }
+      else if(g==='hm-practice'){ S.hearts=S.maxHearts; S.heartsModal=false; render(); }
+      else if(g==='hm-close'){ S.heartsModal=false; render(); }
+      else if(g==='tts'){ S.tts=!S.tts; if(!S.tts) try{speechSynthesis.cancel()}catch(e){} save(); render(); }
+      else if(g==='timeattack'){ S.timeAttack=!S.timeAttack; save(); render(); }
+      else if(g==='selfstudy'){ S.selfStudy=!S.selfStudy; save(); render(); }
+      else if(g==='voice'){ S.voice=b.value; save(); }
+      else if(g==='pitch'){ S.pitch=+b.value; save(); }
+      else if(g==='rate'){ S.rate=+b.value; save(); }
+      else if(g==='buy'){ var ai=+b.getAttribute('data-i'); var acc=ACCS[ai]; if(!acc) return; if(S.gems>=acc[3]){ S.gems-=acc[3]; unlocked[acc[0]]=true; equipped[acc[0]]=true; save(); render(); } }
+    });
+  }
+
+  // ── HUD + shell ──
+  function hudHTML(){
+    var hearts=''; for(var i=0;i<S.maxHearts;i++) hearts += i<S.hearts?'❤️':'🖤';
+    var lvl = S.league, lvlIdx=LEAGUES.indexOf(lvl);
+    var xpPct = Math.min(100, (S.xp%1000)/10);
+    return '<div class="hud">'+
+      '<div class="hud-left"><span class="hud-cat">'+catEmoji()+'</span>'+
+      '<div class="hud-title"><span class="ht-main">'+esc(TITLE)+'</span><span class="ht-sub">'+(S.section<sections.length?esc(LEVEL_NAMES[Math.min(S.section,LEVEL_NAMES.length-1)]+' • '+section().title):'')+'</span></div>'+
+      '<div class="xp-wrap"><div class="xp-row"><span>⚡ '+S.xp+' XP</span><span style="color:'+LEAGUE_COLOR[lvl]+'">'+LEAGUE_EMOJI[lvl]+' '+lvl+'</span></div>'+
+      '<div class="xp-bar"><div class="xp-fill" style="width:'+xpPct+'%"></div></div></div>'+
+      '<span class="hud-hearts">'+hearts+'</span>'+
+      '<span class="hud-pill pill-blue">💎 '+S.gems+'</span>'+
+      '<span class="hud-pill pill-orange">🔥 '+S.streak+'</span>'+
+      '<button class="hud-gear" data-gact="settings">⚙️</button></div></div>';
+  }
+  function catEmoji(){ return S.catMood==='sad'?'😿':(S.catMood==='excited'?'😸':(S.catMood==='sleepy'?'😴':'😺')); }
+  function chipsHTML(){
+    return '<div class="chips">'+sections.map(function(sec,i){
+      var cls='chip'+(i===S.section?' active':(i<S.section?' done':''));
+      var icon = i<S.section?'✅':(i===S.section?'▶':'🔒');
+      return '<button class="'+cls+'" data-gact="goto" data-i="'+i+'"'+(i>S.section?' disabled style="opacity:.6"':'')+(i===S.section?' style="background:'+esc(sec.colour)+'"':'')+'>'+icon+' '+esc(sec.title)+'</button>';
+    }).join('')+'</div>';
+  }
+  function sidePanels(){
+    return '<div class="sidebar">'+panelBody()+'</div>';
+  }
+  function panelBody(){
+    var p=S.panel;
+    if(p==='none'){
+      var mini = NPC.slice().sort(function(a,b){return b.x-a.x;}).concat();
+      var meMini = {n:'You',a:'😺',x:S.totalXp};
+      mini.push(meMini); mini.sort(function(a,b){return b.x-a.x;});
+      var myRank = mini.indexOf(meMini)+1;
+      var top5 = mini.slice(0,5).map(function(r,i){ return '<div class="lb-row'+(r.n==='You'?' me':'')+'"><span style="font-size:16px">'+r.a+'</span><span style="font-weight:800;font-size:12px">'+esc(r.n)+'</span>'+(i===0?'🥇':(i===1?'🥈':(i===2?'🥉':'')))+'<span class="lb-xp" style="font-size:11px">'+r.x+' XP</span></div>'; }).join('');
+      var badgeStrip = BADGES.slice(0,8).map(function(bd){ var got=earnedBadges[bd[0]]; return '<div class="badge-cell'+(got?' got':'')+'" style="padding:8px 4px"><div class="bc-ico" style="font-size:18px">'+bd[2]+'</div><div class="bc-lbl">'+bd[1]+'</div></div>'; }).join('');
+      return '<div class="panel-title">🐱 LinguaCat</div>'+
+        '<div class="card" style="padding:14px"><div class="big-emoji" style="font-size:44px">'+catEmoji()+'</div>'+
+        '<p style="font-weight:900;text-align:center">'+(S.catMood==='sad'?'I believe in you! 💪':'Ready to learn? Let\'s go! 🚀')+'</p></div>'+
+        '<div style="margin-top:12px;font-size:12px;font-weight:800;color:#9ca3af;text-transform:uppercase">Quick Stats</div>'+
+        '<div class="stat-grid" style="grid-template-columns:1fr 1fr"><div class="stat"><b>'+S.totalXp+'</b><span>Total XP</span></div>'+
+        '<div class="stat blue"><b>'+S.completed.length+'</b><span>Completed</span></div>'+
+        '<div class="stat red"><b>'+Object.keys(earnedBadges).length+'</b><span>Badges</span></div>'+
+        '<div class="stat"><b>'+S.streak+'🔥</b><span>Streak</span></div></div>'+
+        '<div style="margin-top:16px" class="panel-title">🏆 Leaderboard <span style="margin-left:auto;font-size:11px;color:#9ca3af">You are #'+myRank+'</span></div>'+
+        top5+
+        '<button class="btn btn-ghost" data-gact="panel" data-p="leaderboard" style="width:100%;margin-top:10px;padding:10px;font-size:13px">See Full League →</button>'+
+        '<div style="margin-top:16px" class="panel-title">🎖️ Badges <span style="margin-left:auto;font-size:11px;color:#9ca3af">'+Object.keys(earnedBadges).length+'/'+BADGES.length+'</span></div>'+
+        '<div class="panel-grid">'+badgeStrip+'</div>'+
+        '<button class="btn btn-ghost" data-gact="panel" data-p="badges" style="width:100%;margin-top:10px;padding:10px;font-size:13px">All Badges →</button>';
+    }
+    if(p==='badges'){
+      return '<div class="panel-title">🎖️ Badges <span style="margin-left:auto;font-size:12px;color:#9ca3af">'+Object.keys(earnedBadges).length+'/'+BADGES.length+'</span></div>'+
+        '<div class="panel-grid">'+BADGES.map(function(bd){
+          var got = earnedBadges[bd[0]];
+          return '<div class="badge-cell'+(got?' got':'')+'"><div class="bc-ico">'+bd[2]+'</div><div class="bc-lbl">'+bd[1]+'</div></div>';
+        }).join('')+'</div>';
+    }
+    if(p==='leaderboard'){
+      var rows = NPC.slice().sort(function(a,b){return b.x-a.x;}).concat();
+      var me = {n:'You',a:'😺',x:S.totalXp};
+      rows.push(me);
+      rows.sort(function(a,b){return b.x-a.x;});
+      var rank = rows.indexOf(me)+1;
+      if(rank<=2){ S.league = LEAGUES[Math.min(1,rank-1)>=0?0:0]; if(rank===1&&S.league==='Bronze'){S.league='Silver';} }
+      return '<div class="panel-title">🏆 Leagues <span style="margin-left:auto;font-size:12px;color:'+LEAGUE_COLOR[S.league]+'">'+LEAGUE_EMOJI[S.league]+' '+S.league+'</span></div>'+
+        rows.map(function(r,i){ return '<div class="lb-row'+(r.n==='You'?' me':'')+'"><span>'+r.a+'</span><span style="font-weight:800;font-size:13px">'+esc(r.n)+'</span>'+(i===0?'<span style="color:#f59e0b">🥇</span>':'')+(i===1?'<span style="color:#9ca3af">🥈</span>':'')+(i===2?'<span style="color:#cd7f32">🥉</span>':'')+'<span class="lb-xp">'+r.x+' XP</span></div>'; }).join('');
+    }
+    if(p==='season'){
+      var tiers = ['10','25','50','100','180','300','450','650','900'];
+      return '<div class="panel-title">🏅 Season Pass <span style="margin-left:auto;font-size:12px;color:#9ca3af">Day '+Math.min(30,Math.floor(S.seasonProg)/1||1)+'</span></div>'+
+        '<div class="season-track"><div class="season-fill" style="width:'+Math.min(100,(S.seasonProg/30)*100)+'%"></div></div>'+
+        '<p style="font-size:12px;color:#6b7280;font-weight:700">'+S.seasonProg+'/30 progress — earn points with every correct answer!</p>';
+    }
+    if(p==='shop'){
+      return '<div class="panel-title">🛍️ Cat Shop <span style="margin-left:auto;font-size:12px;color:#1CB0F6">💎 '+S.gems+'</span></div>'+
+        ACCS.map(function(acc,i){
+          var got = unlocked[acc[0]];
+          return '<div class="access-row"><span class="eq">'+acc[1]+'</span><span style="font-weight:800;font-size:13px">'+acc[2]+'</span>'+
+            (got?'<span style="margin-left:auto;font-size:12px;color:#16a34a;font-weight:900">'+(equipped[acc[0]]?'✨ Equipped':'Owned')+'</span>'+
+              '<button style="background:#58CC02" data-gact="buy" data-i="'+i+'">Equip</button>'
+            :'<button data-gact="buy" data-i="'+i+'">💎 '+acc[3]+'</button>')+'</div>';
+        }).join('');
+    }
+    return '';
+  }
+  function navHTML(){
+    var items = [['none','🏠','Home'],['leaderboard','🏆','Leagues'],['badges','🎖️','Badges'],['season','🏅','Season'],['shop','🛍️','Shop']];
+    return '<div class="mobile-nav">'+items.map(function(it){
+      return '<button class="'+(S.panel===it[0]?'on':'')+'" data-gact="panel" data-p="'+it[0]+'"><span class="mnav-ico">'+it[1]+'</span><span>'+it[2]+'</span></button>';
+    }).join('')+'</div>';
+  }
+  function overlayHTML(){
+    var h='';
+    if(S.xpGain!=null){ h += '<div class="xp-float">+'+S.xpGain+' XP ⚡</div>'; }
+    if(S.showChest){
+      h += '<div class="overlay"><div class="modal"><h3>🎁 Mystery Chest!</h3><p>Every 3 correct answers earns a chest!</p>'+
+        '<div id="chest-reward"><div class="big-emoji bounce">📦</div><button class="btn btn-primary" data-gact="chest-open" style="width:100%;margin-top:12px;font-size:17px">Open Chest! 🔓</button></div></div></div>';
+    }
+    if(S.heartsModal){
+      h += '<div class="overlay"><div class="modal"><div class="big-emoji">😿</div><h3>No Hearts Left!</h3>'+
+        '<p>Your hearts ran out. Refill with gems, or practice anyway in infinite mode.</p>'+
+        '<div class="stat-grid" style="grid-template-columns:1fr"><div class="stat red"><b>'+S.gems+' 💎</b><span>Gems available</span></div></div>'+
+        (S.gems>=5?'<button class="btn btn-blue" data-gact="hm-gems" style="width:100%;margin-top:8px">💎 Refill Now (5 gems)</button>':'')+
+        '<button class="btn btn-primary" data-gact="hm-practice" style="width:100%;margin-top:8px">✨ Practice Anyway (infinite mode)</button>'+
+        '<button class="btn btn-ghost" data-gact="hm-close" style="width:100%;margin-top:8px">Come Back Later</button></div></div>';
+    }
+    if(S.showSectionDone){
+      h += '<div class="overlay"><div class="modal"><div class="big-emoji bounce">🏆</div><h3>Section Complete!</h3><p>'+esc(section().title)+'</p>'+
+        (S.perfectRun?'<div class="reward-box" style="background:#fffbeb;border-color:#fde68a"><b style="color:#a16207">✨ Perfect Run! 1.5x XP Bonus!</b></div>':'')+
+        '<div class="stat-grid"><div class="stat"><b>'+S.sessionXp+'</b><span>XP Earned</span></div><div class="stat red"><b>'+S.hearts+'❤️</b><span>Hearts Left</span></div><div class="stat blue"><b>'+S.gems+'💎</b><span>Gems</span></div></div>'+
+        '<button class="btn btn-primary" data-gact="sec-next" style="width:100%;font-size:17px">'+(S.section<sections.length-1?'Next Level: '+LEVEL_NAMES[S.section+1]+' →':'🎓 Finish Lesson!')+'</button></div></div>';
+    }
+    if(S.showAllDone){
+      h += '<div class="overlay"><div class="modal"><div class="big-emoji bounce">🎓</div><h3>Lesson Complete!</h3><p>You\'ve mastered the whole lesson!</p>'+
+        '<div class="stat-grid" style="grid-template-columns:1fr 1fr"><div class="stat"><b>'+S.totalXp+'</b><span>Total XP</span></div><div class="stat red"><b>'+S.streak+'🔥</b><span>Day Streak</span></div></div>'+
+        '<button class="btn btn-primary" data-gact="all-restart" style="width:100%">🔄 Restart Lesson</button>'+
+        '<button class="btn btn-ghost" data-gact="all-new" style="width:100%;margin-top:8px">↩️ New Lesson Setup</button></div></div>';
+    }
+    if(S.showSettings){
+      var voices = [];
+      try{ voices = speechSynthesis.getVoices(); }catch(e){}
+      h += '<div class="overlay"><div class="modal settings"><div class="act-meta"><h3 style="margin:0">⚙️ Settings</h3><button class="hud-gear" data-gact="close-settings" style="font-size:22px">✕</button></div>'+
+        '<div class="set-row"><div><p class="st">🔊 Text-to-Speech</p><p class="sd">Cat reads feedback aloud</p></div><button class="switch'+(S.tts?' on':'')+'" data-gact="tts"></button></div>'+
+        (S.tts?'<div><label>🎙️ Voice</label><select data-gact="voice"><option value="">— Default Voice —</option>'+voices.map(function(v){return '<option value="'+esc(v.name)+'"'+(S.voice===v.name?' selected':'')+'>'+esc(v.name)+' ('+esc(v.lang)+')</option>';}).join('')+'</select></div>':'')+
+        (S.tts?'<div><label>Pitch — '+S.pitch.toFixed(1)+'</label><input type="range" min="0.5" max="2" step="0.1" value="'+S.pitch+'" data-gact="pitch"></div>':'')+
+        (S.tts?'<div><label>Speed — '+S.rate.toFixed(1)+'x</label><input type="range" min="0.5" max="2" step="0.1" value="'+S.rate+'" data-gact="rate"></div>':'')+
+        '<div class="set-row"><div><p class="st">⏱️ Time Attack Mode</p><p class="sd">10 seconds per question, 2x XP</p></div><button class="switch'+(S.timeAttack?' on':'')+'" data-gact="timeattack"></button></div>'+
+        '<div class="set-row"><div><p class="st">📚 Self-Study Mode</p><p class="sd">Practice your incorrect answers</p></div><button class="switch'+(S.selfStudy?' on':'')+'" data-gact="selfstudy"></button></div>'+
+        '</div></div>';
+    }
+    return h;
+  }
+  function resetGame(){
+    S.section=0; S.activity=0; S.q=0; S.phase='slides'; S.slideIdx=0;
+    S.completed=[]; S.incorrect=[]; S.hearts=S.maxHearts; S.perfectRun=true;
+    S.sessionXp=0; S.xp=0; S.totalXp=0; S.correctStreak=0; S.chestCount=0; S.showAllDone=false;
+    earnedBadges={};
+  }
+
+  // ── main render ──
+  function render(){
+    var root=$('lav2-root'); if(!root) return;
+    var mainInner;
+    if(S.phase==='slides'){
+      mainInner = '<div id="main-slot"></div>';
+    } else {
+      mainInner = '<div class="act-wrap" id="act-slot"></div>';
+    }
+    root.innerHTML = hudHTML()+chipsHTML()+
+      '<div class="main"><div class="main-content">'+mainInner+'</div>'+sidePanels()+'</div>'+
+      navHTML()+overlayHTML();
+    if(S.phase==='slides') renderSlides(); else renderActivity();
+  }
+
+  // ── boot ──
+  load();
+  if(!sections.length){
+    document.getElementById('lav2-root').innerHTML =
+      '<div class="act-wrap"><div class="card" style="text-align:center;padding:40px 20px"><div style="font-size:56px">😿</div>'+
+      '<h2 style="font-weight:900;margin:12px 0 8px">No lesson loaded</h2>'+
+      '<p style="color:#6b7280;font-size:14px;line-height:1.6">Open <b>Lessons → Lesson Creator</b>, choose <b>🎮 Learning App V2</b>, hit <b>Load Mock Data</b> (or paste AI-generated JSON), then generate this lesson.</p></div></div>';
+    return;
+  }
+  S.slideIdx = 0;
+  render();
+  wireGlobal();
+})();
+</script>
+</body>
+</html>

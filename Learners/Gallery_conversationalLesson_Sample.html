@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🗣️ Conversational Lesson — Sample</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+.hdr{background:linear-gradient(135deg,#8b5cf6 0%,#8b5cf6cc 60%,#0f172a 160%);color:#fff;padding:22px 26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hdr .ico{font-size:44px;background:rgba(255,255,255,.16);border-radius:16px;width:70px;height:70px;display:flex;align-items:center;justify-content:center}
+.hdr h1{font-size:24px;font-weight:900;letter-spacing:.3px}
+.hdr .sub{font-size:12px;opacity:.85;margin-top:2px}
+.hdr .right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800}
+.wrap{max-width:860px;margin:24px auto;padding:0 16px 60px}
+.sec{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;margin-bottom:20px;box-shadow:0 4px 18px rgba(15,23,42,.06)}
+.sec-head{display:flex;align-items:center;gap:12px;border-left:4px solid;padding-left:12px;margin-bottom:14px}
+.sec-num{width:30px;height:30px;border-radius:9px;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:14px}
+.sec-head h3{font-size:17px;font-weight:800}
+.sec-meta{font-size:11px;color:#64748b;font-weight:700}
+.acts{display:flex;flex-direction:column;gap:12px}
+.act{border:1px solid #e2e8f0;border-radius:14px;padding:16px;background:#f8fafc}
+.act-head{font-size:10px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:#8b5cf6;margin-bottom:8px}
+.act-title{font-weight:800;font-size:14px;margin-bottom:6px}
+.q{font-size:14px;line-height:1.55;margin-bottom:10px}
+.read-body{font-size:13.5px;line-height:1.65;color:#334155;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;max-height:260px;overflow:auto}
+.hint{font-size:11px;color:#64748b;margin:6px 0;font-weight:600}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;padding:10px 14px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.opt:hover{border-color:#8b5cf6;background:#8b5cf60d}
+.opt.correct{border-color:#059669;background:#ecfdf5;color:#065f46}
+.opt.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.gap-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.gap{flex:1;min-width:180px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:inherit}
+.done{padding:9px 16px;border:none;border-radius:10px;background:#8b5cf6;color:#fff;font-size:12px;font-weight:800;cursor:pointer;transition:.15s}
+.done:hover{filter:brightness(1.1)}
+.done.checked{background:#059669}
+.fb{font-size:12px;font-weight:700;margin-top:8px;min-height:16px}
+.fb.ok{color:#059669}.fb.no{color:#dc2626}
+.cards{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.card{width:150px;height:100px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;position:relative;perspective:400px;padding:0}
+.card span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:8px;font-size:13px;font-weight:700;border-radius:12px;backface-visibility:hidden;transition:.35s}
+.card .card-f{background:#8b5cf6;color:#fff}
+.card .card-b{background:#f0fdf4;color:#065f46;transform:rotateY(180deg)}
+.card.flipped .card-f{transform:rotateY(180deg)}
+.card.flipped .card-b{transform:rotateY(0)}
+.match{display:flex;flex-direction:column;gap:8px}
+.match-row{display:flex;gap:8px}
+.match-a,.match-b{flex:1}
+.order{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.order-item{padding:9px 12px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;font-size:13px;font-weight:600}
+.xpbar{position:fixed;bottom:16px;right:16px;background:#0f172a;color:#fff;padding:10px 16px;border-radius:999px;font-size:12px;font-weight:800;box-shadow:0 8px 24px rgba(15,23,42,.3);z-index:50}
+@media print{.hdr{position:static}.xpbar{display:none}.act{break-inside:avoid}}
+@media (max-width:640px){.hdr .right{width:100%}.wrap{padding:0 10px 80px}}
+</style></head><body>
+<div class="hdr"><div class="ico">🗣️</div><div><h1>Conversational Lesson</h1><div class="sub">Speaking-first guided practice with model answers</div></div>
+<div class="right"><span class="chip">🧑 Learner</span><span class="chip">⚡ 0 XP</span><span class="chip">🔥 0 streak</span><button class="done" onclick="window.print()">🖨 Print</button></div></div>
+<div class="wrap"><section class="sec" id="sec0"><div class="sec-head" style="border-color:#8b5cf655"><span class="sec-num" style="background:#8b5cf6">1</span><div><h3>👋 Warm-Up — Get Talking</h3><span class="sec-meta">⏱ 10 mins · ⚡ 100 XP</span></div></div><div class="acts"><div class="act act-read" data-id="a0_0"><div class="act-head">📘 speaking jam</div><div class="act-title">🗣️ Speaking Jam — Small Talk</div><div class="read-body"></div><button class="done" onclick="markDone('a0_0')">✓ Mark as done</button></div><div class="act act-read" data-id="a0_1"><div class="act-head">📘 speaking game</div><div class="act-title">🎲 Ice-Breaker Card Deck</div><div class="read-body"></div><button class="done" onclick="markDone('a0_1')">✓ Mark as done</button></div></div></section><section class="sec" id="sec1"><div class="sec-head" style="border-color:#8b5cf655"><span class="sec-num" style="background:#8b5cf6">2</span><div><h3>💬 Dialogue Model — Making Plans</h3><span class="sec-meta">⏱ 15 mins · ⚡ 120 XP</span></div></div><div class="acts"><div class="act act-read" data-id="a1_0"><div class="act-head">📘 conversation roleplay</div><div class="act-title">💬 Dialogue Model — Coffee Catch-up</div><div class="read-body"></div><button class="done" onclick="markDone('a1_0')">✓ Mark as done</button></div><div class="act act-read" data-id="a1_1"><div class="act-head">📘 questions</div><div class="act-title">❓ Comprehension Check</div><div class="read-body">1. Why has James been hard to reach recently? 2. Where does Sofia suggest they meet? 3. Why do they decide on 11 o'clock? 4. Who books the table?</div><button class="done" onclick="markDone('a1_1')">✓ Mark as done</button></div><div class="act" data-id="a1_2"><div class="act-head">⚖️ True / False</div><div class="act-title">✅ True or False — How much did you catch?</div><p class="q"></p><div class="opts"><button class="opt" onclick="pick('a1_2',this,'True','')">True</button><button class="opt" onclick="pick('a1_2',this,'False','')">False</button></div><div class="fb"></div></div></div></section><section class="sec" id="sec2"><div class="sec-head" style="border-color:#8b5cf655"><span class="sec-num" style="background:#8b5cf6">3</span><div><h3>🔑 Key Phrases &amp; Quick Reactions</h3><span class="sec-meta">⏱ 15 mins · ⚡ 130 XP</span></div></div><div class="acts"><div class="act act-read" data-id="a2_0"><div class="act-head">📘 flashcard</div><div class="act-title">🔑 Key Phrases Flashcards</div><div class="read-body"></div><button class="done" onclick="markDone('a2_0')">✓ Mark as done</button></div><div class="act" data-id="a2_1"><div class="act-head">🔗 Matching</div><div class="act-title">🔗 Match the Phrase to Its Job</div><div class="match"></div><div class="fb">Tap each pair to complete.</div></div><div class="act" data-id="a2_2"><div class="act-head">🎯 Multiple choice</div><div class="act-title">💬 Choose the Best Response</div><p class="q"></p><div class="opts"></div><div class="fb"></div></div></div></section><section class="sec" id="sec3"><div class="sec-head" style="border-color:#8b5cf655"><span class="sec-num" style="background:#8b5cf6">4</span><div><h3>🗣️ Speaking Challenge — Your Turn</h3><span class="sec-meta">⏱ 20 mins · ⚡ 180 XP</span></div></div><div class="acts"><div class="act act-read" data-id="a3_0"><div class="act-head">📘 speaking jam</div><div class="act-title">🗣️ Speaking Challenge — The One-Minute Plan</div><div class="read-body"></div><button class="done" onclick="markDone('a3_0')">✓ Mark as done</button></div><div class="act act-read" data-id="a3_1"><div class="act-head">📘 conversation roleplay</div><div class="act-title">🎭 Roleplay — Order at the Café</div><div class="read-body"></div><button class="done" onclick="markDone('a3_1')">✓ Mark as done</button></div><div class="act" data-id="a3_2"><div class="act-head">✏️ Fill in the blanks</div><div class="act-title">✍️ Complete the Line — Natural Replies</div><p class="q"></p><div class="gap-row"><input class="gap" id="a3_2_in" placeholder="Type the missing word…"><button class="done" onclick="checkGap('a3_2','')">Check</button></div><div class="fb"></div></div><div class="act act-read" data-id="a3_3"><div class="act-head">📘 error correction</div><div class="act-title">🔍 Fix the Learner's Mistakes</div><div class="read-body"></div><button class="done" onclick="markDone('a3_3')">✓ Mark as done</button></div><div class="act act-read" data-id="a3_4"><div class="act-head">📘 sorting</div><div class="act-title">🗂️ Sort the Register — Formal or Casual?</div><div class="read-body"></div><button class="done" onclick="markDone('a3_4')">✓ Mark as done</button></div></div></section><section class="sec" id="sec4"><div class="sec-head" style="border-color:#8b5cf655"><span class="sec-num" style="background:#8b5cf6">5</span><div><h3>🎮 Speaking Games &amp; Review</h3><span class="sec-meta">⏱ 15 mins · ⚡ 150 XP</span></div></div><div class="acts"><div class="act act-read" data-id="a4_0"><div class="act-head">📘 speaking game</div><div class="act-title">🎲 Truth or Dare — Conversation Edition</div><div class="read-body"></div><button class="done" onclick="markDone('a4_0')">✓ Mark as done</button></div><div class="act act-read" data-id="a4_1"><div class="act-head">📘 would you rather</div><div class="act-title">⚖️ Would You Rather — Talk Till You Drop</div><div class="read-body"></div><button class="done" onclick="markDone('a4_1')">✓ Mark as done</button></div><div class="act" data-id="a4_2"><div class="act-head">🎯 Multiple choice</div><div class="act-title">🎯 Review Quiz — Conversation Toolkit</div><p class="q"></p><div class="opts"></div><div class="fb"></div></div><div class="act act-read" data-id="a4_3"><div class="act-head">📘 voice recording</div><div class="act-title">🎤 Record Your Catch-up</div><div class="read-body">Record a 90-second voice message to an old friend you haven't spoken to in months. Use what you learned: open warmly, explain why you've been busy, suggest a plan and confirm it.</div><button class="done" onclick="markDone('a4_3')">✓ Mark as done</button></div><div class="act act-read" data-id="a4_4"><div class="act-head">📘 questions</div><div class="act-title">💬 Final Reflection</div><div class="read-body">Close the lesson with: Which key phrase will you actually use this week? What is the biggest difference between textbook English and real conversation English? Rate your confidence making plans in English from 1–10 — what would make it a 10?</div><button class="done" onclick="markDone('a4_4')">✓ Mark as done</button></div></div></section></div>
+<div class="xpbar">⚡ <span id="xp">0</span> XP · <span id="done">0</span>/18 done</div>
+<script>
+var xp=0,done=0,total=18;
+function markDone(id){var el=document.querySelector('.act[data-id="'+id+'"] .done');if(el&&!el.classList.contains('checked')){el.classList.add('checked');el.textContent='✓ Completed';done++;xp+=10;tick();}}
+function tick(){document.getElementById('xp').textContent=xp;document.getElementById('done').textContent=done;}
+function pick(id,btn,val,ans){var act=document.querySelector('.act[data-id="'+id+'"]');var fb=act.querySelector('.fb');if(act.dataset.done){return;}var ok=String(val||'').trim().toLowerCase()===String(ans||'').trim().toLowerCase();btn.classList.add(ok?'correct':'wrong');if(ok){act.dataset.done='1';fb.textContent='✅ Correct! +10 XP';fb.className='fb ok';markDone(id);}else{fb.textContent='❌ Not quite — try again.';fb.className='fb no';}}
+function checkGap(id,ans){var inp=document.getElementById(id+'_in');var act=document.querySelector('.act[data-id="'+id+'"]');var fb=act.querySelector('.fb');if(act.dataset.done){return;}var ok=inp.value.trim().toLowerCase()===String(ans||'').trim().toLowerCase();if(ok){act.dataset.done='1';fb.textContent='✅ Correct! +10 XP';fb.className='fb ok';inp.style.borderColor='#059669';markDone(id);}else{fb.textContent='❌ Try again — hint: "'+String(ans||'').replace(/_/g,' ? ')+'"';fb.className='fb no';}}
+function flipCard(c){c.classList.toggle('flipped');}
+</script>
+</body></html>

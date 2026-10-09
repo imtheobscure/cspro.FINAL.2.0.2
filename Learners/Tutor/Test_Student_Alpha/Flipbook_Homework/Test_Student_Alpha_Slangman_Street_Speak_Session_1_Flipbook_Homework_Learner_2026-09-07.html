@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The World of Innovation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:Inter,system-ui,sans-serif;background:radial-gradient(ellipse at 40% 40%,#1a3a5c 0%,#0d0d1a 70%);color:#1a1a1a;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#c9a84c;border-radius:2px}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* XP BAR */
+.xpbar{display:flex;align-items:center;gap:12px;padding:8px 16px;background:linear-gradient(135deg,#0d0d1a,#1a3a5c);border-bottom:1px solid rgba(201,168,76,.3);flex-shrink:0}
+.xpbar .brand{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:14px;background:linear-gradient(135deg,#c9a84c,#f5d87a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:none}
+.xpbar .lvl{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;background:linear-gradient(135deg,#c9a84c,#f5d87a);color:#0d0d1a;flex-shrink:0}
+.xpbar .who{display:none}
+.xpbar .who p{color:#fff;font-size:11px;line-height:1.1}
+.xpbar .who span{color:rgba(255,255,255,.4);font-size:10px}
+.xpbar .xpwrap{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+.xpbar .xpwrap>span{color:rgba(255,255,255,.6);font-size:10px;flex-shrink:0}
+.xpbar .track{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.xpbar .fill{height:100%;width:0;background:linear-gradient(90deg,#f6d365,#fda085);border-radius:3px;transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+.xpbar .xptxt{color:#fde047;font-size:11px;font-weight:700;flex-shrink:0}
+.xpbar .pgtrack{display:none;align-items:center;gap:6px}
+.xpbar .pgtrack span{color:rgba(255,255,255,.4);font-size:10px}
+.xpbar .pgfill{width:64px;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.xpbar .pgfill i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9a84c,#f5d87a)}
+.xpbar .done{display:none;align-items:center;gap:4px;color:rgba(255,255,255,.6);font-size:10px}
+.xpbar .snd{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:12px;cursor:pointer;flex-shrink:0}
+/* CONTROLS */
+.controls{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(0,0,0,.4);border-bottom:1px solid rgba(201,168,76,.1);flex-shrink:0;gap:8px}
+.controls button{border:none;cursor:pointer;font-family:inherit}
+.cbtn{padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:5px}
+.cbtn:hover{transform:scale(1.05)}
+.navmid{display:flex;align-items:center;gap:6px}
+.round{width:26px;height:26px;border-radius:50%;background:transparent;color:rgba(255,255,255,.6);font-size:18px;line-height:1}
+.round:hover{background:rgba(255,255,255,.1);color:#fff}
+.pageno{color:rgba(255,255,255,.5);font-size:11px;font-family:ui-monospace,monospace;padding:0 4px}
+.gold{background:linear-gradient(135deg,#c9a84c,#f5d87a);color:#111;font-weight:700;border:none;border-radius:8px;padding:6px 12px;font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer}
+.gold:hover{transform:scale(1.05)}
+/* STAGE */
+.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 12px;position:relative}
+.book{position:relative;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 30px 60px rgba(0,0,0,.8));perspective:2500px}
+.page{position:absolute;inset:0;background:#faf8f3;border-radius:2px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.05)}
+.page.anim-next{animation:flipNext .65s ease forwards}
+.page.anim-prev{animation:flipPrev .65s ease forwards}
+@keyframes flipNext{from{transform:rotateY(0);opacity:1}to{transform:rotateY(-78deg) translateX(-12%);opacity:.9}}
+@keyframes flipPrev{from{transform:rotateY(0);opacity:1}to{transform:rotateY(78deg) translateX(12%);opacity:.9}}
+.book .page{position:relative;flex-shrink:0}
+.book .corner{position:absolute;bottom:0;width:40px;height:40px;z-index:20;cursor:pointer;opacity:.6;transition:opacity .2s}
+.book .corner:hover{opacity:1}
+.book .corner.l{left:0;background:linear-gradient(315deg,transparent 50%,rgba(201,168,76,.5) 50%)}
+.book .corner.r{right:0;background:linear-gradient(135deg,transparent 50%,rgba(201,168,76,.5) 50%)}
+.sidenav{width:38px;height:38px;border-radius:50%;background:transparent;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;flex-shrink:0}
+.sidenav:hover{background:rgba(255,255,255,.1);color:#fff}
+.mobilenav{display:none;justify-content:center;align-items:center;gap:24px;padding:6px 0;flex-shrink:0}
+.mobilenav button{width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:20px;cursor:pointer}
+.hint{text-align:center;padding:3px 0;flex-shrink:0}
+.hint p{color:rgba(255,255,255,.2);font-size:11px}
+/* PAGE CONTENT SHARED */
+.scroller{flex:1;overflow-y:auto;padding:8px 16px;min-height:0;font-size:12px;line-height:1.75}
+.maghead{font-family:'Playfair Display',Georgia,serif}
+.dropcap::first-letter{font-family:'Playfair Display',Georgia,serif;font-size:3.5em;font-weight:900;float:left;line-height:.8;margin-right:.08em;margin-top:.05em;color:#c0392b}
+.pullquote{font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:700;font-style:italic;color:#1a3a5c;border-top:3px solid #c9a84c;border-bottom:3px solid #c9a84c;padding:8px 12px;margin:10px 0;text-align:center;break-inside:avoid}
+.section-rule{height:2px;background:linear-gradient(90deg,transparent,#c9a84c,transparent);border:none;margin:10px 0}
+.cols2{columns:2;column-gap:12px;column-rule:1px solid #e8dfc8}
+.cols2 p{margin-bottom:8px;text-align:justify;hyphens:auto;break-inside:avoid}
+.actcard{background:#fff;border:1px solid #e8dfc8;border-radius:6px;padding:10px;margin:8px 0;break-inside:avoid;box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:12px}
+.actcard h4{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:#1f2937;margin-bottom:8px}
+.actcard button{border:none;cursor:pointer;font-family:inherit}
+.mcopt{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;font-size:12px;margin-bottom:6px;cursor:pointer}
+.mcopt:hover{border-color:#93c5fd;background:#eff6ff}
+.mcopt.sel{border-color:#3b82f6;background:#eff6ff;color:#1d4ed8}
+.mcopt.ok{border-color:#22c55e;background:#f0fdf4;color:#166534;font-weight:500}
+.mcopt.bad{border-color:#ef4444;background:#fef2f2;color:#b91c1c}
+.mcopt:disabled{opacity:.8;cursor:default}
+.actbtn{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-size:11px;font-weight:500;padding:6px 14px;border-radius:8px;margin-top:8px}
+.actbtn.g{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.actbtn.gr{background:linear-gradient(135deg,#10b981,#047857)}
+.actbtn.o{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.actbtn.p{background:linear-gradient(135deg,#ec4899,#be185d)}
+.result{margin-top:6px;font-size:11px;font-weight:500}
+.result.ok{color:#16a34a}
+.result.no{color:#dc2626}
+.gaprow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:10px;font-size:12px;color:#374151}
+.gaprow input{width:110px;text-align:center;border:none;border-bottom:2px solid #3b82f6;background:transparent;font-size:12px;padding:2px 6px;outline:none;color:inherit}
+.gaprow input.ok{border-color:#16a34a;color:#16a34a}
+.gaprow input.bad{border-color:#dc2626;color:#dc2626}
+.hinttxt{color:#9ca3af;font-style:italic;font-size:11px}
+.matchrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.matchrow .l{flex:1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:6px 8px;color:#1e40af}
+.matchrow .a{color:#9ca3af}
+.matchrow select{flex:1;border:1px solid #d1d5db;border-radius:6px;padding:5px;font-size:11px;color:#374151;background:#fff}
+.matchrow select.ok{border-color:#16a34a}
+.matchrow select.bad{border-color:#dc2626}
+.shortans{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:12px;resize:none;font-family:inherit;color:#374151}
+.stars{display:flex;gap:2px}
+.stars button{background:none;font-size:18px;color:#d1d5db;cursor:pointer;border:none}
+.stars button.on{color:#f59e0b}
+.dlg{display:flex;gap:6px;margin-bottom:6px}
+.dlg.rev{flex-direction:row-reverse}
+.dlg .av{width:20px;height:20px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;flex-shrink:0;margin-top:2px}
+.dlg .bub{max-width:82%;border-radius:12px;padding:6px 8px}
+.dlg .bub p.s{font-weight:900;font-size:9px;margin-bottom:2px}
+.dlg .bub p.t{font-size:11px;color:#374151;line-height:1.5}
+.dlg .bub p.e{font-style:italic;color:#9ca3af;font-size:10px;margin-top:2px}
+.vocabcard{border:1px solid #e8dfc8;border-radius:8px;padding:8px;background:#fff;margin-bottom:6px;break-inside:avoid;cursor:pointer}
+.vocabcard:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.vocabcard .w{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:12px;color:#111;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.vocabcard .w span{background:#f0f9ff;color:#0369a1;font-size:9px;padding:2px 6px;border-radius:4px;font-family:Inter,sans-serif}
+.vocabcard .d{color:#6b7280;font-size:10px;line-height:1.4}
+.vocabcard .e{color:#9ca3af;font-style:italic;font-size:9px;margin-top:3px;line-height:1.4}
+.vocabcard .diff{display:inline-block;font-size:9px;font-weight:600;margin-top:4px;padding:2px 6px;border-radius:4px}
+.vocabcard .diff.advanced{background:#fef2f2;color:#991b1b}
+.vocabcard .diff.intermediate{background:#fef3c7;color:#92400e}
+.vocabcard .diff.basic{background:#f0fdf4;color:#166534}
+.vocabtip{position:absolute;z-index:60;background:#fff;border:2px solid #c9a84c;border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);width:210px;font-size:11px}
+/* PODCAST */
+.podbar{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1a3a5c,#2d5986);color:#fff;border-radius:8px;padding:8px 12px;font-size:11px;margin-bottom:10px;break-inside:avoid}
+.podbar .wv{display:flex;align-items:flex-end;gap:2px;height:20px}
+.podbar .wv i{width:2px;border-radius:2px;background:rgba(255,255,255,.7)}
+.podbar .wv i.on{animation:wave .5s ease-in-out infinite alternate}
+@keyframes wave{from{transform:scaleY(.5)}to{transform:scaleY(1.5)}}
+.podbar .t{flex:1;min-width:0}
+.podbar .t p:first-child{font-weight:500;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.podbar .t p:last-child{color:rgba(255,255,255,.5);font-size:10px}
+.podbar button{width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;font-size:11px}
+.podbar .pp{background:rgba(201,168,76,.8);color:#fff}
+.podbar .st{background:rgba(255,255,255,.15);color:#fff}
+/* COVER */
+.cover{position:relative;width:100%;height:100%;background:linear-gradient(160deg,#0a1628 0%,#1a3a5c 40%,#0d0d1a 100%);color:#fff;font-family:'Playfair Display',Georgia,serif;overflow:hidden;display:flex;flex-direction:column;padding:20px 24px}
+.cover .goldbar{position:absolute;left:0;right:0;height:4px;background:linear-gradient(90deg,#c9a84c,#f5d87a,#c9a84c)}
+.cover .goldbar.t{top:0}
+.cover .goldbar.b{bottom:0}
+.cover .goldbar.v{top:0;bottom:0;width:4px;height:auto;background:linear-gradient(180deg,#c9a84c,#f5d87a,#c9a84c)}
+.cover .goldbar.vl{left:0}
+.cover .goldbar.vr{right:0}
+.cover .mast{border-bottom:2px solid rgba(201,168,76,.5);padding-bottom:12px;margin-bottom:12px;text-align:center}
+.cover .mast .row{display:flex;justify-content:space-between;color:rgba(255,255,255,.5);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;font-family:Inter,sans-serif}
+.cover .mast h1{font-size:clamp(34px,6vw,52px);font-weight:900;letter-spacing:-2px;line-height:1;background:linear-gradient(135deg,#c9a84c 0%,#f5d87a 40%,#c9a84c 80%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cover .mast p{color:rgba(255,255,255,.6);font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-top:2px;font-family:Inter,sans-serif}
+.cover .issue{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:8px;font-family:Inter,sans-serif}
+.cover .issue b{color:#c9a84c;font-weight:400}
+.cover .hero{flex:1;min-height:0;position:relative;border-radius:8px;overflow:hidden;margin-bottom:12px;box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 0 0 2px rgba(201,168,76,.3)}
+.cover .hero img,.cover .hero .ph{width:100%;height:100%;object-fit:cover;object-position:top}
+.cover .hero .ph{display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1a3a5c,#2d5986);font-size:56px}
+.cover .hero .ph p{color:rgba(255,255,255,.6);font-size:12px;font-family:Inter,sans-serif}
+.cover .hero .shade{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 50%)}
+.cover .hero .cap{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-end}
+.cover .hero .cap .nm{font-weight:900;font-size:16px;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.cover .hero .cap .lv{color:rgba(255,255,255,.7);font-size:10px;font-family:Inter,sans-serif}
+.cover .hero .cap .ex{font-size:10px;font-weight:700;background:#c9a84c;color:#0d0d1a;padding:4px 8px;border-radius:4px;font-family:Inter,sans-serif}
+.cover .story{margin-bottom:10px}
+.cover .story .mid{display:flex;align-items:center;gap:8px;margin-bottom:4px;color:#c9a84c;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:Inter,sans-serif}
+.cover .story .mid i{flex:1;height:1px;background:#c9a84c}
+.cover .story h2{font-size:clamp(13px,2.4vw,20px);text-align:center}
+.cover .story p{color:rgba(255,255,255,.5);text-align:center;font-style:italic;font-size:10px;margin-top:2px;font-family:Merriweather,Georgia,serif}
+.cover .bullets{border-top:1px solid rgba(201,168,76,.3);padding-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-family:Inter,sans-serif}
+.cover .bullets span{color:rgba(255,255,255,.6);font-size:10px}
+.cover .bullets b{color:#c9a84c;font-weight:400;margin-right:4px}
+.cover .foot{display:flex;justify-content:space-between;color:rgba(255,255,255,.3);font-size:10px;margin-top:10px;font-family:Inter,sans-serif}
+/* TOC */
+.toc{width:100%;height:100%;background:#faf8f3;display:flex;flex-direction:column;position:relative}
+.toc .hd{padding:16px 24px;border-bottom:2px solid #c9a84c}
+.toc .hd .row{display:flex;justify-content:space-between;align-items:flex-start}
+.toc .hd p{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#9ca3af;font-family:Inter,sans-serif}
+.toc .hd h1{font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:900;color:#111;line-height:1.1}
+.toc .hd .bk{font-size:32px;opacity:.2}
+.toc .hd .sub{font-style:italic;font-size:11px;color:#6b7280;margin-top:2px;font-family:Merriweather,Georgia,serif}
+.toc .list{flex:1;overflow-y:auto;padding:12px 16px}
+.toc .rowitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 12px;border-radius:8px;border:1px solid #f0e8d8;background:#fff;margin-bottom:6px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.04);font-family:inherit}
+.toc .rowitem:hover{transform:scale(1.01)}
+.toc .rowitem .ic{font-size:18px;flex-shrink:0}
+.toc .rowitem .tt{flex:1;min-width:0}
+.toc .rowitem .tt b{font-size:11px;color:#1f2937;font-family:'Playfair Display',Georgia,serif;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toc .rowitem .tt span{font-size:10px;color:#9ca3af;text-transform:capitalize}
+.toc .rowitem .pg{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.toc .rowitem .pg .n{color:#9ca3af;font-size:10px;font-family:ui-monospace,monospace}
+.toc .rowitem .pg .cnt{background:#fef3c7;color:#92400e;font-size:9px;padding:2px 6px;border-radius:4px}
+.toc .rowitem .pg .ar{color:#e5e7eb;font-size:10px}
+.toc .ft{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:8px 24px;border-top:1px solid #e8dfc8;background:#faf8f3;color:#9ca3af;font-size:10px;font-family:Inter,sans-serif}
+/* SECTION PAGE */
+.secpage{width:100%;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.secpage .acc{height:4px;flex-shrink:0}
+.secpage .hd{flex-shrink:0;padding:6px 14px 8px;border-bottom:1px solid #e8dfc8}
+.secpage .hd .row{display:flex;justify-content:space-between;align-items:center}
+.secpage .hd .badge{color:#fff;font-weight:900;font-size:9px;letter-spacing:.05em;padding:3px 8px;border-radius:4px;font-family:Inter,sans-serif}
+.secpage .hd .pg{font-family:ui-monospace,monospace;font-size:9px;color:#d1d5db}
+.secpage .hd h2{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(12px,1.8vw,15px);margin-top:3px;line-height:1.2}
+.secpage .ft{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;padding:5px 14px;border-top:1px solid #e8dfc8;font-size:10px;color:#d1d5db;background:rgba(250,248,243,.95)}
+.secpage .ft .m{font-family:'Playfair Display',Georgia,serif;font-style:italic}
+.secpage .ft .cmp{color:#16a34a;font-size:9px}
+.heroimg{border-radius:8px;overflow:hidden;margin-bottom:10px;position:relative;height:80px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.heroimg img{width:100%;height:100%;object-fit:cover}
+.heroimg .tint{position:absolute;inset:0}
+.heroimg .lbl{position:absolute;left:8px;bottom:4px;color:#fff;font-size:9px;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.8);font-family:Inter,sans-serif}
+.complete-badge{position:absolute;top:8px;right:8px;z-index:20;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.3);animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(0) rotate(-30deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+/* BACK COVER */
+.backcover{width:100%;height:100%;background:linear-gradient(160deg,#0d0d1a 0%,#1a1a2e 50%,#2d1b69 100%);color:#fff;font-family:'Playfair Display',Georgia,serif;display:flex;flex-direction:column;padding:20px 24px;position:relative;overflow:hidden}
+.backcover .goldbar{position:absolute;left:0;right:0;height:4px;background:linear-gradient(90deg,#c9a84c,#f5d87a,#c9a84c)}
+.backcover .goldbar.t{top:0}
+.backcover .goldbar.b{bottom:0}
+.backcover .hd{text-align:center;margin-bottom:14px}
+.backcover .hd h1{font-size:28px;font-weight:900;background:linear-gradient(135deg,#c9a84c,#f5d87a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.backcover .hd p{color:rgba(255,255,255,.4);font-size:10px;margin-top:2px;font-family:Inter,sans-serif}
+.backcover .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;font-family:Inter,sans-serif}
+.backcover .stats div{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:10px;text-align:center}
+.backcover .stats .v{font-size:18px;font-weight:900;font-family:'Playfair Display',Georgia,serif}
+.backcover .stats .l{font-size:10px;color:rgba(255,255,255,.4)}
+.backcover .board{flex:1;min-height:0;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.backcover .board .hdr{display:flex;padding:8px 12px;font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(201,168,76,.2);font-family:Inter,sans-serif}
+.backcover .board .hdr span:nth-child(1){width:28px}
+.backcover .board .hdr span:nth-child(2){flex:1}
+.backcover .board .hdr span:nth-child(3){width:44px;text-align:right}
+.backcover .board .hdr span:nth-child(4){width:28px;text-align:right}
+.backcover .board .rows{flex:1;overflow-y:auto}
+.backcover .board .r{display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.05);font-family:Inter,sans-serif}
+.backcover .board .r.me{background:rgba(201,168,76,.2)}
+.backcover .board .r .rank{width:28px;font-size:11px;font-weight:700;color:rgba(255,255,255,.4)}
+.backcover .board .r .nm{flex:1;display:flex;align-items:center;gap:6px;font-size:11px;color:#fff}
+.backcover .board .r .nm .av{font-size:14px}
+.backcover .board .r .nm .ct{color:rgba(255,255,255,.3);font-size:9px}
+.backcover .board .r .xp{width:44px;text-align:right;font-size:11px;font-weight:700;color:#c9a84c}
+.backcover .board .r .lv{width:28px;text-align:right;font-size:10px;color:rgba(255,255,255,.4)}
+.backcover .rankline{text-align:center;font-family:Inter,sans-serif;color:rgba(255,255,255,.5);font-size:10px;margin-top:10px}
+.backcover .rankline b{color:#c9a84c}
+.backcover .brand{text-align:center;border-top:1px solid rgba(201,168,76,.3);margin-top:10px;padding-top:10px;font-family:Inter,sans-serif}
+.backcover .brand p:first-child{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:16px}
+.backcover .brand p:first-child span{color:#c9a84c}
+.backcover .brand p:last-child{color:rgba(255,255,255,.3);font-size:9px;margin-top:2px}
+/* OVERLAYS */
+.overlay{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:flex-start;justify-content:flex-start;padding:80px 16px 16px}
+.overlay .panel{background:#faf8f3;border-radius:16px;max-height:calc(100vh - 100px);overflow:hidden;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.context-menu{position:fixed;background:#fff;border:1px solid #e8dfc8;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:9500;min-width:190px;overflow:hidden;font-size:12px}
+.context-menu .t{padding:8px 12px;font-weight:700;color:#6b7280;border-bottom:1px solid #eee;text-transform:uppercase;font-size:10px;letter-spacing:1px}
+.context-menu button{display:block;width:100%;text-align:left;padding:9px 12px;border:none;background:#fff;cursor:pointer;font-family:inherit;color:#374151;font-size:12px}
+.context-menu button:hover{background:#f0e8d8}
+.dictmodal{position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px}
+.dictmodal .box{background:#fff;border-radius:16px;width:100%;max-width:420px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.dictmodal .box .hd{background:linear-gradient(135deg,#1a3a5c,#2d5986);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+.dictmodal .box .hd h3{font-family:'Playfair Display',Georgia,serif;font-size:16px}
+.dictmodal .box .hd button{background:none;border:none;color:rgba(255,255,255,.6);font-size:16px;cursor:pointer}
+.dictmodal .box .bd{padding:18px;overflow-y:auto;font-size:13px}
+.dictmodal .box .bd h2{font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#111}
+.dictmodal .box .bd .ph{color:#6b7280;font-size:12px;font-family:ui-monospace,monospace}
+.dictmodal .box .bd .m{margin-bottom:14px}
+.dictmodal .box .bd .pos{display:inline-block;background:#fef3c7;color:#92400e;font-size:11px;padding:2px 8px;border-radius:4px;margin-bottom:6px}
+.dictmodal .box .bd .def{color:#374151;margin-bottom:6px}
+.dictmodal .box .bd .ex{color:#6b7280;font-style:italic;font-size:12px}
+.dictmodal .box .bd .syn{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.dictmodal .box .bd .syn span{background:#e0f2fe;color:#0369a1;font-size:11px;padding:2px 8px;border-radius:10px}
+.cat{position:fixed;bottom:14px;right:14px;z-index:500;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1a3a5c,#2d5986);border:3px solid #c9a84c;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:catbounce 2s ease-in-out infinite}
+@keyframes catbounce{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+.catbub{position:fixed;bottom:78px;right:14px;z-index:510;background:#fff;border:2px solid #c9a84c;border-radius:14px;border-bottom-right-radius:4px;padding:10px 12px;width:210px;font-size:12px;color:#1f2937;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.catbub:after{content:'';position:absolute;bottom:-8px;right:20px;width:14px;height:14px;background:#fff;border-right:2px solid #c9a84c;border-bottom:2px solid #c9a84c;transform:rotate(45deg)}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+.confetti i{position:absolute;top:-10px;width:8px;height:14px;opacity:.9;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media (max-width:768px){.xpbar .brand,.xpbar .who,.xpbar .pgtrack,.xpbar .done{display:none}.sidenav{display:none}.mobilenav{display:flex}.cols2{columns:1}.dropcap::first-letter{font-size:2.5em}.cover .bullets{grid-template-columns:1fr}}
+@media (min-width:769px){.xpbar .brand,.xpbar .who,.xpbar .pgtrack,.xpbar .done{display:flex}}
+
+</style>
+</head>
+<body>
+<script id="lesson-data" type="application/json">{"id":"lesson-innovation","title":"The World of Innovation","level":"B2 – Upper Intermediate","topic":"Technology, Society \u0026 Human Connection","tutor":"Tutorly","learnerName":"Test Student Alpha","date":"September 7, 2026","description":"An immersive journey through language, culture, and critical thinking.","coverTagline":"Your personalised English adventure starts here.","sections":[{"id":"sec-reading-factual","type":"reading-factual","title":"The Digital Revolution: How Technology Reshaped Humanity","imageQuery":"digital technology innovation future city","content":"The term \"digital revolution\" is thrown around so often these days that it has almost lost its punch. Yet when you step back and examine the sheer scale of the transformation over the last four decades, the word \"revolution\" seems not just appropriate but perhaps even an understatement.\n\n      In 1980, there were fewer than one million personal computers in the entire world. Today, more than five billion people carry a supercomputer in their pocket. The smartphone — a device that would have seemed like pure science fiction in 1990 — has become as mundane and indispensable as a wristwatch, except far more powerful than any wristwatch ever dreamed of being.\n\n      But the digital revolution is not simply a story about gadgets and convenience. At its core, it is a story about the fundamental restructuring of human society — how we work, how we learn, how we shop, how we vote, and even how we define ourselves.\n\n      THE WORKPLACE TRANSFORMED\n\n      Automation and artificial intelligence are rewriting the rules of employment. Tasks that once required years of training can now be performed by algorithms in milliseconds. The World Economic Forum estimates that by 2030, 85 million jobs may be displaced by a shift in the division of labour between humans and machines, while 97 million new roles may emerge.\n\n      THE SHADOW SIDE\n\n      Yet for all its promise, the digital revolution casts a long shadow. Privacy has become an increasingly precious and endangered commodity. The Cambridge Analytica scandal of 2018 revealed the alarming ease with which personal data could be weaponised to manipulate democratic elections.\n\n      The task ahead of us — as individuals, as societies, and as a global community — is not to resist the digital revolution, but to shape it. To put in place the ethical frameworks, the regulatory structures, and the cultural norms that will allow us to harness its extraordinary potential while guarding against its very real dangers. That is the defining challenge of our age.","vocabulary":[{"word":"mundane","definition":"Lacking interest or excitement; dull and ordinary","partOfSpeech":"adjective","example":"Checking emails had become a mundane part of the morning routine.","synonyms":["ordinary","commonplace","banal"],"difficulty":"intermediate"},{"word":"indispensable","definition":"Absolutely necessary; essential","partOfSpeech":"adjective","example":"The smartphone has become indispensable to modern life.","synonyms":["essential","vital","crucial"],"difficulty":"intermediate"},{"word":"ripple effect","definition":"One event produces effects which spread and produce further effects","partOfSpeech":"noun phrase","example":"The factory closure had a ripple effect throughout the local economy.","synonyms":["knock-on effect","chain reaction"],"difficulty":"intermediate"},{"word":"upended","definition":"Completely changed or turned upside down","partOfSpeech":"verb (past participle)","example":"The pandemic upended traditional working patterns overnight.","synonyms":["disrupted","overturned"],"difficulty":"advanced"},{"word":"benign","definition":"Gentle and kindly; not harmful","partOfSpeech":"adjective","example":"Not all companies collecting data have benign intentions.","synonyms":["harmless","gentle"],"difficulty":"advanced"},{"word":"futile","definition":"Incapable of producing any useful result; pointless","partOfSpeech":"adjective","example":"Resisting all digital change would be as futile as fighting the tide.","synonyms":["pointless","useless"],"difficulty":"intermediate"}],"activities":[{"id":"act-rf-1","type":"multiple-choice","question":"According to the article, approximately how many personal computers existed in 1980?","options":["Fewer than one million","About five billion","More than ten million","Around fifty thousand"],"correctAnswer":"Fewer than one million","xpReward":10},{"id":"act-rf-2","type":"true-false","question":"The article states that the digital revolution is only a story about gadgets and convenience.","options":["True","False"],"correctAnswer":"False","xpReward":10},{"id":"act-rf-3","type":"multiple-choice","question":"What does the World Economic Forum estimate about jobs by 2030?","options":["85 million jobs displaced, 97 million new roles may emerge","97 million jobs displaced, 85 million new roles may emerge","All jobs will be automated by machines","No significant job changes will occur"],"correctAnswer":"85 million jobs displaced, 97 million new roles may emerge","xpReward":10},{"id":"act-rf-4","type":"fill-blanks","question":"Complete the sentences from the article.","blanks":[{"id":"b1","sentence":"The Cambridge Analytica scandal revealed how personal data could be _____ to manipulate democratic elections.","answer":"weaponised","hint":"It was used as a weapon."},{"id":"b2","sentence":"Resisting digital change would be as _____ as trying to hold back the tide.","answer":"futile","hint":"Pointless; incapable of producing results."}],"xpReward":15},{"id":"act-rf-5","type":"discussion","question":"Critical Thinking Discussion","discussionPoints":["Do you think the benefits of the digital revolution outweigh its risks? Give specific examples.","How has technology changed your personal daily routine over the past five years?","Should governments have the power to regulate what people post on social media? Why or why not?","What skills do you think will be most valuable in the job market of 2030?"],"xpReward":20}]},{"id":"sec-grammar","type":"grammar","title":"Perfect Tenses: Connecting Past to Present","imageQuery":"grammar learning education chalkboard classroom","content":"The perfect tenses are among the most important and nuanced structures in English grammar. They create a bridge between two time points — most commonly linking something in the past to its relevance in the present, or establishing the sequence of events in a narrative.\n\n      THE PRESENT PERFECT\n\n      Form: have/has + past participle\n      Key uses:\n      1. Life experience: \"I have visited Japan three times.\"\n      2. Recent events with present relevance: \"She has just finished the report.\"\n      3. Duration from past to present: \"We have lived here for ten years.\"\n      4. Change over time: \"The world has changed dramatically since 1990.\"\n\n      Signal words: already, yet, just, ever, never, recently, lately, for, since, so far.\n\n      Common mistake:\n      ✗ \"I have seen him yesterday.\" — use simple past with specific time references.\n      ✓ \"I saw him yesterday.\" / \"I have seen him recently.\"\n\n      THE PAST PERFECT\n\n      Form: had + past participle\n      Used for an action completed BEFORE another action or time in the past — the \"past of the past.\"\n\n      Examples:\n      \"By the time she arrived, they had already left.\"\n      \"He hadn't eaten since morning, so he was famished.\"\n\n      THE FUTURE PERFECT\n\n      Form: will have + past participle\n      Used for an action that will be completed before a specific time in the future.\n\n      Examples:\n      \"By next June, I will have completed my degree.\"\n      \"The construction will have finished before the tourists arrive.\"","activities":[{"id":"act-gram-1","type":"fill-blanks","question":"Complete the sentences using the correct perfect tense.","blanks":[{"id":"bg1","sentence":"She _____ (work) for this company since 2019.","answer":"has been working","hint":"Duration from past to present — continuous."},{"id":"bg2","sentence":"By the time he retired, he _____ (teach) for over thirty years.","answer":"had taught","hint":"An action completed before another past point."},{"id":"bg3","sentence":"By this time next year, we _____ (finish) the whole project.","answer":"will have finished","hint":"Completed before a future point."}],"xpReward":20},{"id":"act-gram-2","type":"multiple-choice","question":"Which sentence uses the present perfect correctly?","options":["I have seen her last Tuesday.","She has been to Paris twice.","They have went to the shops.","He have finished his homework."],"correctAnswer":"She has been to Paris twice.","xpReward":10},{"id":"act-gram-3","type":"true-false","question":"The past perfect (had + past participle) describes an action completed BEFORE another action in the past.","options":["True","False"],"correctAnswer":"True","xpReward":10},{"id":"act-gram-4","type":"matching","question":"Match each sentence to the correct tense name.","pairs":[{"left":"She has just called.","right":"Present Perfect"},{"left":"They had left before noon.","right":"Past Perfect"},{"left":"He has been reading for hours.","right":"Present Perfect Continuous"},{"left":"We will have landed by midnight.","right":"Future Perfect"}],"xpReward":15}]},{"id":"sec-vocabulary","type":"thematic-vocabulary","title":"The Language of Innovation: Tech \u0026 Change","imageQuery":"vocabulary dictionary words language learning","content":"In today's rapidly changing world, the language of technology and innovation permeates every area of life — from business meetings to casual conversations, from news headlines to everyday small talk. Whether you are in a job interview, negotiating a deal, or simply chatting with colleagues, using these words confidently will mark you out as a sophisticated, contemporary communicator.\n\n      In this section, we explore high-value vocabulary items drawn from the fields of technology, business, and social change. For each word, we provide a clear definition, its grammatical function, example sentences showing it in authentic contexts, and guidance on when and how to use it appropriately.","vocabulary":[{"word":"disruptive","definition":"Causing radical change by introducing a new product or idea that displaces established competitors","partOfSpeech":"adjective","example":"\"Uber was a disruptive force in the taxi industry.\" | \"Disruptive innovation doesn't just improve things — it transforms entire markets.\"","synonyms":["revolutionary","transformative"],"difficulty":"intermediate"},{"word":"scalable","definition":"Able to be easily expanded or upgraded to handle increased demand or growth","partOfSpeech":"adjective","example":"\"We need a scalable solution that will work whether we have 100 or 100,000 customers.\"","synonyms":["expandable","flexible"],"difficulty":"advanced"},{"word":"pivot","definition":"To change direction or strategy significantly, especially in business","partOfSpeech":"verb / noun","example":"\"After losing market share, they decided to pivot from hardware to software services.\"","synonyms":["shift","change course"],"difficulty":"intermediate"},{"word":"ecosystem","definition":"A complex network or interconnected system, especially in business or technology","partOfSpeech":"noun","example":"\"Apple has built an ecosystem of devices, software, and services that keep customers loyal.\"","synonyms":["network","system"],"difficulty":"intermediate"},{"word":"bandwidth","definition":"Technically: data transmission capacity; informally: the mental capacity to handle tasks","partOfSpeech":"noun","example":"\"I don't have the bandwidth to take on another project right now.\"","synonyms":["capacity","headroom"],"difficulty":"intermediate"},{"word":"granular","definition":"Dealing with or relating to the individual details of something; fine-grained","partOfSpeech":"adjective","example":"\"We need granular data on customer behaviour, not just broad trends.\"","synonyms":["detailed","specific"],"difficulty":"advanced"},{"word":"iterate","definition":"To repeat a process, making improvements each time","partOfSpeech":"verb","example":"\"The design team iterated rapidly, releasing a new version every two weeks.\"","synonyms":["refine","improve"],"difficulty":"advanced"},{"word":"frictionless","definition":"Requiring minimal effort; smooth and without obstacles","partOfSpeech":"adjective","example":"\"Digital payments have made transactions more frictionless.\"","synonyms":["smooth","seamless"],"difficulty":"advanced"}],"activities":[{"id":"act-vocab-1","type":"matching","question":"Match the vocabulary word to its correct definition.","pairs":[{"left":"disruptive","right":"Causing radical change by displacing established competitors"},{"left":"scalable","right":"Able to be expanded to handle increased demand"},{"left":"pivot","right":"To change direction or strategy significantly"},{"left":"iterate","right":"To repeat a process, making improvements each time"}],"xpReward":15},{"id":"act-vocab-2","type":"fill-blanks","question":"Complete the sentences with the correct vocabulary word.","blanks":[{"id":"bv1","sentence":"The app was designed to provide a _____ shopping experience with one-click payment.","answer":"frictionless","hint":"Smooth and effortless."},{"id":"bv2","sentence":"After the initial product failed, the founders decided to _____ and focus on consulting instead.","answer":"pivot","hint":"Change direction."},{"id":"bv3","sentence":"We need more _____ analytics — not just total sales but sales by region, age group, and device.","answer":"granular","hint":"Detailed and specific."}],"xpReward":15},{"id":"act-vocab-3","type":"speaking","question":"Vocabulary in Use – Speaking Practice","speakingPrompts":["Use \"disruptive\" to describe a company or product that changed your industry or daily life.","Explain the concept of an \"ecosystem\" using Apple, Google, or another brand you know well.","Tell your tutor about a time when you had to \"pivot\" — change direction in work, study, or life.","Use \"bandwidth\" in its informal sense to describe a busy week you have had."],"xpReward":20}]},{"id":"sec-business","type":"business-english","title":"The Art of the Negotiation","imageQuery":"business meeting negotiation professional conference","content":"Negotiation is not a battle. The most sophisticated business professionals understand that the best negotiations end with both parties feeling they have achieved something of value — what specialists call a \"win-win outcome.\"\n\n      OPENING A NEGOTIATION PROFESSIONALLY\n\n      First impressions matter enormously. Opening with clear, measured, professional language immediately establishes your credibility.\n\n      Useful phrases:\n      • \"Thank you for making the time to meet today. I'm looking forward to exploring some mutually beneficial arrangements.\"\n      • \"We've put together a proposal that we believe works for both parties — shall I walk you through the key points?\"\n\n      MAKING AND RESPONDING TO PROPOSALS\n\n      Making a proposal clearly and confidently:\n      • \"We would like to propose a three-month trial period at the rates outlined in our document.\"\n      • \"One option we could explore is a phased payment structure — what are your thoughts?\"\n\n      Responding to a proposal professionally:\n      • \"That's an interesting proposal. We'd need some time to consider the financial implications.\"\n      • \"We're not quite there yet on the timeline, but I think there's room to find a middle ground.\"\n\n      REACHING AND CLOSING AN AGREEMENT\n\n      The art of the close:\n      • \"I think we're very close to something we can both be satisfied with.\"\n      • \"I'm pleased to say we have an agreement in principle — let's get the legal team to formalise the details.\"","dialogue":[{"speaker":"Sofia (Buyer)","text":"Good morning, Marcus. I've reviewed your proposal and I have to say, the quality of the work is impressive.","emotion":"professional"},{"speaker":"Marcus (Seller)","text":"Thank you, Sofia. We really believe this partnership can deliver significant value for your organisation.","emotion":"confident"},{"speaker":"Sofia (Buyer)","text":"My concern, however, is around the pricing. The figure you've quoted is somewhat above what we had budgeted for this phase.","emotion":"concerned"},{"speaker":"Marcus (Seller)","text":"I understand your concern, and I appreciate your directness. Could you help me understand what the budget ceiling looks like? That would help me see whether there's a structure that could work for both of us.","emotion":"measured"},{"speaker":"Sofia (Buyer)","text":"We were hoping to come in at around 15% below your quoted figure for the first phase, with the understanding that we'd revisit the rates if the results justify it.","emotion":"negotiating"},{"speaker":"Marcus (Seller)","text":"That's a significant difference from where we are now. However, if we could structure a performance-based element into the second phase, I think there's a conversation to be had.","emotion":"strategic"},{"speaker":"Sofia (Buyer)","text":"That sounds reasonable. Friday morning works on our end. I think there's a deal here — we just need to land on the right structure.","emotion":"positive"},{"speaker":"Marcus (Seller)","text":"I agree entirely. I'll come back to you with some revised scenarios. Thank you for your openness today, Sofia.","emotion":"warm"}],"activities":[{"id":"act-biz-1","type":"roleplay","question":"Roleplay Scenario: You are the seller. Your client wants a 20% discount on a software package. Practise negotiating using the phrases from this lesson.","xpReward":25},{"id":"act-biz-2","type":"multiple-choice","question":"Which phrase is most appropriate when you need time to consider a proposal?","options":["\"No, we can't agree to that.\"","\"That's a significant point. I'd like to take that back to my team.\"","\"Whatever you think is best.\"","\"You're asking for too much.\""],"correctAnswer":"\"That's a significant point. I'd like to take that back to my team.\"","xpReward":10},{"id":"act-biz-3","type":"matching","question":"Match the negotiation situation to the most appropriate response.","pairs":[{"left":"You strongly disagree with a proposal","right":"\"I hear what you're saying, however from our side the situation looks different.\""},{"left":"You want to close the deal","right":"\"I think we're very close to something we can both be satisfied with.\""},{"left":"You need time to think","right":"\"Could we schedule a follow-up call to give both sides time to review?\""},{"left":"Opening the negotiation","right":"\"I'm looking forward to exploring some mutually beneficial arrangements.\""}],"xpReward":15}]},{"id":"sec-survival","type":"survival-english","title":"Survival English: At the Doctor's Surgery","imageQuery":"doctor patient consultation medical office healthcare","content":"Going to the doctor in an English-speaking country can be stressful enough without the added challenge of a language barrier. This section gives you the essential vocabulary, phrases, and conversational strategies you need to communicate clearly and confidently in a medical setting.\n\n      BOOKING AN APPOINTMENT\n\n      On the phone:\n      • \"Hello, I'd like to make an appointment to see a doctor, please.\"\n      • \"It's fairly urgent — I've been feeling unwell for a few days.\"\n\n      DESCRIBING SYMPTOMS\n\n      Being precise about your symptoms helps doctors help you. Learn to describe:\n      Location: \"I have a sharp pain in my lower right abdomen.\"\n      Duration: \"It's been going on for about three days.\"\n      Intensity: \"On a scale of one to ten, I'd say it's about a seven.\"\n      Triggers: \"It gets worse when I eat.\"\n\n      UNDERSTANDING YOUR DOCTOR\n\n      Don't be afraid to ask for clarification:\n      • \"I'm sorry, could you explain what that means in simpler terms?\"\n      • \"What are my options here, and what would you recommend?\"\n      • \"Are there any side effects I should be aware of?\"","dialogue":[{"speaker":"Patient (Maria)","text":"Good morning. I have a 9:15 appointment with Dr. Patel. My name is Maria Santos.","emotion":"polite"},{"speaker":"Receptionist","text":"Good morning, Ms. Santos. Yes, I can see you on the system. Please take a seat — Dr. Patel will be with you in about ten minutes.","emotion":"professional"},{"speaker":"Dr. Patel","text":"Ms. Santos, good morning. What brings you in today?","emotion":"warm"},{"speaker":"Patient (Maria)","text":"I've been having quite a bad headache for about four days now. It's a throbbing pain, mainly on the left side. I've tried paracetamol but it's not really touching it.","emotion":"concerned"},{"speaker":"Dr. Patel","text":"I'm sorry to hear that. On a scale of one to ten, how would you rate the pain at its worst?","emotion":"professional"},{"speaker":"Patient (Maria)","text":"About a seven or eight when it peaks. It's really affecting my concentration at work.","emotion":"uncomfortable"},{"speaker":"Dr. Patel","text":"Have you experienced any nausea, sensitivity to light, or visual disturbances?","emotion":"professional"},{"speaker":"Patient (Maria)","text":"Yes, actually — the light does bother me a lot. What does that suggest?","emotion":"curious"},{"speaker":"Dr. Patel","text":"The symptoms you're describing are consistent with migraine. I'd like to prescribe a specific migraine medication for you to try. If there's no improvement in 48 hours, please call us immediately.","emotion":"reassuring"}],"activities":[{"id":"act-surv-1","type":"roleplay","question":"Roleplay: You have a sore throat and mild fever that has lasted 5 days. Practise describing your symptoms to the doctor using at least four different descriptive phrases from this lesson.","xpReward":25},{"id":"act-surv-2","type":"fill-blanks","question":"Complete the patient's sentences.","blanks":[{"id":"bs1","sentence":"I've been feeling unwell for about _____ days now.","answer":"three","hint":"A specific time duration."},{"id":"bs2","sentence":"On a _____ of one to ten, I'd say the pain is about a six.","answer":"scale","hint":"A measurement range."},{"id":"bs3","sentence":"Could you explain what that _____ in simpler terms, please?","answer":"means","hint":"Asking for clarification."}],"xpReward":15}]},{"id":"sec-news","type":"news-story","title":"BREAKING: Scientists Achieve Breakthrough in Quantum Computing","imageQuery":"quantum computer laboratory technology breakthrough science","content":"SAN FRANCISCO, CA — Researchers at a leading technology institute announced yesterday that they have achieved what many in the scientific community are calling a landmark breakthrough in quantum computing: the first demonstration of \"quantum advantage\" on a problem with real-world commercial applications.\n\n      The team, led by Dr. Yuki Tanaka of the Meridian Institute for Advanced Computing, demonstrated that their 127-qubit quantum processor could solve a class of molecular simulation problems relevant to drug discovery in under four minutes — a task that would take the world's most powerful classical supercomputer approximately 47,000 years to complete.\n\n      \"What we have shown today is not just a proof of concept,\" Dr. Tanaka told reporters. \"We are demonstrating that quantum computing can already deliver practical advantages in domains that matter enormously for human wellbeing — in this case, the discovery of new medicines.\"\n\n      The announcement has been met with cautious enthusiasm from independent experts. Professor Sarah Goldstein of Imperial College London described the results as \"genuinely exciting\" but urged caution. \"We need to see the full methodology, and independent replication is essential before we can draw firm conclusions.\"\n\n      Not everyone is cheering, however. Critics point out that the specific problem class chosen by Dr. Tanaka's team, while genuinely relevant, was also one that quantum machines are particularly well-suited to handle. \"Real quantum advantage across a wide range of problems remains a work in progress,\" said Professor Alexei Volkov of MIT.\n\n      Dr. Tanaka's team plans to publish a peer-reviewed paper within the next sixty days and has invited independent research groups to attempt replication.","activities":[{"id":"act-news-1","type":"true-false","question":"The quantum processor solved the molecular simulation problem in under four minutes.","options":["True","False"],"correctAnswer":"True","xpReward":10},{"id":"act-news-2","type":"multiple-choice","question":"What concern did Professor Goldstein raise about the research?","options":["The research was entirely fraudulent.","Independent replication is needed before drawing firm conclusions.","Quantum computing can never have practical applications.","The team used an outdated methodology."],"correctAnswer":"Independent replication is needed before drawing firm conclusions.","xpReward":10},{"id":"act-news-3","type":"discussion","question":"News Analysis Discussion","discussionPoints":["What is \"peer review\" and why is it important in science?","Should we be concerned that this research was partly funded by corporations? Why or why not?","How do you evaluate news about scientific breakthroughs? What questions do you ask?","What other fields do you think quantum computing might transform?"],"xpReward":20}]},{"id":"sec-reflection","type":"reflection","title":"My Innovation Journey: Reflect \u0026 Review","imageQuery":"reflection journal writing thinking notebook","content":"You have travelled through the whole magazine: you read about the digital revolution, mastered the perfect tenses, built a toolkit of innovation vocabulary, negotiated like a professional, survived a doctor's visit, and analysed a breaking news story.\n\n      NOW IT'S YOUR TURN\n\n      Take a moment to reflect on what you learned. Which new words will you actually use this week? Which grammar point still feels tricky? What is the most surprising idea you met in these pages?\n\n      • Write a short paragraph: \"The most important thing I learned in this magazine is...\"\n      • Rate each skill below honestly — your tutor uses this to plan our next lesson.\n      • Choose one discussion point and talk about it in your next session.","activities":[{"id":"act-refl-1","type":"rating","question":"Rate your confidence in each skill after this magazine.","ratingCriteria":["Reading a long factual article in English","Using perfect tenses in writing","Using innovation vocabulary in conversation","Negotiating and describing symptoms in English"],"xpReward":20},{"id":"act-refl-2","type":"short-answer","question":"Write a short paragraph: \"The most important thing I learned in this magazine is...\"","xpReward":15},{"id":"act-refl-3","type":"discussion","question":"Final Discussion — bring one of these to your next class:","discussionPoints":["What technology do you think will change our lives the most in the next ten years?","Which negotiation or doctor-visit phrase would you teach a friend?","What will you do differently after reading this magazine?"],"xpReward":20}]}]}</script>
+<script>
+window.__LESSON__ = JSON.parse(document.getElementById('lesson-data').textContent);
+window.__FB_COLORS__ = {"reading-factual":"#c0392b","reading-fictional":"#7c3aed","grammar":"#1a3a5c","vocabulary":"#065f46","thematic-vocabulary":"#065f46","business-english":"#1e3a5f","news-story":"#c0392b","survival-english":"#c2410c","biography":"#1a3a5c","lifestyle":"#065f46","debate":"#6b21a8","writing-email":"#1e40af","how-to":"#065f46","travel":"#0369a1","horror-story":"#1f2937","jokes":"#b45309","advertisement":"#be123c","reflection":"#6b21a8","dialogue":"#0369a1","movie-dialogue":"#1e3a5f","micro-lesson":"#065f46","life-hack":"#b45309","historical-story":"#78350f","recent-news":"#c0392b","formal-dialogue":"#1a3a5c","roleplay":"#6b21a8","speaking":"#be123c","shopping":"#0369a1","realistic-reading":"#374151","listening":"#1e3a5f","soft-skills":"#065f46","practical":"#374151","social-profile":"#be185d","discussion":"#c2410c"};
+window.__FB_LABELS__ = {"reading-factual":"📰 Factual Reading","reading-fictional":"📖 Fiction","grammar":"📝 Grammar Masterclass","vocabulary":"🔤 Vocabulary","thematic-vocabulary":"📚 Thematic Vocabulary","business-english":"💼 Business English","news-story":"🗞️ Breaking News","survival-english":"🏥 Survival English","biography":"👤 Biography","lifestyle":"🌿 Lifestyle","debate":"⚖️ Great Debate","writing-email":"✉️ Email Writing","how-to":"🛠️ How To","travel":"✈️ Travel","horror-story":"👻 Horror Fiction","jokes":"😄 Humour & Wit","advertisement":"📢 Advertisement","reflection":"🪞 My Reflection","dialogue":"💬 Dialogue","movie-dialogue":"🎬 Movie Dialogue","micro-lesson":"⚡ Micro Lesson","life-hack":"💡 Life Hack","historical-story":"🏛️ Historical Story","recent-news":"📡 Recent News","formal-dialogue":"🤝 Formal Dialogue","roleplay":"🎭 Roleplay","speaking":"🎤 Speaking","shopping":"🛒 Shopping","realistic-reading":"📋 Realistic Reading","listening":"🎧 Listening","soft-skills":"🧠 Soft Skills","practical":"🔧 Practical English","social-profile":"💑 Social Profile","discussion":"🗣️ Discussion"};
+window.__FB_ICONS__ = {"reading-factual":"📰","reading-fictional":"📖","grammar":"📝","vocabulary":"🔤","thematic-vocabulary":"📚","business-english":"💼","news-story":"🗞️","survival-english":"🏥","biography":"👤","lifestyle":"🌿","debate":"⚖️","writing-email":"✉️","how-to":"🛠️","travel":"✈️","horror-story":"👻","jokes":"😄","advertisement":"📢","reflection":"🪞","dialogue":"💬","movie-dialogue":"🎬","micro-lesson":"⚡","life-hack":"💡","historical-story":"🏛️","recent-news":"📡","formal-dialogue":"🤝","roleplay":"🎭","speaking":"🎤","shopping":"🛒","realistic-reading":"📋","listening":"🎧","soft-skills":"🧠","practical":"🔧","social-profile":"💑","discussion":"🗣️"};
+window.__FB_BG__ = {"horror-story":"#111827","advertisement":"#fff1f2","reflection":"#f5f3ff","jokes":"#fffbeb"};
+window.__FB_IMAGES__ = {"reading-factual":"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80","reading-fictional":"https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80","grammar":"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80","vocabulary":"https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80","thematic-vocabulary":"https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80","business-english":"https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800&q=80","news-story":"https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80","survival-english":"https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=800&q=80","biography":"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80","lifestyle":"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80","debate":"https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&q=80","writing-email":"https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80","how-to":"https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80","travel":"https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80","horror-story":"https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=800&q=80","jokes":"https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=800&q=80","advertisement":"https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=800&q=80","reflection":"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80","dialogue":"https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80","movie-dialogue":"https://picsum.photos/800/500","micro-lesson":"https://picsum.photos/800/500","life-hack":"https://picsum.photos/800/500","historical-story":"https://picsum.photos/800/500","recent-news":"https://picsum.photos/800/500","formal-dialogue":"https://picsum.photos/800/500","roleplay":"https://picsum.photos/800/500","speaking":"https://picsum.photos/800/500","shopping":"https://picsum.photos/800/500","realistic-reading":"https://picsum.photos/800/500","listening":"https://picsum.photos/800/500","soft-skills":"https://picsum.photos/800/500","practical":"https://picsum.photos/800/500","social-profile":"https://picsum.photos/800/500","discussion":"https://picsum.photos/800/500"};
+window.__FB_PHOTO__ = "";
+
+(function(){
+  'use strict';
+  var LESSON = window.__LESSON__ || { sections: [], title: 'Flipbook', level: '', topic: '', coverTagline: '', learnerName: 'Learner', date: '' };
+  var LEARNER_NAME = LESSON.learnerName || 'Learner';
+  var SECTIONS = LESSON.sections || [];
+  var TOTAL = SECTIONS.length + 3; // cover + toc + sections + back cover
+  var LS_KEY = 'tutorly-fb-' + (LESSON.id || 'lesson');
+
+  var state = { page: 0, xp: 0, level: 1, sound: true, completedPages: [], done: {}, answers: {}, ratings: {}, matches: {}, fills: {}, short: {} };
+  try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (saved) { for (var k in saved) if (k !== 'page') state[k] = saved[k]; } } catch (e) {}
+
+  var $ = function(s, r){ return (r || document).querySelector(s); };
+  var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  function save(){ try { var c = {}; ['xp','level','sound','completedPages','done','answers','ratings','matches','fills','short'].forEach(function(k){ if (state[k] !== undefined) c[k] = state[k]; }); localStorage.setItem(LS_KEY, JSON.stringify(c)); } catch (e) {} }
+  function lvl(){ return Math.floor(state.xp / 100) + 1; }
+
+  /* ── sounds ── */
+  var AC = null;
+  function ctx(){ try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); return AC; } catch (e) { return null; } }
+  function tone(f, d, t, g){ if (!state.sound) return; var c = ctx(); if (!c) return; try { var o = c.createOscillator(), gn = c.createGain(); o.connect(gn); gn.connect(c.destination); o.type = t || 'sine'; o.frequency.value = f; gn.gain.setValueAtTime(g || .3, c.currentTime); gn.gain.exponentialRampToValueAtTime(.001, c.currentTime + d); o.start(); o.stop(c.currentTime + d); } catch (e) {} }
+  function sndPage(){ if (!state.sound) return; var c = ctx(); if (!c) return; try { var n = c.sampleRate * .15, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2); var s = c.createBufferSource(); s.buffer = b; var g = c.createGain(); g.gain.value = .4; g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .15); var f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200; s.connect(f); f.connect(g); g.connect(c.destination); s.start(); } catch (e) {} }
+  function sndGood(){ tone(523,.1); setTimeout(function(){ tone(659,.1); },100); setTimeout(function(){ tone(784,.2); },200); }
+  function sndBad(){ tone(300,.15,'sawtooth',.2); setTimeout(function(){ tone(250,.2,'sawtooth',.15); },150); }
+  function sndBadge(){ [0,100,200,300,400].forEach(function(d,i){ setTimeout(function(){ tone(523 + i*100,.15); }, d); }); }
+
+  /* ── TTS ── */
+  function pickVoice(pref){ var vs = window.speechSynthesis.getVoices(); if (!vs.length) return null; if (pref) { var m = vs.filter(function(v){ return v.name.toLowerCase().includes(pref.toLowerCase()) || v.name === pref; }); if (m.length) return m[0]; } var nat = vs.filter(function(v){ return /ava|aria|natural|online/.test(v.name.toLowerCase()) && v.lang.startsWith('en'); }); if (nat.length) return nat[0]; var en = vs.filter(function(v){ return v.lang.startsWith('en'); }); return en[0] || null; }
+  function speak(text, voice, rate){ try { window.speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').replace(/[✅❌🏆🎯💡🔑⚡🎓📚]/g,'')); u.rate = rate || .95; u.pitch = 1; var v = pickVoice(voice); if (v) u.voice = v; window.speechSynthesis.speak(u); } catch (e) {} }
+
+  /* ── confetti ── */
+  function confetti(){ var wrap = document.createElement('div'); wrap.className = 'confetti'; var cols = ['#c9a84c','#f5d87a','#3b82f6','#8b5cf6','#ec4899','#10b981']; for (var i = 0; i < 120; i++) { var p = document.createElement('i'); p.style.left = Math.random()*100 + '%'; p.style.background = cols[i % cols.length]; p.style.animationDuration = (2 + Math.random()*2.5) + 's'; p.style.animationDelay = (Math.random()*.5) + 's'; wrap.appendChild(p); } document.body.appendChild(wrap); setTimeout(function(){ wrap.remove(); }, 5200); }
+
+  function addXP(n){ var oldL = lvl(); state.xp += n; var nl = lvl(); if (nl > oldL) { state.level = nl; sndBadge(); confetti(); } else { sndGood(); } renderBar(); save(); }
+
+  /* ── page navigation ── */
+  function flipAnim(dir){ var pg = $('#page'); if (!pg) return; pg.classList.add(dir === 1 ? 'anim-next' : 'anim-prev'); setTimeout(function(){ pg.classList.remove('anim-next'); pg.classList.remove('anim-prev'); }, 680); }
+  function goTo(i, silent){ sndPage(); flipAnim(i > state.page ? 1 : -1); state.page = Math.max(0, Math.min(TOTAL - 1, i)); render(); }
+  function next(){ if (state.page < TOTAL - 1) goTo(state.page + 1); }
+  function prev(){ if (state.page > 0) goTo(state.page - 1); }
+
+  /* ── renderers ── */
+  function renderBar(){
+    var xpIn = state.xp % 100;
+    $('#lvl').textContent = lvl();
+    $('#xpnum').textContent = state.xp;
+    $('#fill').style.width = xpIn + '%';
+    $('#who').innerHTML = '<p>' + esc(LEARNER_NAME) + '</p><span>Level ' + lvl() + '</span>';
+    $('#pgnum').textContent = (state.page + 1) + ' / ' + TOTAL;
+    $('#pgfill').style.width = (TOTAL > 1 ? Math.round(state.page / (TOTAL - 1) * 100) : 0) + '%';
+    $('#pgpct').textContent = Math.round(TOTAL > 1 ? state.page / (TOTAL - 1) * 100 : 0) + '%';
+    $('#done').textContent = state.completedPages.length + ' done';
+    $('#snd').textContent = state.sound ? '🔊' : '🔇';
+    var t = $('#pagecomplete'); if (t) t.style.display = state.completedPages.indexOf(state.page) >= 0 ? 'inline' : 'none';
+  }
+
+  function isDone(id){ return !!state.done[id]; }
+  function markDone(id, answer){
+    state.done[id] = true;
+    if (answer !== undefined) state.answers[id] = answer;
+    save();
+    // page complete when every activity on it is done
+    var sec = SECTIONS[state.page - 2];
+    if (sec && sec.activities && sec.activities.length && sec.activities.every(function(a){ return isDone(a.id); })) {
+      if (state.completedPages.indexOf(state.page) < 0) { state.completedPages.push(state.page); sndBadge(); save(); }
+    }
+    render();
+  }
+
+  function activityHTML(a){
+    var xp = a.xpReward || 10;
+    var done = isDone(a.id);
+    var saved = state.answers[a.id];
+    var h = '<div class="actcard" data-id="' + esc(a.id) + '">';
+    h += '<h4>' + esc(a.question || '') + '</h4>';
+    if (a.type === 'multiple-choice' || a.type === 'true-false') {
+      var opts = (a.options && a.options.length ? a.options : ['True','False']);
+      h += '<div class="opts">';
+      opts.forEach(function(o, i){
+        var cls = '';
+        if (done && String(o) === String(a.correctAnswer)) cls = ' ok';
+        else if (done && String(o) === String(saved) && String(o) !== String(a.correctAnswer)) cls = ' bad';
+        else if (!done && String(o) === String(saved)) cls = ' sel';
+        h += '<button class="mcopt' + cls + '" data-o="' + esc(o) + '"' + (done ? ' disabled' : '') + '>' + esc(o) + '</button>';
+      });
+      h += '</div>';
+      h += '<div class="result" style="display:none"></div>';
+    } else if (a.type === 'fill-blanks' && a.blanks) {
+      a.blanks.forEach(function(b){
+        var val = (saved && saved[b.id]) || '';
+        h += '<div class="gaprow"><span>' + esc(b.sentence.split('_____')[0] || '') + '</span><input data-b="' + esc(b.id) + '" value="' + esc(val) + '"' + (done ? ' disabled' : '') + ' placeholder="..." /><span>' + esc(b.sentence.split('_____')[1] || '') + '</span><span class="hinttxt">' + (b.hint ? '💡 ' + esc(b.hint) : '') + '</span></div>';
+      });
+      h += '<button class="actbtn">Check Answers</button>';
+      h += '<div class="result" style="display:none"></div>';
+    } else if (a.type === 'matching' && a.pairs) {
+      a.pairs.forEach(function(p, i){
+        var sel = (saved && saved[i]) || '';
+        h += '<div class="matchrow"><span class="l">' + esc(p.left) + '</span><span class="a">→</span><select data-i="' + i + '"' + (done ? ' disabled' : '') + '><option value="">Select...</option>';
+        a.pairs.forEach(function(r){ h += '<option value="' + esc(r.right) + '"' + (sel === r.right ? ' selected' : '') + '>' + esc(r.right) + '</option>'; });
+        h += '</select><span class="mk"></span></div>';
+      });
+      h += '<button class="actbtn g">Check Matches</button>';
+      h += '<div class="result" style="display:none"></div>';
+    } else if (a.type === 'short-answer') {
+      h += '<textarea class="shortans" rows="3" placeholder="Write your answer here..."' + (done ? ' disabled' : '') + '>' + esc(typeof saved === 'string' ? saved : '') + '</textarea>';
+      h += '<button class="actbtn gr">Submit Answer</button>';
+      h += '<div class="result" style="display:none"></div>';
+    } else if (a.type === 'discussion' && a.discussionPoints) {
+      h += '<ul style="padding-left:16px;font-size:12px;color:#374151;margin-bottom:6px">';
+      a.discussionPoints.forEach(function(p){ h += '<li style="margin-bottom:4px">' + esc(p) + '</li>'; });
+      h += '</ul>';
+      if (!done) h += '<button class="actbtn o">Mark as Discussed ✓</button>';
+      h += '<div class="result" style="display:none"></div>';
+    } else if (a.type === 'speaking' || a.type === 'roleplay') {
+      if (a.speakingPrompts) {
+        h += '<ul style="padding-left:16px;font-size:12px;color:#374151;margin-bottom:6px">';
+        a.speakingPrompts.forEach(function(p){ h += '<li style="margin-bottom:4px">' + esc(p) + '</li>'; });
+        h += '</ul>';
+      }
+      if (!done) h += '<button class="actbtn p">✓ Speaking Completed</button>';
+      h += '<div class="result" style="display:none"></div>';
+    } else if (a.type === 'rating' && a.ratingCriteria) {
+      a.ratingCriteria.forEach(function(c, i){
+        h += '<div style="margin-bottom:6px"><p style="font-size:11px;color:#4b5563;margin-bottom:2px">' + esc(c) + '</p><div class="stars" data-i="' + i + '">';
+        for (var s = 1; s <= 5; s++) h += '<button data-s="' + s + '" class="' + ((saved && saved[i] && saved[i] >= s) ? 'on' : '') + '">★</button>';
+        h += '</div></div>';
+      });
+      h += '<button class="actbtn o">Submit Ratings</button>';
+      h += '<div class="result" style="display:none"></div>';
+    } else {
+      h += '<p style="font-style:italic;color:#9ca3af">' + esc(a.type) + '</p>';
+    }
+    if (done) h = h.replace('<div class="result" style="display:none"></div>', '<div class="result ok">✓ +' + xp + ' XP</div>');
+    h += '</div>';
+    return h;
+  }
+
+  function vocabHTML(items){
+    var h = '<div style="columns:2;column-gap:10px">';
+    items.forEach(function(v){
+      var dc = v.difficulty || 'basic';
+      h += '<div class="vocabcard" data-word="' + esc(v.word) + '"><div class="w">' + esc(v.word) + '<span>' + esc(v.partOfSpeech || '') + '</span></div><div class="d">' + esc(v.definition || '') + '</div>' + (v.example ? '<div class="e">e.g. "' + esc(v.example.split('|')[0].trim().substring(0,80)) + '"</div>' : '') + '<span class="diff ' + esc(dc) + '">' + esc(dc) + '</span></div>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  function dialogueHTML(lines){
+    var h = '';
+    lines.forEach(function(line, i){
+      var isA = i % 2 === 0;
+      h += '<div class="dlg' + (isA ? '' : ' rev') + '"><div class="av" style="background:' + (isA ? '#1a3a5c' : '#c9a84c') + '">' + esc((line.speaker || '?').charAt(0)) + '</div><div class="bub" style="background:' + (isA ? '#f0f4f8' : '#fef9e7') + ';border:1px solid ' + (isA ? '#e2e8f0' : '#fef3c7') + ';border-top-left-radius:' + (isA ? 2 : 12) + 'px;border-top-right-radius:' + (isA ? 12 : 2) + 'px"><p class="s" style="color:' + (isA ? '#1a3a5c' : '#92400e') + '">' + esc(line.speaker) + '</p><p class="t">' + esc(line.text) + '</p>' + (line.emotion ? '<p class="e">*' + esc(line.emotion) + '*</p>' : '') + '</div></div>';
+    });
+    return h;
+  }
+
+  function sectionHTML(sec, pageNum){
+    var accent = window.__FB_COLORS__ && window.__FB_COLORS__[sec.type] || '#1a3a5c';
+    var bg = window.__FB_BG__ && window.__FB_BG__[sec.type] || '#faf8f3';
+    var isHorror = sec.type === 'horror-story';
+    var isAd = sec.type === 'advertisement';
+    var img = sec.imageUrl || (window.__FB_IMAGES__ && window.__FB_IMAGES__[sec.type]) || (sec.imageQuery ? 'https://picsum.photos/seed/' + (sec.imageQuery.split('').reduce(function(a,c){ return a + c.charCodeAt(0); },0) % 1000) + '/800/500' : 'https://picsum.photos/800/500');
+    var label = (window.__FB_LABELS__ && window.__FB_LABELS__[sec.type]) || sec.type.replace(/-/g,' ');
+    var paras = (sec.content || '').split('\n').map(function(p){ return p.trim(); }).filter(function(p){ return p.length > 0; });
+    var hasPod = /reading|story|news|biography|lifestyle|listening/.test(sec.type) && sec.content;
+
+    var h = '<div class="secpage" style="background:' + bg + ';color:' + (isHorror ? '#e5e7eb' : '#1a1a1a') + ';font-family:Merriweather,Georgia,serif">';
+    h += '<div class="acc" style="background:' + accent + '"></div>';
+    h += '<div class="hd" style="border-color:' + (isHorror ? 'rgba(255,255,255,.1)' : '#e8dfc8') + '"><div class="row"><span class="badge" style="background:' + accent + '">' + esc(label) + '</span><span class="pg" style="color:' + (isHorror ? '#6b7280' : '#d1d5db') + '">' + pageNum + '</span></div><h2 style="color:' + (isHorror ? '#f3f4f6' : accent) + '">' + esc(sec.title) + '</h2></div>';
+
+    h += '<div class="scroller" style="color:' + (isHorror ? '#d1d5db' : '#374151') + '">';
+    if (hasPod) h += '<div class="podbar" data-pod="1"><div class="wv">' + [3,5,7,5,3,7,5,3].map(function(x){ return '<i style="height:' + x + 'px"></i>'; }).join('') + '</div><div class="t"><p>🎙️ ' + esc(sec.title) + '</p><p>Natural AI Voice</p></div><button class="pp">▶</button><button class="st">⏹</button></div>';
+    if (!isAd) h += '<div class="heroimg"><img src="' + esc(img) + '" alt="' + esc(sec.title) + '" /><div class="tint" style="background:linear-gradient(to right,' + accent + '44,transparent 60%)"></div><div class="lbl">' + esc(sec.imageQuery || sec.title) + '</div></div>';
+
+    if (isAd) {
+      h += '<div style="text-align:center;padding:14px 0"><div style="font-size:48px;margin-bottom:10px">🎓</div><div style="display:inline-block;background:#c9a84c;color:#0d0d1a;padding:8px 16px;border-radius:20px;font-weight:900;font-size:14px">TUTORLY™</div></div>';
+      h += '<div class="cols2">' + paras.map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('') + '</div>';
+    } else if (paras.length) {
+      h += '<div class="cols2" style="column-rule:1px solid ' + (isHorror ? 'rgba(255,255,255,.1)' : '#e8dfc8') + '">';
+      paras.forEach(function(p, i){
+        if (p.length < 100 && (p === p.toUpperCase() || /^[A-Z\s\d:–\-'"]+$/.test(p))) {
+          h += '<div style="break-inside:avoid;margin-bottom:6px"><div style="height:1px;background:' + (isHorror ? 'rgba(255,255,255,.1)' : '#e8dfc8') + ';margin:6px 0"></div><h3 class="maghead" style="font-size:11px;font-weight:900;color:' + (isHorror ? '#f9fafb' : accent) + ';margin-bottom:4px">' + esc(p) + '</h3></div>';
+        } else if (i === 0) {
+          h += '<p class="dropcap" style="margin-bottom:8px;text-align:justify;color:' + (isHorror ? '#e5e7eb' : '#374151') + '">' + esc(p) + '</p>';
+        } else if (i === 2 && p.length > 80) {
+          h += '<div class="pullquote">"' + esc(p.substring(0,120)) + '..."</div>';
+        } else {
+          h += '<p style="margin-bottom:6px;text-align:justify;color:' + (isHorror ? '#d1d5db' : '#374151') + '">' + esc(p) + '</p>';
+        }
+      });
+      h += '</div>';
+    }
+
+    if (sec.dialogue && sec.dialogue.length) h += '<div class="section-rule"></div><h3 class="maghead" style="font-size:11px;font-weight:900;color:' + accent + ';margin-bottom:8px">🗣️ Dialogue Practice</h3>' + dialogueHTML(sec.dialogue);
+    if (sec.vocabulary && sec.vocabulary.length) h += '<div class="section-rule"></div><h3 class="maghead" style="font-size:11px;font-weight:900;color:' + accent + ';margin-bottom:8px">📚 Key Vocabulary</h3>' + vocabHTML(sec.vocabulary);
+    if (sec.activities && sec.activities.length) {
+      var all = sec.activities.every(function(a){ return isDone(a.id); });
+      h += '<div class="section-rule"></div><h3 class="maghead" style="font-size:11px;font-weight:900;color:' + accent + ';display:flex;align-items:center;gap:6px;margin-bottom:4px">✏️ Activities <span style="background:' + accent + ';color:#fff;font-size:9px;padding:2px 6px;border-radius:4px;font-family:Inter,sans-serif">' + sec.activities.length + '</span>' + (all ? '<span style="color:#22c55e;font-size:11px">✓ All done!</span>' : '') + '</h3>';
+      sec.activities.forEach(function(a){ h += activityHTML(a); });
+    }
+    h += '<div style="height:16px"></div></div>';
+
+    h += '<div class="ft" style="border-color:' + (isHorror ? 'rgba(255,255,255,.1)' : '#e8dfc8') + ';background:' + (isHorror ? 'rgba(0,0,0,.2)' : 'rgba(250,248,243,.95)') + '"><span class="m" style="color:' + (isHorror ? '#6b7280' : '#d1d5db') + '">Tutorly Magazine</span><span><span id="pagecomplete" style="color:#16a34a;font-size:9px;display:none">✓ Page Complete&nbsp;</span><span style="color:' + (isHorror ? '#6b7280' : '#d1d5db') + '">' + pageNum + '</span></span></div>';
+    h += '</div>';
+    return h;
+  }
+
+  function coverHTML(){
+    var h = '<div class="cover"><div class="goldbar t"></div><div class="goldbar b"></div><div class="goldbar v vl"></div><div class="goldbar v vr"></div>';
+    h += '<div class="mast"><div class="row"><span>' + esc(LESSON.level) + '</span><span>' + esc(LESSON.date) + '</span></div><h1>TUTORLY</h1><p>Homework Magazine</p></div>';
+    h += '<div class="issue"><span>Special Edition</span><span><b>★★★★★</b>&nbsp;Premium Issue</span></div>';
+    h += '<div class="hero"><div class="ph"><div>👩‍🎓</div><p>' + esc(LEARNER_NAME) + '</p></div><div class="shade"></div><div class="cap"><div><div class="nm">' + esc(LEARNER_NAME) + '</div><div class="lv">' + esc(LESSON.level) + ' • ' + esc(LESSON.topic) + '</div></div><div class="ex">EXCLUSIVE</div></div></div>';
+    h += '<div class="story"><div class="mid"><i></i>This Issue<i></i></div><h2>' + esc(LESSON.title) + '</h2><p>' + esc(LESSON.coverTagline || LESSON.description) + '</p></div>';
+    h += '<div class="bullets">' + ['Reading & Comprehension','Grammar Masterclass','Vocabulary Builder','Speaking & Debate','Business English','Survival Language'].map(function(b){ return '<span><b>▸</b>' + b + '</span>'; }).join('') + '</div>';
+    h += '<div class="foot"><span>tutorly.com</span><span>© Tutorly Education</span></div></div>';
+    return h;
+  }
+
+  function tocHTML(){
+    var h = '<div class="toc"><div class="hd"><div class="row"><div><p>Contents</p><h1>Table of Contents</h1></div><div class="bk">📚</div></div><p class="sub">' + esc(LESSON.title) + ' • ' + esc(LESSON.level) + '</p></div><div class="list">';
+    SECTIONS.forEach(function(sec, i){
+      var ic = (window.__FB_ICONS__ && window.__FB_ICONS__[sec.type]) || '📄';
+      h += '<div class="rowitem" data-go="' + (i + 2) + '"><span class="ic">' + ic + '</span><div class="tt"><b>' + esc(sec.title) + '</b><span>' + esc(sec.type.replace(/-/g,' ')) + '</span></div><div class="pg">' + (sec.activities && sec.activities.length ? '<span class="cnt">' + sec.activities.length + ' activities</span>' : '') + '<span class="n">' + (i + 3) + '</span><span class="ar">→</span></div></div>';
+    });
+    h += '</div><div class="ft"><span>Tutorly Homework Magazine</span><span>' + SECTIONS.length + ' sections</span></div></div>';
+    return h;
+  }
+
+  function backCoverHTML(){
+    var lb = generateLB();
+    var myRank = lb.findIndex(function(e){ return e.me; }) + 1;
+    var h = '<div class="backcover"><div class="goldbar t"></div><div class="goldbar b"></div>';
+    h += '<div class="hd"><h1>🏆 Leaderboard</h1><p>Global Rankings • This Week</p></div>';
+    h += '<div class="stats"><div><div class="v">⚡' + state.xp + '</div><div class="l">My XP</div></div><div><div class="v">🎓' + lvl() + '</div><div class="l">Level</div></div><div><div class="v">🏅' + state.completedPages.length + '</div><div class="l">Pages Done</div></div></div>';
+    h += '<div class="board"><div class="hdr"><span>#</span><span>Learner</span><span>XP</span><span>Lv.</span></div><div class="rows">';
+    lb.slice(0, 12).forEach(function(e, i){
+      h += '<div class="r' + (e.me ? ' me' : '') + '"><span class="rank">' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)) + '</span><span class="nm"><span class="av">' + e.avatar + '</span><span>' + esc(e.name) + (e.me ? ' (You)' : '') + '<span class="ct"><br>' + e.flag + ' ' + esc(e.country) + '</span></span></span><span class="xp">' + e.xp + '</span><span class="lv">' + e.level + '</span></div>';
+    });
+    h += '</div></div>';
+    h += '<div class="rankline">Your rank: <b>#' + myRank + '</b> of ' + lb.length + ' learners • ' + state.completedPages.length + ' pages completed</div>';
+    h += '<div class="brand"><p><span>Tutorly</span> Homework Magazine</p><p>' + esc(LESSON.title) + ' • ' + esc(LESSON.date) + ' • tutorly.com</p></div></div>';
+    return h;
+  }
+
+  function generateLB(){
+    var fakes = [
+      ['Amara O.','Nigeria','🇳🇬','👩🏿‍🎓'],['Hiroshi T.','Japan','🇯🇵','👨🏻‍💼'],['Sofia M.','Brazil','🇧🇷','👩🏽‍🎨'],['Dmitri K.','Russia','🇷🇺','🧑🏻‍💻'],['Priya S.','India','🇮🇳','👩🏽‍🔬'],['Carlos R.','Mexico','🇲🇽','👨🏽‍🏫'],['Yuki N.','Japan','🇯🇵','👩🏻‍🎤'],['Ibrahim A.','Egypt','🇪🇬','🧑🏽‍💼'],['Elena V.','Ukraine','🇺🇦','👩🏻‍🏫'],['Kwame B.','Ghana','🇬🇭','👨🏿‍🎓'],['Mei L.','China','🇨🇳','👩🏻‍💻'],['Ahmed F.','Morocco','🇲🇦','🧔🏽']
+    ];
+    var rng = function(min, max, s){ var x = Math.sin(s) * 10000; return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min; };
+    var list = fakes.map(function(f, i){ return { name: f[0], country: f[1], flag: f[2], avatar: f[3], xp: rng(50,400,42 + i*7), level: rng(1,5,42 + i*3), me: false }; });
+    list.push({ name: LEARNER_NAME || 'You', country: 'Your Country', flag: '🌟', avatar: '👩‍🎓', xp: state.xp, level: lvl(), me: true });
+    return list.sort(function(a, b){ return b.xp - a.xp; });
+  }
+
+  function render(){
+    var html = '';
+    if (state.page === 0) html = coverHTML();
+    else if (state.page === 1) html = tocHTML();
+    else if (state.page === TOTAL - 1) html = backCoverHTML();
+    else html = sectionHTML(SECTIONS[state.page - 2], state.page + 1);
+    var pg = $('#page');
+    pg.innerHTML = html;
+    pg.style.width = pageW() + 'px';
+    pg.style.height = pageH() + 'px';
+    renderBar();
+    bindPage();
+  }
+
+  function pageW(){ return Math.min(innerWidth - (innerWidth < 768 ? 16 : 96), Math.floor(pageH() / 1.414)); }
+  function pageH(){ return Math.min(innerHeight - 150, 860, Math.max(300, (innerWidth < 768 ? innerWidth - 16 : (innerWidth - 96) / 2) * 1.414)); }
+
+  /* ── interactions ── */
+  function bindPage(){
+    var pg = $('#page');
+    $$('.rowitem', pg).forEach(function(el){ el.addEventListener('click', function(){ goTo(+el.getAttribute('data-go')); }); });
+    $$('.mcopt', pg).forEach(function(b){
+      b.addEventListener('click', function(){
+        var card = b.closest('.actcard'), id = card.getAttribute('data-id');
+        var opts = $$('.mcopt', card); opts.forEach(function(o){ o.classList.remove('sel'); }); b.classList.add('sel');
+        var act = findAct(id);
+        var correct = act.correctAnswer != null && String(b.getAttribute('data-o')) === String(act.correctAnswer);
+        opts.forEach(function(o){ o.disabled = true; });
+        if (correct) { b.classList.add('ok'); } else { b.classList.add('bad'); }
+        var res = $('.result', card);
+        res.style.display = 'block';
+        res.className = 'result ' + (correct ? 'ok' : 'no');
+        res.textContent = correct ? '✓ Correct! +' + (act.xpReward || 10) + ' XP' : '✗ The answer is: ' + act.correctAnswer;
+        if (correct) addXP(act.xpReward || 10); else sndBad();
+        markDone(id, b.getAttribute('data-o'));
+      });
+    });
+    $$('.actbtn', pg).forEach(function(b){
+      b.addEventListener('click', function(){
+        var card = b.closest('.actcard'), id = card.getAttribute('data-id'), act = findAct(id);
+        if (act.type === 'fill-blanks') {
+          var all = true, ok = true;
+          act.blanks.forEach(function(bl){
+            var inp = $('input[data-b="' + bl.id + '"]', card);
+            var v = inp.value.trim().toLowerCase(), a = bl.answer.trim().toLowerCase();
+            if (!v) all = false;
+            var good = v === a;
+            inp.classList.remove('ok','bad'); inp.classList.add(good ? 'ok' : 'bad');
+            if (!good) ok = false;
+            if (!good) { var ex = document.createElement('span'); ex.textContent = '(' + bl.answer + ')'; ex.style.cssText = 'color:#16a34a;font-size:11px'; inp.parentElement.appendChild(ex); }
+          });
+          var res = $('.result', card); res.style.display = 'block'; res.className = 'result ' + (all && ok ? 'ok' : 'no');
+          res.textContent = all && ok ? '✓ Correct! +' + (act.xpReward || 10) + ' XP' : (all ? '✗ Some answers are wrong' : '✗ Fill every blank first');
+          if (all && ok) addXP(act.xpReward || 10); else if (all) sndBad();
+          if (all) markDone(id, answersObj(act));
+        } else if (act.type === 'matching') {
+          var sel = $$('select', card).map(function(s){ return s.value; });
+          var filled = sel.every(function(v){ return v !== ''; });
+          var correct = sel.every(function(v, i){ return v === act.pairs[i].right; });
+          $$('select', card).forEach(function(s, i){ var m = $('.mk', s.parentElement); if (filled) { s.classList.remove('ok','bad'); s.classList.add(s.value === act.pairs[i].right ? 'ok' : 'bad'); m.textContent = s.value === act.pairs[i].right ? '✓' : '✗'; m.style.color = s.value === act.pairs[i].right ? '#22c55e' : '#ef4444'; } });
+          var res = $('.result', card); res.style.display = 'block'; res.className = 'result ' + (filled && correct ? 'ok' : 'no');
+          res.textContent = filled && correct ? '✓ All matched! +' + (act.xpReward || 10) + ' XP' : (filled ? '✗ Some matches are wrong' : '✗ Match every pair first');
+          if (filled && correct) addXP(act.xpReward || 10); else if (filled) sndBad();
+          if (filled) markDone(id, sel);
+        } else if (act.type === 'short-answer') {
+          var ta = $('.shortans', card), v = ta.value.trim();
+          if (!v) return;
+          var res = $('.result', card); res.style.display = 'block'; res.className = 'result ok';
+          res.textContent = '✓ Answer saved! +' + (act.xpReward || 10) + ' XP';
+          addXP(act.xpReward || 10); markDone(id, v);
+        } else if (act.type === 'discussion') {
+          var res = $('.result', card); res.style.display = 'block'; res.className = 'result ok';
+          res.textContent = '✓ Discussed! +' + (act.xpReward || 10) + ' XP';
+          addXP(act.xpReward || 10); markDone(id, 'discussed');
+        } else if (act.type === 'speaking' || act.type === 'roleplay') {
+          var res = $('.result', card); res.style.display = 'block'; res.className = 'result ok';
+          res.textContent = '✓ Speaking done! +' + (act.xpReward || 10) + ' XP';
+          addXP(act.xpReward || 10); markDone(id, 'speaking-done');
+        } else if (act.type === 'rating') {
+          var res = $('.result', card); res.style.display = 'block'; res.className = 'result ok';
+          res.textContent = '✓ Rated! +' + (act.xpReward || 10) + ' XP';
+          addXP(act.xpReward || 10); markDone(id, ratingsObj(card));
+        }
+      });
+    });
+    $$('.stars button', pg).forEach(function(s){
+      s.addEventListener('click', function(){ var row = s.parentElement; $$('.stars button', row.parentElement).forEach(function(x){ x.classList.remove('on'); }); for (var i = 0; i < +s.getAttribute('data-s'); i++) $$('.stars button', row.parentElement)[i].classList.add('on'); });
+    });
+    // podcast
+    $$('.podbar', pg).forEach(function(p){
+      var btn = $('.pp', p);
+      btn.addEventListener('click', function(){
+        var sec = SECTIONS[state.page - 2];
+        if (!sec) return;
+        var playing = btn.textContent === '⏸';
+        if (playing) { window.speechSynthesis.cancel(); btn.textContent = '▶'; $$('.wv i', p).forEach(function(w){ w.classList.remove('on'); }); return; }
+        speak(sec.content, null, .9);
+        btn.textContent = '⏸';
+        $$('.wv i', p).forEach(function(w, i){ w.classList.add('on'); w.style.animationDelay = (i * .08) + 's'; });
+        var poll = setInterval(function(){ if (!window.speechSynthesis.speaking && !window.speechSynthesis.paused) { clearInterval(poll); btn.textContent = '▶'; $$('.wv i', p).forEach(function(w){ w.classList.remove('on'); }); } }, 500);
+      });
+      $('.st', p).addEventListener('click', function(){ window.speechSynthesis.cancel(); btn.textContent = '▶'; $$('.wv i', p).forEach(function(w){ w.classList.remove('on'); }); });
+    });
+    // vocab hover lookup
+    $$('.vocabcard', pg).forEach(function(c){
+      c.addEventListener('mouseenter', function(){ lookupTip(c); });
+      c.addEventListener('mouseleave', function(){ var t = $('#vocabtip'); if (t) t.remove(); });
+    });
+    // completion badge
+    if (state.completedPages.indexOf(state.page) >= 0 && state.page >= 2 && state.page <= TOTAL - 2) {
+      var b = document.createElement('div'); b.className = 'complete-badge'; b.textContent = '✓'; pg.appendChild(b);
+    }
+  }
+
+  function findAct(id){ for (var i = 0; i < SECTIONS.length; i++) { var a = (SECTIONS[i].activities || []).filter(function(x){ return x.id === id; }); if (a.length) return a[0]; } return {}; }
+  function answersObj(act){ var o = {}; act.blanks.forEach(function(b){ var inp = $('input[data-b="' + b.id + '"]'); if (inp) o[b.id] = inp.value; }); return o; }
+  function ratingsObj(card){ var o = {}; $$('.stars', card).forEach(function(row, i){ var n = 0; $$('button', row).forEach(function(s){ if (s.classList.contains('on')) n++; }); o[i] = n; }); return o; }
+
+  /* dictionary */
+  function lookupTip(card){
+    var w = card.getAttribute('data-word'); if (!w) return;
+    fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(w)).then(function(r){ return r.json(); }).then(function(d){
+      var e = d && d[0]; if (!e) return;
+      var tip = document.createElement('div'); tip.id = 'vocabtip'; tip.className = 'vocabtip';
+      tip.innerHTML = '<b>' + esc(e.word) + '</b> ' + (e.phonetic ? '<span style="color:#9ca3af;font-family:ui-monospace,monospace">' + esc(e.phonetic) + '</span>' : '') + '<div style="margin-top:4px;color:#374151">' + (e.meanings[0] ? esc(e.meanings[0].definitions[0].definition) : '') + '</div>';
+      document.body.appendChild(tip);
+      var r = card.getBoundingClientRect(); tip.style.left = Math.min(r.left, innerWidth - 220) + 'px'; tip.style.top = (r.top + r.height + 6) + 'px';
+    }).catch(function(){});
+  }
+
+  var menu = null;
+  document.addEventListener('contextmenu', function(e){
+    var sel = (window.getSelection() || '').toString().trim();
+    if (!sel || sel.length > 60) return;
+    e.preventDefault();
+    if (menu) menu.remove();
+    menu = document.createElement('div'); menu.className = 'context-menu';
+    menu.style.left = Math.min(e.clientX, innerWidth - 200) + 'px'; menu.style.top = e.clientY + 'px';
+    menu.innerHTML = '<div class="t">"' + esc(sel.substring(0,30)) + (sel.length > 30 ? '…' : '') + '"</div><button data-a="define">📖 Define (Free Dictionary)</button><button data-a="translate">🌐 Translate (Google)</button><button data-a="google">🔍 Search Google</button>';
+    document.body.appendChild(menu);
+    $$('button', menu).forEach(function(b){
+      b.addEventListener('click', function(){
+        var a = b.getAttribute('data-a'); menu.remove(); menu = null;
+        if (a === 'translate') window.open('https://translate.google.com/?sl=en&text=' + encodeURIComponent(sel), '_blank');
+        else if (a === 'google') window.open('https://www.google.com/search?q=' + encodeURIComponent(sel + ' meaning'), '_blank');
+        else openDict(sel);
+      });
+    });
+  });
+  document.addEventListener('click', function(){ if (menu) { menu.remove(); menu = null; } });
+
+  function openDict(word){
+    var m = document.createElement('div'); m.className = 'dictmodal';
+    m.innerHTML = '<div class="box"><div class="hd"><h3>📖 Dictionary</h3><button>✕</button></div><div class="bd"><p style="color:#9ca3af">Looking up "' + esc(word) + '"…</p></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', function(e){ if (e.target === m || e.target.closest('.hd button')) m.remove(); });
+    fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(word)).then(function(r){ return r.json(); }).then(function(d){
+      var e = d && d[0]; if (!e) { m.querySelector('.bd').innerHTML = '<p style="color:#dc2626">Definition not found.</p>'; return; }
+      var h = '<h2>' + esc(e.word) + '</h2>' + (e.phonetic ? '<span class="ph">' + esc(e.phonetic) + '</span>' : '');
+      (e.meanings || []).slice(0, 3).forEach(function(mn){
+        h += '<div class="m"><span class="pos">' + esc(mn.partOfSpeech) + '</span>';
+        (mn.definitions || []).slice(0, 2).forEach(function(df){
+          h += '<div class="def">' + esc(df.definition) + '</div>' + (df.example ? '<div class="ex">"' + esc(df.example) + '"</div>' : '');
+        });
+        if (mn.synonyms && mn.synonyms.length) h += '<div class="syn">' + mn.synonyms.slice(0,5).map(function(s){ return '<span>' + esc(s) + '</span>'; }).join('') + '</div>';
+        h += '</div>';
+      });
+      m.querySelector('.bd').innerHTML = h;
+    }).catch(function(){ m.querySelector('.bd').innerHTML = '<p style="color:#dc2626">Definition not found.</p>'; });
+  }
+
+  /* cat assistant */
+  var CATS = ['😺','😸','😹','😻','😼','😽','🐱'];
+  var QUOTES = ["You're doing BRILLIANTLY! Keep it up! 🌟","Every mistake is a lesson in disguise! 🎓","I believe in you more than catnip! 🐱","Reading is purr-fect for your brain! 📚","Meow! You just got smarter! ✨","Language learning is an adventure — enjoy it! 🌍","Even I had to learn to meow properly! Practice makes perfect! 🎯","Your tutor is SO proud of you right now! 💫","Challenge accepted? Challenge CONQUERED! 💪","You're in the top percentile of cool learners! 🏆","Curiosity didn't kill the cat — it made them fluent! 😻","Take a deep breath. You've got this! 🌸"];
+  function catQuote(){
+    var q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    var b = document.createElement('div'); b.className = 'catbub'; b.textContent = q;
+    document.body.appendChild(b);
+    if (state.sound) speak(q, null, 1.1);
+    setTimeout(function(){ b.remove(); }, 4200);
+  }
+  var cat = document.createElement('button'); cat.className = 'cat'; cat.textContent = '😺'; cat.title = 'Cat Assistant';
+  cat.addEventListener('click', function(){ cat.textContent = CATS[Math.floor(Math.random() * CATS.length)]; catQuote(); });
+  document.body.appendChild(cat);
+
+  /* shell */
+  document.body.innerHTML = '<div class="app"><div class="xpbar"><span class="brand">Tutorly</span><span style="width:1px;height:18px;background:rgba(255,255,255,.2);display:none"></span><div class="lvl" id="lvl">1</div><div class="who" id="who"></div><div class="xpwrap"><span>XP</span><div class="track"><div class="fill" id="fill"></div></div><span class="xptxt" id="xpnum">0</span></div><div class="pgtrack"><span>Pg</span><div class="pgfill"><i id="pgfill"></i></div><span id="pgpct">0%</span></div><div class="done"><span>🏅</span><span id="done">0 done</span></div><button class="snd" id="snd">🔊</button></div><div class="controls"><button class="cbtn" id="contents">📋 <span>Contents</span></button><div class="navmid"><button class="round" id="nv">‹</button><span class="pageno" id="pgnum">1 / 1</span><button class="round" id="nx">›</button></div><div class="navmid"><button class="gold" id="restart">↺ Restart</button></div></div><div class="stage"><div id="book" class="book"><div id="page" class="page"></div></div></div><div class="mobilenav"><button id="mv">‹</button><span class="pageno" id="mpgnum"></span><button id="mx">›</button></div><div class="hint"><p>← → arrow keys to flip • Right-click text for dictionary</p></div></div>';
+
+  var contentsOpen = false;
+  $('#contents').addEventListener('click', function(){
+    contentsOpen = !contentsOpen;
+    if (contentsOpen) {
+      var ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'tocov';
+      ov.innerHTML = '<div class="panel">' + tocHTML() + '</div>';
+      document.body.appendChild(ov);
+      $$('.rowitem', ov).forEach(function(el){ el.addEventListener('click', function(){ goTo(+el.getAttribute('data-go')); closeToc(); }); });
+      ov.addEventListener('click', function(e){ if (e.target === ov) closeToc(); });
+    } else closeToc();
+  });
+  function closeToc(){ var ov = $('#tocov'); if (ov) ov.remove(); contentsOpen = false; }
+
+  $('#nv').addEventListener('click', prev);
+  $('#nx').addEventListener('click', next);
+  $('#mv').addEventListener('click', prev);
+  $('#mx').addEventListener('click', next);
+  $('#restart').addEventListener('click', function(){ if (confirm('Restart this magazine? Your XP and progress will be reset.')) { try { localStorage.removeItem(LS_KEY); } catch (e) {} location.reload(); } });
+  $('#snd').addEventListener('click', function(){ state.sound = !state.sound; $('#snd').textContent = state.sound ? '🔊' : '🔇'; save(); });
+  document.addEventListener('keydown', function(e){
+    if (['INPUT','TEXTAREA','SELECT'].indexOf((e.target || {}).tagName) >= 0) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+  });
+  var corners = document.createElement('div');
+  corners.innerHTML = '<div class="corner l"></div><div class="corner r"></div>';
+  $('#book').appendChild(corners);
+  $('.corner.l').addEventListener('click', prev);
+  $('.corner.r').addEventListener('click', next);
+  addEventListener('resize', render);
+
+  render();
+})();
+
+</script>
+</body>
+</html>
