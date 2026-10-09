@@ -1,8 +1,0 @@
-node_modules
-.next
-.pglite
-.pglite-corrupt-*
-.npm-install.log
-.env
-.env.local
-next-env.d.ts

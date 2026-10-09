@@ -1,7 +1,0 @@
-@import "tailwindcss";
-
-html { font-size: 18px; }
-body { -webkit-font-smoothing: antialiased; }
-* { scrollbar-width: thin; }
-button { touch-action: manipulation; }
-img { -webkit-user-drag: none; }
