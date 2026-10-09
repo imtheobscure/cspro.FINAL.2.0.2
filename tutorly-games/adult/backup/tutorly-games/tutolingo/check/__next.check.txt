@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[12511,["/tutorly-games/tutolingo/_next/static/chunks/0pigp_b-mj~y-.js","/tutorly-games/tutolingo/_next/static/chunks/06r9~8_7c5vd5.js","/tutorly-games/tutolingo/_next/static/chunks/0xfy855a5wad0.js"],"default"]
+3:I[8767,["/tutorly-games/tutolingo/_next/static/chunks/0pigp_b-mj~y-.js","/tutorly-games/tutolingo/_next/static/chunks/06r9~8_7c5vd5.js","/tutorly-games/tutolingo/_next/static/chunks/0xfy855a5wad0.js"],"default"]
+4:[]
+0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"NiwYZMRPbGWRY-Ic0U15t"}

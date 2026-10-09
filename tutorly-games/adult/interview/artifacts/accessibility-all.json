@@ -1,0 +1,34 @@
+[
+  {
+    "screen": "Dashboard",
+    "violations": []
+  },
+  {
+    "screen": "Learning path",
+    "violations": []
+  },
+  {
+    "screen": "Practice room",
+    "violations": []
+  },
+  {
+    "screen": "Question bank",
+    "violations": []
+  },
+  {
+    "screen": "AI studio",
+    "violations": []
+  },
+  {
+    "screen": "My progress",
+    "violations": []
+  },
+  {
+    "screen": "Settings dialog",
+    "violations": []
+  },
+  {
+    "screen": "Mobile learning path",
+    "violations": []
+  }
+]

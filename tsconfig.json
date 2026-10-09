@@ -1,0 +1,83 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "exclude": [
+    "dist",
+    "old",
+    // `new/` is the scratch copy of the live server's web root (with its own
+    // 120 MB zip) used to recover missing apps. It is a SNAPSHOT, not source:
+    // typechecking it only ever reports errors in someone else's minified bundles.
+    "new",
+    "gaming-hub",
+    // `tutorly-games/` (which now includes adult/arena, the app that used to sit at
+    // the repo root as `combat-arena/`) has its own package.json and tsconfig and
+    // builds on its own, so it typechecks itself. The one file the main app does
+    // reach into is adult/arena/src/data/roles, pulled in by that import and checked
+    // with the app either way.
+    "tutorly-games",
+    // Standalone widget and lesson apps: each has its own package.json and
+    // tsconfig.json and builds on its own (`npm run build` inside it), so it
+    // typechecks itself — the same rule `tutorly-games/` above follows. Leaving
+    // them in would put every one of their errors on the main app's `npm run lint`
+    // and say nothing useful about the app that ships from `dist/index.html`.
+    "tutorly-widgets/Tutorly-cscreen",
+    // A finished build with no source of its own, recovered from the live server.
+    // (Tutor Leaderboard used to sit here too; it was retired and deleted.)
+    "tutorly-widgets/content-creator",
+    "tutorly-widgets/exam-builder",
+    "tutorly-widgets/preply-success-advisor",
+    "tutorly-widgets/tutorly-prompter",
+    "tutorly-widgets/tutorly-voice-transcribe",
+    "tutorly-widgets/university-management-system",
+    // The Transcriber is excluded as a whole FOLDER because it finally arrived as a
+    // real project (src/, its own package.json, tsconfig and `@/*` path alias), not
+    // just a build. Note that it also holds `prebuilt/` and `prebuilt-server/`: the
+    // artifact that actually ships, whose source is newer than this folder's src/.
+    "tutorly-widgets/tutorly-transcriber-2-v1",
+    // The two lesson APPS. The other four folders in tutorly-lessons/ stay IN the
+    // program on purpose: they are the HTML generators the main app imports, so
+    // they must keep being typechecked here. (englishlesson2/Video-Lesson are
+    // excluded as folders, but the generator files the app imports are still
+    // pulled in through those imports and checked either way.)
+    "tutorly-lessons/englishlesson2",
+    "tutorly-lessons/Video-Lesson",
+    // Retired lesson studios, archived in the repo but never published (see
+    // tutorly-lessons/README.md). Each is a finished single-file page with no
+    // source of its own, so there is nothing here to typecheck.
+    "tutorly-lessons/music-lesson",
+    "tutorly-lessons/live-lesson",
+    "tutorly-lessons/daily-lesson",
+    "tutorly-lessons/gamified-challenge",
+    "tutorly-lessons/flipbook-homework",
+    "tutorly-lessons/learning-app-v2",
+    "tutorly-lessons/interactive-lesson-maker",
+    "test.ts",
+    "test_wb_js.ts",
+    "test_wb_write.ts"
+  ]
+}

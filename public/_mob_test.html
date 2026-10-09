@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;font-family:monospace;font-size:12px">
+<iframe id="f" src="http://localhost:3000/learners/Review_App_Test.html" style="width:390px;height:844px;border:1px solid #333"></iframe>
+<pre id="res">waiting...</pre>
+<script>
+  const f = document.getElementById('f');
+  let stage = 0;
+  f.onload = () => {
+    if (stage === 0) { stage = 1; setTimeout(() => { f.contentWindow.location.reload(); }, 1500); }
+    else if (stage === 1) { stage = 2; setTimeout(run, 5000); }
+  };
+  function out(t){ document.getElementById('res').textContent = t; }
+  function run(){
+    const d = f.contentDocument, w = f.contentWindow;
+    const offenders = [];
+    d.querySelectorAll('*').forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && (r.right > 390.5 || r.left < -0.5)) offenders.push((el.tagName||'').toLowerCase()+'.'+String(el.className||'').slice(0,24)+' L'+Math.round(r.left)+' R'+Math.round(r.right));
+    });
+    const bodyText = d.body.textContent.replace(/\s+/g,' ').trim();
+    let res = 'OFFENDERS: ' + (offenders.slice(0,12).join(' | ') || 'NONE') + '\n';
+    res += 'RENDERED: ' + (bodyText.length > 200 ? 'yes' : 'no') + '\n';
+    res += 'HAS-LEVEL1: ' + (/Level 1: Foundations/.test(bodyText)?1:0) + ' HAS-TRANSCRIPT-ERROR: ' + (/(goed|libary|buyed|sayed|seed)/.test(bodyText)?1:0) + '\n';
+    res += 'BODY: ' + bodyText.slice(0,220);
+    out(res);
+  }
+</script>
+</body>
+</html>

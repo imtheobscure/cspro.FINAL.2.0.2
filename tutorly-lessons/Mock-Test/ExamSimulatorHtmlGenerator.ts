@@ -1,0 +1,5827 @@
+/*
+ * ExamSimulatorHtmlGenerator.ts
+ */
+
+let JSZIP_INLINED_CODE = "";
+if (typeof window === "undefined" && typeof process !== "undefined" && process.versions && process.versions.node) {
+  try {
+    const nodeFs = require("fs");
+    const nodePath = require("path");
+    const jszipPath = nodePath.join(process.cwd(), "node_modules/jszip/dist/jszip.min.js");
+    if (nodeFs.existsSync(jszipPath)) {
+      JSZIP_INLINED_CODE = nodeFs.readFileSync(jszipPath, "utf-8");
+    }
+  } catch (e) {
+    console.warn("Could not load jszip.min.js synchronously:", e);
+  }
+}
+
+export const EXAM_SIMULATOR_SCHEMA_VERSION = "2026.2" as const;
+export const EXAM_SIMULATOR_RUNTIME_VERSION = "1.0.0" as const;
+
+type UnknownRecord = Record<string, unknown>;
+
+export interface ExamAuthoringPackage extends UnknownRecord {
+  schemaVersion?: string;
+  packageType?: string;
+  examMetadata?: UnknownRecord;
+  sections?: unknown[];
+  scoringPackage?: unknown;
+}
+
+export interface ExamDefinition extends UnknownRecord {
+  schemaVersion?: string;
+  examMetadata?: UnknownRecord;
+  sections?: unknown[];
+}
+
+export interface RuntimeAssetManifest {
+  scriptUrl: string;
+  stylesheetUrl?: string;
+  integrity?: {
+    script?: string;
+    stylesheet?: string;
+  };
+  crossOrigin?: "anonymous" | "use-credentials";
+}
+
+export type FocusLossBehavior = "pause" | "continue" | "lock";
+export type SubmissionMode = "post" | "event" | "both";
+
+export interface GeneratorFeatureFlags {
+  annotations?: boolean;
+  transcript?: boolean;
+  review?: boolean;
+  answerChanges?: boolean;
+  calculator?: boolean;
+  spellcheck?: boolean;
+  audioReplay?: boolean;
+  autosave?: boolean;
+}
+
+export interface AccessibilityOptions {
+  extraTimeMultiplier?: number;
+  reducedMotion?: boolean;
+  highContrast?: boolean;
+  largeText?: boolean;
+  captions?: boolean;
+  allowClipboard?: boolean;
+  allowSelection?: boolean;
+}
+
+export interface TelemetryOptions {
+  enabled?: boolean;
+  consentRequired?: boolean;
+  pointerSampleIntervalMs?: number;
+  maxPointerPointsPerTask?: number;
+  maxAuditEvents?: number;
+  idleThresholdMs?: number;
+}
+
+export interface ProctoringOptions {
+  enabled?: boolean;
+  preventFocusLoss?: boolean;
+  maxFocusLossWarnings?: number;
+  focusLossBehavior?: FocusLossBehavior;
+  autoSubmitOnLock?: boolean;
+  preventClipboardActions?: boolean;
+  preventContextMenu?: boolean;
+  preventProtectedSelection?: boolean;
+}
+
+export interface ExamSimulatorGeneratorOptions {
+  mode?: "self-contained" | "asset-referenced";
+  assets?: RuntimeAssetManifest;
+  documentTitle?: string;
+  locale?: string;
+  timeZone?: string;
+  sessionId?: string;
+  assignmentId?: string;
+  candidateReference?: string;
+  strictMode?: boolean;
+  submissionEndpoint?: string;
+  submissionMode?: SubmissionMode;
+  requestCredentials?: "omit" | "same-origin" | "include";
+  requestTimeoutMs?: number;
+  autosaveIntervalMs?: number;
+  storageNamespace?: string;
+  cspNonce?: string;
+  cspConnectSources?: string[];
+  cspMediaSources?: string[];
+  featureFlags?: GeneratorFeatureFlags;
+  accessibility?: AccessibilityOptions;
+  telemetry?: TelemetryOptions;
+  proctoring?: ProctoringOptions;
+  policyVersion?: string;
+  privacyNotice?: string;
+  examinerEmail?: string;
+}
+
+export interface ValidationIssue {
+  path: string;
+  code: string;
+  message: string;
+}
+
+export interface ExamTaskTypeDefinition {
+  taskType: string;
+  label: string;
+  renderer: ExamResponseRendererType;
+  examFamilies: readonly string[];
+  aliases: readonly string[];
+  notes?: string;
+}
+
+function defineTaskType(
+  taskType: string,
+  label: string,
+  renderer: ExamResponseRendererType,
+  examFamilies: readonly string[],
+  aliases: readonly string[] = [],
+  notes?: string,
+): ExamTaskTypeDefinition {
+  return { taskType, label, renderer, examFamilies, aliases, notes };
+}
+
+/**
+ * Canonical task inventory covered by the generator. Multiple official task
+ * names can share one accessible interaction renderer while retaining their
+ * psychometric identity through `taskType`.
+ */
+export const EXAM_TASK_TYPE_CATALOG: readonly ExamTaskTypeDefinition[] = [
+  // Cross-exam primitives.
+  defineTaskType("multiple_choice", "Multiple choice", "single_choice", ["common"]),
+  defineTaskType("multiple_select", "Multiple select", "multiple_select", ["common"]),
+  defineTaskType("short_answer", "Short answer", "text", ["common"]),
+  defineTaskType("numeric_response", "Numeric response", "numeric", ["common"]),
+  defineTaskType("extended_response", "Extended response", "rich_text", ["common"]),
+  defineTaskType("gap_fill", "Gap fill", "gap_fill", ["common"]),
+  defineTaskType("dropdown_gap_fill", "Dropdown gap fill", "dropdown_gaps", ["common"]),
+  defineTaskType("matching", "Matching", "matching", ["common"]),
+  defineTaskType("categorization", "Categorization", "categorization", ["common"]),
+  defineTaskType("ordering", "Ordering", "ordering", ["common"]),
+  defineTaskType("table_completion", "Table completion", "table_completion", ["common"]),
+  defineTaskType("diagram_labelling", "Diagram labelling", "matching", ["common"], ["diagram_labeling"]),
+  defineTaskType("hotspot_selection", "Hotspot selection", "hotspot", ["common"]),
+  defineTaskType("matrix_selection", "Matrix selection", "matrix_selection", ["common"]),
+  defineTaskType("graph_interaction", "Graph interaction", "graph_interaction", ["common"]),
+  defineTaskType("voice_recording", "Voice recording", "voice_recording", ["common"]),
+  defineTaskType("video_statement", "Video statement", "video_recording", ["common"]),
+  defineTaskType("select_text", "Select text", "select_text", ["common"], ["highlight_text"]),
+  defineTaskType("multi_field_response", "Multi-field response", "multi_field", ["common"]),
+  defineTaskType("instructional_content", "Instructional content", "instructional_content", ["common"]),
+
+  // IELTS Listening, Reading, Writing, Speaking, and Life Skills.
+  defineTaskType("ielts_listening_multiple_choice", "IELTS Listening multiple choice", "single_choice", ["IELTS"]),
+  defineTaskType("ielts_listening_multiple_select", "IELTS Listening multiple answers", "multiple_select", ["IELTS"]),
+  defineTaskType("ielts_listening_matching", "IELTS Listening matching", "matching", ["IELTS"]),
+  defineTaskType("ielts_listening_plan_map_diagram_labelling", "IELTS Listening plan, map, or diagram labelling", "matching", ["IELTS"], ["ielts_listening_plan_map_diagram_labeling"]),
+  defineTaskType("ielts_listening_form_completion", "IELTS Listening form completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_listening_note_completion", "IELTS Listening note completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_listening_table_completion", "IELTS Listening table completion", "table_completion", ["IELTS"]),
+  defineTaskType("ielts_listening_flowchart_completion", "IELTS Listening flow-chart completion", "gap_fill", ["IELTS"], ["ielts_listening_flow_chart_completion"]),
+  defineTaskType("ielts_listening_summary_completion", "IELTS Listening summary completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_listening_sentence_completion", "IELTS Listening sentence completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_listening_short_answer", "IELTS Listening short answer", "text", ["IELTS"]),
+  defineTaskType("ielts_reading_multiple_choice", "IELTS Reading multiple choice", "single_choice", ["IELTS"]),
+  defineTaskType("ielts_reading_multiple_select", "IELTS Reading multiple answers", "multiple_select", ["IELTS"]),
+  defineTaskType("ielts_reading_true_false_not_given", "IELTS Reading True, False, Not Given", "true_false_not_given", ["IELTS"]),
+  defineTaskType("ielts_reading_yes_no_not_given", "IELTS Reading Yes, No, Not Given", "yes_no_not_given", ["IELTS"]),
+  defineTaskType("ielts_reading_matching_information", "IELTS Reading matching information", "matching", ["IELTS"]),
+  defineTaskType("ielts_reading_matching_headings", "IELTS Reading matching headings", "matching", ["IELTS"]),
+  defineTaskType("ielts_reading_matching_features", "IELTS Reading matching features", "matching", ["IELTS"]),
+  defineTaskType("ielts_reading_matching_sentence_endings", "IELTS Reading matching sentence endings", "matching", ["IELTS"]),
+  defineTaskType("ielts_reading_sentence_completion", "IELTS Reading sentence completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_reading_summary_completion", "IELTS Reading summary completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_reading_note_completion", "IELTS Reading note completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_reading_table_completion", "IELTS Reading table completion", "table_completion", ["IELTS"]),
+  defineTaskType("ielts_reading_flowchart_completion", "IELTS Reading flow-chart completion", "gap_fill", ["IELTS"]),
+  defineTaskType("ielts_reading_diagram_label_completion", "IELTS Reading diagram label completion", "matching", ["IELTS"]),
+  defineTaskType("ielts_reading_short_answer", "IELTS Reading short answer", "text", ["IELTS"]),
+  defineTaskType("ielts_academic_writing_task1_chart", "IELTS Academic Writing Task 1 chart", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_academic_writing_task1_table", "IELTS Academic Writing Task 1 table", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_academic_writing_task1_process", "IELTS Academic Writing Task 1 process", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_academic_writing_task1_map", "IELTS Academic Writing Task 1 map", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_academic_writing_task1_mixed_visuals", "IELTS Academic Writing Task 1 mixed visuals", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_writing_task2_opinion", "IELTS Writing Task 2 opinion essay", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_writing_task2_discussion", "IELTS Writing Task 2 discussion essay", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_writing_task2_advantages_disadvantages", "IELTS Writing Task 2 advantages and disadvantages", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_writing_task2_problem_solution", "IELTS Writing Task 2 problem and solution", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_writing_task2_two_part_question", "IELTS Writing Task 2 two-part question", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_general_writing_task1_formal_letter", "IELTS General formal letter", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_general_writing_task1_semiformal_letter", "IELTS General semi-formal letter", "rich_text", ["IELTS"], ["ielts_general_writing_task1_semi_formal_letter"]),
+  defineTaskType("ielts_general_writing_task1_informal_letter", "IELTS General informal letter", "rich_text", ["IELTS"]),
+  defineTaskType("ielts_speaking_part1_interview", "IELTS Speaking Part 1 interview", "voice_recording", ["IELTS"]),
+  defineTaskType("ielts_speaking_part2_long_turn", "IELTS Speaking Part 2 long turn", "voice_recording", ["IELTS"]),
+  defineTaskType("ielts_speaking_part3_discussion", "IELTS Speaking Part 3 discussion", "voice_recording", ["IELTS"]),
+  defineTaskType("ielts_life_skills_personal_questions", "IELTS Life Skills personal questions", "voice_recording", ["IELTS Life Skills"]),
+  defineTaskType("ielts_life_skills_listen_and_answer", "IELTS Life Skills listen and answer", "voice_recording", ["IELTS Life Skills"]),
+  defineTaskType("ielts_life_skills_peer_exchange", "IELTS Life Skills peer exchange", "voice_recording", ["IELTS Life Skills"]),
+  defineTaskType("ielts_life_skills_planning_decision", "IELTS Life Skills planning and decision", "voice_recording", ["IELTS Life Skills"]),
+  defineTaskType("ielts_life_skills_extended_talk", "IELTS Life Skills extended talk", "voice_recording", ["IELTS Life Skills"]),
+
+  // TOEFL iBT 2026, TOEFL Essentials, ITP, and Junior.
+  defineTaskType("toefl_ibt_complete_the_words", "TOEFL iBT Complete the Words", "complete_words", ["TOEFL iBT"], ["complete_the_words"]),
+  defineTaskType("toefl_ibt_read_in_daily_life", "TOEFL iBT Read in Daily Life", "single_choice", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_read_academic_passage", "TOEFL iBT Read an Academic Passage", "single_choice", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_listen_choose_response", "TOEFL iBT Listen and Choose a Response", "single_choice", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_listen_conversation", "TOEFL iBT Listen to a Conversation", "single_choice", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_listen_announcement", "TOEFL iBT Listen to an Announcement", "single_choice", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_listen_academic_talk", "TOEFL iBT Listen to an Academic Talk", "single_choice", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_build_sentence", "TOEFL iBT Build a Sentence", "sentence_builder", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_write_email", "TOEFL iBT Write an Email", "rich_text", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_academic_discussion", "TOEFL iBT Academic Discussion", "rich_text", ["TOEFL iBT"]),
+  defineTaskType("toefl_ibt_listen_repeat", "TOEFL iBT Listen and Repeat", "voice_recording", ["TOEFL iBT"], ["sentence_repetition"]),
+  defineTaskType("toefl_ibt_take_interview", "TOEFL iBT Take an Interview", "voice_recording", ["TOEFL iBT"]),
+  defineTaskType("toefl_essentials_listen_reply", "TOEFL Essentials Listen and Reply", "single_choice", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_listen_conversation", "TOEFL Essentials conversation", "single_choice", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_listen_announcement", "TOEFL Essentials academic announcement", "single_choice", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_listen_talk", "TOEFL Essentials academic talk", "single_choice", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_vocabulary", "TOEFL Essentials vocabulary", "single_choice", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_daily_life_reading", "TOEFL Essentials daily-life reading", "single_choice", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_academic_table", "TOEFL Essentials academic table", "true_false_not_given", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_academic_passage", "TOEFL Essentials academic passage", "single_choice", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_build_sentence", "TOEFL Essentials Build a Sentence", "sentence_builder", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_write_email", "TOEFL Essentials Write an Email", "rich_text", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_describe_photo", "TOEFL Essentials Describe a Photo", "rich_text", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_academic_discussion", "TOEFL Essentials academic discussion", "rich_text", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_read_aloud_dialogue", "TOEFL Essentials Read Aloud dialogue", "voice_recording", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_listen_repeat", "TOEFL Essentials Listen and Repeat", "voice_recording", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_virtual_interview", "TOEFL Essentials virtual interview", "voice_recording", ["TOEFL Essentials"]),
+  defineTaskType("toefl_essentials_personal_video_statement", "TOEFL Essentials Personal Video Statement", "video_recording", ["TOEFL Essentials"]),
+  defineTaskType("toefl_itp_listening_short_conversation", "TOEFL ITP short conversation", "single_choice", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_listening_long_conversation", "TOEFL ITP long conversation", "single_choice", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_listening_talk", "TOEFL ITP talk", "single_choice", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_structure_sentence_completion", "TOEFL ITP structure sentence completion", "single_choice", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_written_expression_error_identification", "TOEFL ITP written-expression error identification", "single_choice", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_reading_comprehension", "TOEFL ITP reading comprehension", "single_choice", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_read_aloud", "TOEFL ITP Speaking read aloud", "voice_recording", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_independent_speaking", "TOEFL ITP independent speaking", "voice_recording", ["TOEFL ITP"]),
+  defineTaskType("toefl_itp_integrated_speaking", "TOEFL ITP integrated speaking", "voice_recording", ["TOEFL ITP"]),
+  defineTaskType("toefl_junior_listening_classroom_instruction", "TOEFL Junior classroom instruction", "single_choice", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_listening_conversation", "TOEFL Junior conversation", "single_choice", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_listening_talk", "TOEFL Junior academic talk", "single_choice", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_language_form", "TOEFL Junior language form", "single_choice", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_language_meaning", "TOEFL Junior language meaning", "single_choice", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_reading_nonacademic", "TOEFL Junior nonacademic reading", "single_choice", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_reading_academic", "TOEFL Junior academic reading", "single_choice", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_speaking_read_aloud", "TOEFL Junior Speaking read aloud", "voice_recording", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_speaking_picture_narration", "TOEFL Junior picture narration", "voice_recording", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_speaking_independent", "TOEFL Junior independent speaking", "voice_recording", ["TOEFL Junior"]),
+  defineTaskType("toefl_junior_speaking_integrated", "TOEFL Junior integrated speaking", "voice_recording", ["TOEFL Junior"]),
+
+  // PTE Academic, PTE Core, and PTE Home.
+  defineTaskType("pte_read_aloud", "PTE Read Aloud", "voice_recording", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_repeat_sentence", "PTE Repeat Sentence", "voice_recording", ["PTE Academic", "PTE Core", "PTE Home"]),
+  defineTaskType("pte_describe_image", "PTE Describe Image", "voice_recording", ["PTE Academic", "PTE Core", "PTE Home"]),
+  defineTaskType("pte_retell_lecture", "PTE Retell Lecture", "voice_recording", ["PTE Academic"]),
+  defineTaskType("pte_answer_short_question", "PTE Answer Short Question", "voice_recording", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_summarize_group_discussion", "PTE Summarize Group Discussion", "voice_recording", ["PTE Academic"]),
+  defineTaskType("pte_respond_to_situation", "PTE Respond to a Situation", "voice_recording", ["PTE Academic"]),
+  defineTaskType("pte_summarize_written_text", "PTE Summarize Written Text", "rich_text", ["PTE Academic"]),
+  defineTaskType("pte_write_essay", "PTE Write Essay", "rich_text", ["PTE Academic"]),
+  defineTaskType("pte_reading_writing_fill_blanks", "PTE Reading and Writing Fill in the Blanks", "dropdown_gaps", ["PTE Academic"]),
+  defineTaskType("pte_multiple_choice_multiple_answers", "PTE Multiple Choice, Multiple Answers", "multiple_select", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_reading_multiple_choice_multiple_answers", "PTE Reading Multiple Choice, Multiple Answers", "multiple_select", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_listening_multiple_choice_multiple_answers", "PTE Listening Multiple Choice, Multiple Answers", "multiple_select", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_reorder_paragraphs", "PTE Reorder Paragraphs", "ordering", ["PTE Academic"]),
+  defineTaskType("pte_reading_fill_blanks", "PTE Reading Fill in the Blanks", "dropdown_gaps", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_multiple_choice_single_answer", "PTE Multiple Choice, Single Answer", "single_choice", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_reading_multiple_choice_single_answer", "PTE Reading Multiple Choice, Single Answer", "single_choice", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_listening_multiple_choice_single_answer", "PTE Listening Multiple Choice, Single Answer", "single_choice", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_summarize_spoken_text", "PTE Summarize Spoken Text", "rich_text", ["PTE Academic"]),
+  defineTaskType("pte_listening_fill_blanks", "PTE Listening Fill in the Blanks", "gap_fill", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_highlight_correct_summary", "PTE Highlight Correct Summary", "single_choice", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_select_missing_word", "PTE Select Missing Word", "single_choice", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_highlight_incorrect_words", "PTE Highlight Incorrect Words", "select_text", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_write_from_dictation", "PTE Write From Dictation", "text", ["PTE Academic", "PTE Core"]),
+  defineTaskType("pte_core_personal_introduction", "PTE Core Personal Introduction", "voice_recording", ["PTE Core"]),
+  defineTaskType("pte_core_respond_to_situation", "PTE Core Respond to a Situation", "voice_recording", ["PTE Core"]),
+  defineTaskType("pte_core_write_email", "PTE Core Write Email", "rich_text", ["PTE Core"]),
+  defineTaskType("pte_core_summarize_written_text", "PTE Core Summarize Written Text", "rich_text", ["PTE Core"]),
+  defineTaskType("pte_core_reading_multiple_choice", "PTE Core Reading multiple choice", "single_choice", ["PTE Core"]),
+  defineTaskType("pte_core_reorder_paragraph", "PTE Core Reorder Paragraph", "ordering", ["PTE Core"]),
+  defineTaskType("pte_home_listen_answer", "PTE Home Listen and Answer", "voice_recording", ["PTE Home A1"]),
+  defineTaskType("pte_home_retell_story", "PTE Home Retell Story", "voice_recording", ["PTE Home B1"]),
+  defineTaskType("pte_home_story_listen_answer", "PTE Home Story: Listen and Answer", "voice_recording", ["PTE Home B1"]),
+
+  // Duolingo English Test current and legacy aliases.
+  defineTaskType("det_read_select", "DET Read and Select", "single_choice", ["Duolingo English Test"]),
+  defineTaskType("det_fill_blanks", "DET Fill in the Blanks", "complete_words", ["Duolingo English Test"]),
+  defineTaskType("det_read_complete", "DET Read and Complete", "complete_words", ["Duolingo English Test"]),
+  defineTaskType("det_listen_type", "DET Listen and Type", "text", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_reading_complete_sentences", "DET Complete the Sentences", "dropdown_gaps", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_reading_complete_passage", "DET Complete the Passage", "single_choice", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_reading_highlight_answer", "DET Highlight the Answer", "select_text", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_reading_identify_idea", "DET Identify the Idea", "single_choice", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_reading_title_passage", "DET Title the Passage", "single_choice", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_listening_complete", "DET Listen and Complete", "gap_fill", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_listening_respond", "DET Listen and Respond", "single_choice", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_listening_summary", "DET Summarize the Conversation", "rich_text", ["Duolingo English Test"]),
+  defineTaskType("det_write_about_photo", "DET Write About the Photo", "rich_text", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_writing", "DET Interactive Writing", "rich_text", ["Duolingo English Test"]),
+  defineTaskType("det_speak_about_photo", "DET Speak About the Photo", "voice_recording", ["Duolingo English Test"]),
+  defineTaskType("det_read_then_speak", "DET Read, Then Speak", "voice_recording", ["Duolingo English Test"]),
+  defineTaskType("det_interactive_speaking", "DET Interactive Speaking", "voice_recording", ["Duolingo English Test"]),
+  defineTaskType("det_writing_sample", "DET Writing Sample", "rich_text", ["Duolingo English Test"]),
+  defineTaskType("det_speaking_sample", "DET Speaking Sample", "video_recording", ["Duolingo English Test"]),
+  defineTaskType("det_legacy_read_aloud", "DET legacy Read Aloud", "voice_recording", ["Duolingo English Test"], [], "Legacy alias only; not part of the current post-July-2025 form."),
+  defineTaskType("det_legacy_listen_then_speak", "DET legacy Listen, Then Speak", "voice_recording", ["Duolingo English Test"], [], "Legacy alias only; not part of the current post-July-2025 form."),
+
+  // Cambridge English Qualifications A2-C2.
+  defineTaskType("cambridge_short_text_main_message", "Cambridge short-text main message", "single_choice", ["Cambridge English"]),
+  defineTaskType("cambridge_matching_people_texts", "Cambridge matching people to texts", "matching", ["Cambridge English"]),
+  defineTaskType("cambridge_multiple_choice_reading", "Cambridge multiple-choice reading", "single_choice", ["Cambridge English"]),
+  defineTaskType("cambridge_multiple_choice_cloze", "Cambridge multiple-choice cloze", "dropdown_gaps", ["Cambridge English"]),
+  defineTaskType("cambridge_open_cloze", "Cambridge open cloze", "gap_fill", ["Cambridge English"]),
+  defineTaskType("cambridge_word_formation", "Cambridge word formation", "gap_fill", ["Cambridge English"]),
+  defineTaskType("cambridge_key_word_transformation", "Cambridge key-word transformation", "gap_fill", ["Cambridge English"]),
+  defineTaskType("cambridge_gapped_text", "Cambridge gapped text", "matching", ["Cambridge English"]),
+  defineTaskType("cambridge_multiple_matching", "Cambridge multiple matching", "matching", ["Cambridge English"]),
+  defineTaskType("cambridge_guided_email", "Cambridge guided email", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_picture_story", "Cambridge picture story", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_essay", "Cambridge essay", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_article", "Cambridge article", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_letter_email", "Cambridge letter or email", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_proposal", "Cambridge proposal", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_report", "Cambridge report", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_review", "Cambridge review", "rich_text", ["Cambridge English"]),
+  defineTaskType("cambridge_listening_multiple_choice", "Cambridge Listening multiple choice", "single_choice", ["Cambridge English"]),
+  defineTaskType("cambridge_listening_gap_fill", "Cambridge Listening gap fill", "gap_fill", ["Cambridge English"]),
+  defineTaskType("cambridge_listening_multiple_matching", "Cambridge Listening multiple matching", "matching", ["Cambridge English"]),
+  defineTaskType("cambridge_speaking_interview", "Cambridge Speaking interview", "voice_recording", ["Cambridge English"]),
+  defineTaskType("cambridge_speaking_long_turn", "Cambridge Speaking long turn", "voice_recording", ["Cambridge English"]),
+  defineTaskType("cambridge_speaking_collaborative", "Cambridge Speaking collaborative task", "voice_recording", ["Cambridge English"]),
+  defineTaskType("cambridge_speaking_discussion", "Cambridge Speaking discussion", "voice_recording", ["Cambridge English"]),
+
+  // CELPIP, OET, Trinity, Aptis, and LanguageCert.
+  defineTaskType("celpip_listening_problem_solving", "CELPIP Listening to Problem Solving", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_listening_daily_life", "CELPIP Listening to a Daily Life Conversation", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_listening_information", "CELPIP Listening for Information", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_listening_news", "CELPIP Listening to a News Item", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_listening_discussion", "CELPIP Listening to a Discussion", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_listening_viewpoints", "CELPIP Listening to Viewpoints", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_reading_correspondence", "CELPIP Reading Correspondence", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_reading_apply_diagram", "CELPIP Reading to Apply a Diagram", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_reading_information", "CELPIP Reading for Information", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_reading_viewpoints", "CELPIP Reading for Viewpoints", "single_choice", ["CELPIP"]),
+  defineTaskType("celpip_writing_email", "CELPIP Writing an Email", "rich_text", ["CELPIP"]),
+  defineTaskType("celpip_writing_survey", "CELPIP Responding to Survey Questions", "rich_text", ["CELPIP"]),
+  defineTaskType("celpip_speaking_advice", "CELPIP Giving Advice", "voice_recording", ["CELPIP"]),
+  defineTaskType("celpip_speaking_personal_experience", "CELPIP Personal Experience", "voice_recording", ["CELPIP"]),
+  defineTaskType("celpip_speaking_describe_scene", "CELPIP Describing a Scene", "voice_recording", ["CELPIP"]),
+  defineTaskType("celpip_speaking_prediction", "CELPIP Making Predictions", "voice_recording", ["CELPIP"]),
+  defineTaskType("celpip_speaking_compare_persuade", "CELPIP Comparing and Persuading", "voice_recording", ["CELPIP"]),
+  defineTaskType("celpip_speaking_difficult_situation", "CELPIP Difficult Situation", "voice_recording", ["CELPIP"]),
+  defineTaskType("celpip_speaking_opinion", "CELPIP Expressing Opinions", "voice_recording", ["CELPIP"]),
+  defineTaskType("celpip_speaking_unusual_situation", "CELPIP Unusual Situation", "voice_recording", ["CELPIP"]),
+  defineTaskType("oet_listening_consultation_notes", "OET Listening Part A consultation notes", "gap_fill", ["OET"]),
+  defineTaskType("oet_listening_workplace_extract", "OET Listening Part B workplace extract", "single_choice", ["OET"]),
+  defineTaskType("oet_listening_presentation_interview", "OET Listening Part C presentation or interview", "single_choice", ["OET"]),
+  defineTaskType("oet_reading_expeditious_matching", "OET Reading Part A matching", "matching", ["OET"]),
+  defineTaskType("oet_reading_expeditious_short_answer", "OET Reading Part A short answer", "text", ["OET"]),
+  defineTaskType("oet_reading_expeditious_sentence_completion", "OET Reading Part A sentence completion", "gap_fill", ["OET"]),
+  defineTaskType("oet_reading_workplace_text", "OET Reading Part B workplace text", "single_choice", ["OET"]),
+  defineTaskType("oet_reading_long_text", "OET Reading Part C long text", "single_choice", ["OET"]),
+  defineTaskType("oet_writing_referral_letter", "OET referral letter", "rich_text", ["OET"]),
+  defineTaskType("oet_writing_transfer_letter", "OET transfer letter", "rich_text", ["OET"]),
+  defineTaskType("oet_writing_discharge_letter", "OET discharge letter", "rich_text", ["OET"]),
+  defineTaskType("oet_writing_advice_information_letter", "OET advice or information letter", "rich_text", ["OET"]),
+  defineTaskType("oet_speaking_role_play", "OET profession-specific role-play", "voice_recording", ["OET"]),
+  defineTaskType("trinity_ise_long_reading", "Trinity ISE long reading", "single_choice", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_multi_text_reading", "Trinity ISE multi-text reading", "matching", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_reading_into_writing", "Trinity ISE reading into writing", "rich_text", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_extended_writing", "Trinity ISE extended writing", "rich_text", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_topic_discussion", "Trinity ISE topic discussion", "voice_recording", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_conversation", "Trinity ISE conversation", "voice_recording", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_collaborative_task", "Trinity ISE collaborative task", "voice_recording", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_independent_listening", "Trinity ISE independent listening", "voice_recording", ["Trinity ISE"]),
+  defineTaskType("trinity_ise_digital_levelling", "Trinity ISE Digital levelling task", "single_choice", ["Trinity ISE Digital"]),
+  defineTaskType("trinity_ise_digital_written_online_communication", "Trinity ISE Digital written online communication", "rich_text", ["Trinity ISE Digital"]),
+  defineTaskType("trinity_ise_digital_writing_from_sources", "Trinity ISE Digital writing from sources", "rich_text", ["Trinity ISE Digital"]),
+  defineTaskType("trinity_ise_digital_prepared_talk", "Trinity ISE Digital prepared talk", "voice_recording", ["Trinity ISE Digital"]),
+  defineTaskType("trinity_ise_digital_summarise_talk", "Trinity ISE Digital summarize a talk or conversation", "voice_recording", ["Trinity ISE Digital"]),
+  defineTaskType("aptis_grammar_sentence_completion", "Aptis grammar sentence completion", "single_choice", ["Aptis"]),
+  defineTaskType("aptis_vocabulary_synonym_matching", "Aptis vocabulary synonym matching", "matching", ["Aptis"]),
+  defineTaskType("aptis_vocabulary_definition_matching", "Aptis vocabulary definition matching", "matching", ["Aptis"]),
+  defineTaskType("aptis_vocabulary_collocation_matching", "Aptis vocabulary collocation matching", "matching", ["Aptis"]),
+  defineTaskType("aptis_reading_sentence_comprehension", "Aptis sentence comprehension", "dropdown_gaps", ["Aptis"]),
+  defineTaskType("aptis_reading_text_cohesion", "Aptis text cohesion", "ordering", ["Aptis"]),
+  defineTaskType("aptis_reading_opinion_matching", "Aptis opinion matching", "matching", ["Aptis"]),
+  defineTaskType("aptis_reading_long_text_headings", "Aptis long-text headings", "matching", ["Aptis"]),
+  defineTaskType("aptis_listening_information_recognition", "Aptis listening information recognition", "single_choice", ["Aptis"]),
+  defineTaskType("aptis_listening_information_matching", "Aptis listening information matching", "matching", ["Aptis"]),
+  defineTaskType("aptis_listening_opinion_attitude", "Aptis listening opinion and attitude", "single_choice", ["Aptis"]),
+  defineTaskType("aptis_listening_monologue_comprehension", "Aptis monologue comprehension", "single_choice", ["Aptis"]),
+  defineTaskType("aptis_writing_word_short_phrase", "Aptis word or short-phrase writing", "text", ["Aptis"]),
+  defineTaskType("aptis_writing_social_responses", "Aptis social-media responses", "multi_field", ["Aptis"]),
+  defineTaskType("aptis_writing_informal_email", "Aptis informal email", "rich_text", ["Aptis"]),
+  defineTaskType("aptis_writing_formal_email", "Aptis formal email", "rich_text", ["Aptis"]),
+  defineTaskType("aptis_speaking_personal_information", "Aptis personal information", "voice_recording", ["Aptis"]),
+  defineTaskType("aptis_speaking_describe_photo", "Aptis describe photo", "voice_recording", ["Aptis"]),
+  defineTaskType("aptis_speaking_compare_photos", "Aptis compare photos", "voice_recording", ["Aptis"]),
+  defineTaskType("aptis_speaking_abstract_topic", "Aptis abstract topic", "voice_recording", ["Aptis"]),
+  defineTaskType("languagecert_listening_short_utterance_match", "LanguageCert short-utterance matching", "matching", ["LanguageCert"]),
+  defineTaskType("languagecert_listening_best_reply", "LanguageCert best reply", "single_choice", ["LanguageCert"]),
+  defineTaskType("languagecert_listening_conversation", "LanguageCert conversation", "single_choice", ["LanguageCert"]),
+  defineTaskType("languagecert_listening_note_form_completion", "LanguageCert listening note or form completion", "gap_fill", ["LanguageCert"]),
+  defineTaskType("languagecert_listening_discussion", "LanguageCert listening discussion", "single_choice", ["LanguageCert"]),
+  defineTaskType("languagecert_reading_gapped_text", "LanguageCert gapped text", "dropdown_gaps", ["LanguageCert"]),
+  defineTaskType("languagecert_reading_sentence_insertion", "LanguageCert sentence insertion", "matching", ["LanguageCert"]),
+  defineTaskType("languagecert_reading_short_text_matching", "LanguageCert short-text matching", "matching", ["LanguageCert"]),
+  defineTaskType("languagecert_reading_short_answer", "LanguageCert reading short answer", "text", ["LanguageCert"]),
+  defineTaskType("languagecert_writing_short_communication", "LanguageCert short communication", "rich_text", ["LanguageCert"]),
+  defineTaskType("languagecert_writing_extended_task", "LanguageCert extended writing", "rich_text", ["LanguageCert"]),
+  defineTaskType("languagecert_speaking_personal_information", "LanguageCert personal information", "voice_recording", ["LanguageCert"]),
+  defineTaskType("languagecert_speaking_role_play", "LanguageCert role-play", "voice_recording", ["LanguageCert"]),
+  defineTaskType("languagecert_speaking_picture_discussion", "LanguageCert picture discussion", "voice_recording", ["LanguageCert"]),
+  defineTaskType("languagecert_speaking_long_turn", "LanguageCert long turn", "voice_recording", ["LanguageCert"]),
+
+  // GCSE, 11+, ISEB, SSAT, SAT, ACT, HSPT, ISEE, NAPLAN, CAT4/CCAT.
+  defineTaskType("gcse_source_retrieval", "GCSE source retrieval", "text", ["GCSE"]),
+  defineTaskType("gcse_language_analysis", "GCSE language analysis", "rich_text", ["GCSE"]),
+  defineTaskType("gcse_structure_analysis", "GCSE structure analysis", "rich_text", ["GCSE"]),
+  defineTaskType("gcse_source_comparison", "GCSE source comparison", "rich_text", ["GCSE"]),
+  defineTaskType("gcse_critical_evaluation", "GCSE critical evaluation", "rich_text", ["GCSE"]),
+  defineTaskType("gcse_descriptive_writing", "GCSE descriptive writing", "rich_text", ["GCSE English"]),
+  defineTaskType("gcse_narrative_writing", "GCSE narrative writing", "rich_text", ["GCSE English"]),
+  defineTaskType("gcse_viewpoint_writing", "GCSE viewpoint writing", "rich_text", ["GCSE English"]),
+  defineTaskType("gcse_spoken_endorsement", "GCSE spoken-language endorsement", "video_recording", ["GCSE English"]),
+  defineTaskType("gcse_literature_extract_essay", "GCSE literature extract essay", "rich_text", ["GCSE Literature"]),
+  defineTaskType("gcse_literature_whole_text_essay", "GCSE literature whole-text essay", "rich_text", ["GCSE Literature"]),
+  defineTaskType("gcse_poetry_comparison", "GCSE poetry comparison", "rich_text", ["GCSE Literature"]),
+  defineTaskType("gcse_unseen_poetry_analysis", "GCSE unseen poetry analysis", "rich_text", ["GCSE Literature"]),
+  defineTaskType("gcse_unseen_poetry_comparison", "GCSE unseen poetry comparison", "rich_text", ["GCSE Literature"]),
+  defineTaskType("gcse_math_short_calculation", "GCSE Mathematics short calculation", "numeric", ["GCSE Mathematics"]),
+  defineTaskType("gcse_math_multistep_working", "GCSE Mathematics multi-step working", "multi_field", ["GCSE Mathematics"]),
+  defineTaskType("gcse_math_proof_reasoning", "GCSE Mathematics proof or reasoning", "rich_text", ["GCSE Mathematics"]),
+  defineTaskType("gcse_math_graph", "GCSE Mathematics graph", "graph_interaction", ["GCSE Mathematics"]),
+  defineTaskType("gcse_math_geometry_construction", "GCSE Mathematics geometry construction", "graph_interaction", ["GCSE Mathematics"]),
+  defineTaskType("gcse_science_multiple_choice", "GCSE Science multiple choice", "single_choice", ["GCSE Science"]),
+  defineTaskType("gcse_science_structured_response", "GCSE Science structured response", "multi_field", ["GCSE Science"]),
+  defineTaskType("gcse_science_equation_fill", "GCSE Science equation fill", "gap_fill", ["GCSE Science"]),
+  defineTaskType("gcse_science_calculation", "GCSE Science calculation", "multi_field", ["GCSE Science"]),
+  defineTaskType("gcse_science_data_analysis", "GCSE Science data analysis", "rich_text", ["GCSE Science"]),
+  defineTaskType("gcse_science_practical_method", "GCSE Science required-practical method", "rich_text", ["GCSE Science"]),
+  defineTaskType("gcse_science_diagram_labelling", "GCSE Science diagram labelling", "matching", ["GCSE Science"]),
+  defineTaskType("eleven_plus_comprehension", "11+ comprehension", "single_choice", ["11+"] ),
+  defineTaskType("eleven_plus_grammar_punctuation_spelling", "11+ grammar, punctuation, and spelling", "single_choice", ["11+"] ),
+  defineTaskType("eleven_plus_creative_writing", "11+ creative writing", "rich_text", ["11+"] ),
+  defineTaskType("eleven_plus_arithmetic", "11+ arithmetic", "numeric", ["11+"] ),
+  defineTaskType("eleven_plus_word_problem", "11+ word problem", "multi_field", ["11+"] ),
+  defineTaskType("eleven_plus_verbal_analogy", "11+ verbal analogy", "single_choice", ["11+"] ),
+  defineTaskType("eleven_plus_verbal_code", "11+ verbal code", "single_choice", ["11+"] ),
+  defineTaskType("eleven_plus_verbal_sequence", "11+ verbal sequence", "single_choice", ["11+"] ),
+  defineTaskType("eleven_plus_nonverbal_matrix", "11+ non-verbal matrix", "matrix_selection", ["11+"] ),
+  defineTaskType("eleven_plus_nonverbal_sequence", "11+ non-verbal sequence", "matrix_selection", ["11+"] ),
+  defineTaskType("eleven_plus_spatial_rotation", "11+ spatial rotation", "matrix_selection", ["11+"] ),
+  defineTaskType("eleven_plus_spatial_folding", "11+ spatial folding", "matrix_selection", ["11+"] ),
+  defineTaskType("iseb_english_reading", "ISEB English reading", "rich_text", ["ISEB"]),
+  defineTaskType("iseb_english_writing", "ISEB English writing", "rich_text", ["ISEB"]),
+  defineTaskType("iseb_math_noncalculator", "ISEB Mathematics non-calculator", "multi_field", ["ISEB"]),
+  defineTaskType("iseb_math_calculator", "ISEB Mathematics calculator", "multi_field", ["ISEB"]),
+  defineTaskType("iseb_mental_arithmetic", "ISEB mental arithmetic", "numeric", ["ISEB"]),
+  defineTaskType("iseb_science_biology", "ISEB Biology", "multi_field", ["ISEB"]),
+  defineTaskType("iseb_science_chemistry", "ISEB Chemistry", "multi_field", ["ISEB"]),
+  defineTaskType("iseb_science_physics", "ISEB Physics", "multi_field", ["ISEB"]),
+  defineTaskType("iseb_humanities_essay", "ISEB humanities essay", "rich_text", ["ISEB"]),
+  defineTaskType("iseb_language_listening", "ISEB language listening", "single_choice", ["ISEB"]),
+  defineTaskType("iseb_language_speaking", "ISEB language speaking", "voice_recording", ["ISEB"]),
+  defineTaskType("iseb_pretest_english", "ISEB Pre-Test English", "single_choice", ["ISEB Pre-Tests"]),
+  defineTaskType("iseb_pretest_math", "ISEB Pre-Test Mathematics", "single_choice", ["ISEB Pre-Tests"]),
+  defineTaskType("iseb_pretest_verbal", "ISEB Pre-Test Verbal Reasoning", "single_choice", ["ISEB Pre-Tests"]),
+  defineTaskType("iseb_pretest_nonverbal", "ISEB Pre-Test Non-Verbal Reasoning", "matrix_selection", ["ISEB Pre-Tests"]),
+  defineTaskType("ssat_quantitative", "SSAT Quantitative", "single_choice", ["SSAT"]),
+  defineTaskType("ssat_verbal_synonym", "SSAT verbal synonym", "single_choice", ["SSAT"]),
+  defineTaskType("ssat_verbal_analogy", "SSAT verbal analogy", "single_choice", ["SSAT"]),
+  defineTaskType("ssat_reading_comprehension", "SSAT reading comprehension", "single_choice", ["SSAT"]),
+  defineTaskType("ssat_writing_sample", "SSAT writing sample", "rich_text", ["SSAT"]),
+  defineTaskType("ssat_experimental", "SSAT experimental item", "single_choice", ["SSAT"]),
+  defineTaskType("sat_rw_central_ideas_details", "SAT central ideas and details", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_command_evidence", "SAT command of evidence", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_inference", "SAT inference", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_words_context", "SAT words in context", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_text_structure_purpose", "SAT text structure and purpose", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_cross_text_connections", "SAT cross-text connections", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_rhetorical_synthesis", "SAT rhetorical synthesis", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_transitions", "SAT transitions", "single_choice", ["SAT"]),
+  defineTaskType("sat_rw_standard_english", "SAT Standard English conventions", "single_choice", ["SAT"]),
+  defineTaskType("sat_math_multiple_choice", "SAT Math multiple choice", "single_choice", ["SAT"]),
+  defineTaskType("sat_math_student_produced_response", "SAT Math student-produced response", "numeric", ["SAT"]),
+  defineTaskType("act_english_revision", "ACT English revision and editing", "single_choice", ["ACT"]),
+  defineTaskType("act_math_multiple_choice", "ACT Mathematics", "single_choice", ["ACT"]),
+  defineTaskType("act_reading_comprehension", "ACT Reading comprehension", "single_choice", ["ACT"]),
+  defineTaskType("act_science_data_representation", "ACT Science data representation", "single_choice", ["ACT"]),
+  defineTaskType("act_science_research_summary", "ACT Science research summary", "single_choice", ["ACT"]),
+  defineTaskType("act_science_conflicting_viewpoints", "ACT Science conflicting viewpoints", "single_choice", ["ACT"]),
+  defineTaskType("act_writing_essay", "ACT optional Writing essay", "rich_text", ["ACT"]),
+  defineTaskType("hspt_verbal_synonym_antonym", "HSPT synonym or antonym", "single_choice", ["HSPT"]),
+  defineTaskType("hspt_verbal_analogy", "HSPT verbal analogy", "single_choice", ["HSPT"]),
+  defineTaskType("hspt_verbal_logic", "HSPT verbal logic", "single_choice", ["HSPT"]),
+  defineTaskType("hspt_quantitative_series", "HSPT quantitative series", "single_choice", ["HSPT"]),
+  defineTaskType("hspt_quantitative_comparison", "HSPT quantitative comparison", "single_choice", ["HSPT"]),
+  defineTaskType("hspt_reading", "HSPT reading", "single_choice", ["HSPT"]),
+  defineTaskType("hspt_mathematics", "HSPT mathematics", "single_choice", ["HSPT"]),
+  defineTaskType("hspt_language", "HSPT language skills", "single_choice", ["HSPT"]),
+  defineTaskType("isee_verbal_synonym", "ISEE verbal synonym", "single_choice", ["ISEE"]),
+  defineTaskType("isee_verbal_sentence_completion", "ISEE sentence completion", "single_choice", ["ISEE"]),
+  defineTaskType("isee_quantitative_reasoning", "ISEE quantitative reasoning", "single_choice", ["ISEE"]),
+  defineTaskType("isee_reading_comprehension", "ISEE reading comprehension", "single_choice", ["ISEE"]),
+  defineTaskType("isee_mathematics_achievement", "ISEE mathematics achievement", "single_choice", ["ISEE"]),
+  defineTaskType("isee_essay", "ISEE essay", "rich_text", ["ISEE"]),
+  defineTaskType("naplan_writing", "NAPLAN writing", "rich_text", ["NAPLAN"]),
+  defineTaskType("naplan_reading_multiple_choice", "NAPLAN reading multiple choice", "single_choice", ["NAPLAN"]),
+  defineTaskType("naplan_reading_short_answer", "NAPLAN reading short answer", "text", ["NAPLAN"]),
+  defineTaskType("naplan_spelling", "NAPLAN spelling", "single_choice", ["NAPLAN"]),
+  defineTaskType("naplan_grammar_punctuation", "NAPLAN grammar and punctuation", "single_choice", ["NAPLAN"]),
+  defineTaskType("naplan_numeracy_multiple_choice", "NAPLAN numeracy multiple choice", "single_choice", ["NAPLAN"]),
+  defineTaskType("naplan_numeracy_constructed_response", "NAPLAN numeracy constructed response", "numeric", ["NAPLAN"]),
+  defineTaskType("cat4_verbal_classification", "CAT4 verbal classification", "single_choice", ["CAT4"]),
+  defineTaskType("cat4_verbal_analogy", "CAT4 verbal analogy", "single_choice", ["CAT4"]),
+  defineTaskType("cat4_figure_classification", "CAT4 figure classification", "matrix_selection", ["CAT4"]),
+  defineTaskType("cat4_figure_matrix", "CAT4 figure matrix", "matrix_selection", ["CAT4"]),
+  defineTaskType("cat4_number_analogy", "CAT4 number analogy", "single_choice", ["CAT4"]),
+  defineTaskType("cat4_number_series", "CAT4 number series", "single_choice", ["CAT4"]),
+  defineTaskType("cat4_figure_analysis", "CAT4 figure analysis", "matrix_selection", ["CAT4"]),
+  defineTaskType("cat4_figure_recognition", "CAT4 figure recognition", "matrix_selection", ["CAT4"]),
+  defineTaskType("ccat_verbal_classification", "CCAT verbal classification", "single_choice", ["CCAT"]),
+  defineTaskType("ccat_sentence_completion", "CCAT sentence completion", "single_choice", ["CCAT"]),
+  defineTaskType("ccat_verbal_analogy", "CCAT verbal analogy", "single_choice", ["CCAT"]),
+  defineTaskType("ccat_number_analogy", "CCAT number analogy", "single_choice", ["CCAT"]),
+  defineTaskType("ccat_number_series", "CCAT number series", "single_choice", ["CCAT"]),
+  defineTaskType("ccat_number_puzzles", "CCAT number puzzles", "single_choice", ["CCAT"]),
+  defineTaskType("ccat_figure_matrices", "CCAT figure matrices", "matrix_selection", ["CCAT"]),
+  defineTaskType("ccat_paper_folding", "CCAT paper folding", "matrix_selection", ["CCAT"]),
+  defineTaskType("ccat_figure_classification", "CCAT figure classification", "matrix_selection", ["CCAT"]),
+
+  // Custom diagnostics and Test-Teach-Test lessons.
+  defineTaskType("placement_grammar", "Placement grammar", "single_choice", ["English Placement"]),
+  defineTaskType("placement_vocabulary", "Placement vocabulary", "single_choice", ["English Placement"]),
+  defineTaskType("placement_reading", "Placement reading", "single_choice", ["English Placement"]),
+  defineTaskType("placement_listening", "Placement listening", "single_choice", ["English Placement"]),
+  defineTaskType("placement_writing", "Placement writing", "rich_text", ["English Placement"]),
+  defineTaskType("placement_speaking", "Placement speaking", "voice_recording", ["English Placement"]),
+  defineTaskType("placement_use_of_english", "Placement use of English", "dropdown_gaps", ["English Placement"]),
+  defineTaskType("ttt_pre_diagnostic", "Test-Teach-Test pre-diagnostic", "single_choice", ["Test-Teach-Test"]),
+  defineTaskType("ttt_video_or_text_lesson", "Test-Teach-Test mini lesson", "instructional_content", ["Test-Teach-Test"]),
+  defineTaskType("ttt_guided_practice", "Test-Teach-Test guided practice", "multi_field", ["Test-Teach-Test"]),
+  defineTaskType("ttt_post_test", "Test-Teach-Test post-test", "single_choice", ["Test-Teach-Test"]),
+] as const;
+
+function normalizeTaskTypeKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+const TASK_TYPE_LOOKUP = new Map<string, ExamTaskTypeDefinition>();
+for (const definition of EXAM_TASK_TYPE_CATALOG) {
+  TASK_TYPE_LOOKUP.set(normalizeTaskTypeKey(definition.taskType), definition);
+  for (const alias of definition.aliases) {
+    TASK_TYPE_LOOKUP.set(normalizeTaskTypeKey(alias), definition);
+  }
+}
+
+export function resolveExamTaskType(value: string): ExamTaskTypeDefinition | undefined {
+  return TASK_TYPE_LOOKUP.get(normalizeTaskTypeKey(value));
+}
+
+/** Required canonical task types for the 42 requested simulator profiles. */
+export const EXAM_PROFILE_TASK_TYPE_MATRIX: Record<string, readonly string[]> = {
+  ielts_academic_paper_2026: [
+    "ielts_listening_multiple_choice", "ielts_listening_multiple_select", "ielts_listening_matching", "ielts_listening_plan_map_diagram_labelling", "ielts_listening_form_completion", "ielts_listening_note_completion", "ielts_listening_table_completion", "ielts_listening_flowchart_completion", "ielts_listening_summary_completion", "ielts_listening_sentence_completion", "ielts_listening_short_answer",
+    "ielts_reading_multiple_choice", "ielts_reading_multiple_select", "ielts_reading_true_false_not_given", "ielts_reading_yes_no_not_given", "ielts_reading_matching_information", "ielts_reading_matching_headings", "ielts_reading_matching_features", "ielts_reading_matching_sentence_endings", "ielts_reading_sentence_completion", "ielts_reading_summary_completion", "ielts_reading_note_completion", "ielts_reading_table_completion", "ielts_reading_flowchart_completion", "ielts_reading_diagram_label_completion", "ielts_reading_short_answer",
+    "ielts_academic_writing_task1_chart", "ielts_academic_writing_task1_table", "ielts_academic_writing_task1_process", "ielts_academic_writing_task1_map", "ielts_academic_writing_task1_mixed_visuals", "ielts_writing_task2_opinion", "ielts_writing_task2_discussion", "ielts_writing_task2_advantages_disadvantages", "ielts_writing_task2_problem_solution", "ielts_writing_task2_two_part_question", "ielts_speaking_part1_interview", "ielts_speaking_part2_long_turn", "ielts_speaking_part3_discussion"
+  ],
+  ielts_academic_computer_2026: [],
+  ielts_general_paper_2026: [
+    "ielts_listening_multiple_choice", "ielts_listening_multiple_select", "ielts_listening_matching", "ielts_listening_plan_map_diagram_labelling", "ielts_listening_form_completion", "ielts_listening_note_completion", "ielts_listening_table_completion", "ielts_listening_flowchart_completion", "ielts_listening_summary_completion", "ielts_listening_sentence_completion", "ielts_listening_short_answer",
+    "ielts_reading_multiple_choice", "ielts_reading_multiple_select", "ielts_reading_true_false_not_given", "ielts_reading_yes_no_not_given", "ielts_reading_matching_information", "ielts_reading_matching_headings", "ielts_reading_matching_features", "ielts_reading_matching_sentence_endings", "ielts_reading_sentence_completion", "ielts_reading_summary_completion", "ielts_reading_note_completion", "ielts_reading_table_completion", "ielts_reading_flowchart_completion", "ielts_reading_diagram_label_completion", "ielts_reading_short_answer",
+    "ielts_general_writing_task1_formal_letter", "ielts_general_writing_task1_semiformal_letter", "ielts_general_writing_task1_informal_letter", "ielts_writing_task2_opinion", "ielts_writing_task2_discussion", "ielts_writing_task2_advantages_disadvantages", "ielts_writing_task2_problem_solution", "ielts_writing_task2_two_part_question", "ielts_speaking_part1_interview", "ielts_speaking_part2_long_turn", "ielts_speaking_part3_discussion"
+  ],
+  ielts_general_computer_2026: [],
+  ielts_ukvi_2026: [],
+  ielts_life_skills_a1_2026: ["ielts_life_skills_personal_questions", "ielts_life_skills_listen_and_answer", "ielts_life_skills_peer_exchange"],
+  ielts_life_skills_b1_2026: ["ielts_life_skills_personal_questions", "ielts_life_skills_listen_and_answer", "ielts_life_skills_peer_exchange", "ielts_life_skills_planning_decision", "ielts_life_skills_extended_talk"],
+  toefl_ibt_2026: ["toefl_ibt_complete_the_words", "toefl_ibt_read_in_daily_life", "toefl_ibt_read_academic_passage", "toefl_ibt_listen_choose_response", "toefl_ibt_listen_conversation", "toefl_ibt_listen_announcement", "toefl_ibt_listen_academic_talk", "toefl_ibt_build_sentence", "toefl_ibt_write_email", "toefl_ibt_academic_discussion", "toefl_ibt_listen_repeat", "toefl_ibt_take_interview"],
+  toefl_essentials_2026: ["toefl_essentials_listen_reply", "toefl_essentials_listen_conversation", "toefl_essentials_listen_announcement", "toefl_essentials_listen_talk", "toefl_essentials_vocabulary", "toefl_essentials_daily_life_reading", "toefl_essentials_academic_table", "toefl_essentials_academic_passage", "toefl_essentials_build_sentence", "toefl_essentials_write_email", "toefl_essentials_describe_photo", "toefl_essentials_academic_discussion", "toefl_essentials_read_aloud_dialogue", "toefl_essentials_listen_repeat", "toefl_essentials_virtual_interview", "toefl_essentials_personal_video_statement"],
+  toefl_itp_2026: ["toefl_itp_listening_short_conversation", "toefl_itp_listening_long_conversation", "toefl_itp_listening_talk", "toefl_itp_structure_sentence_completion", "toefl_itp_written_expression_error_identification", "toefl_itp_reading_comprehension"],
+  toefl_junior_2026: ["toefl_junior_listening_classroom_instruction", "toefl_junior_listening_conversation", "toefl_junior_listening_talk", "toefl_junior_language_form", "toefl_junior_language_meaning", "toefl_junior_reading_nonacademic", "toefl_junior_reading_academic"],
+  pte_academic_2026: ["pte_read_aloud", "pte_repeat_sentence", "pte_describe_image", "pte_retell_lecture", "pte_answer_short_question", "pte_summarize_group_discussion", "pte_respond_to_situation", "pte_summarize_written_text", "pte_write_essay", "pte_reading_writing_fill_blanks", "pte_reading_multiple_choice_multiple_answers", "pte_reorder_paragraphs", "pte_reading_fill_blanks", "pte_reading_multiple_choice_single_answer", "pte_summarize_spoken_text", "pte_listening_multiple_choice_multiple_answers", "pte_listening_fill_blanks", "pte_highlight_correct_summary", "pte_listening_multiple_choice_single_answer", "pte_select_missing_word", "pte_highlight_incorrect_words", "pte_write_from_dictation"],
+  pte_core_2026: ["pte_core_personal_introduction", "pte_read_aloud", "pte_repeat_sentence", "pte_describe_image", "pte_core_respond_to_situation", "pte_answer_short_question", "pte_core_summarize_written_text", "pte_core_write_email", "pte_reading_writing_fill_blanks", "pte_reading_multiple_choice_multiple_answers", "pte_core_reorder_paragraph", "pte_reading_fill_blanks", "pte_reading_multiple_choice_single_answer", "pte_summarize_spoken_text", "pte_listening_multiple_choice_multiple_answers", "pte_listening_fill_blanks", "pte_listening_multiple_choice_single_answer", "pte_select_missing_word", "pte_highlight_incorrect_words", "pte_write_from_dictation"],
+  pte_home_a1_2026: ["pte_repeat_sentence", "pte_home_listen_answer"],
+  pte_home_b1_2026: ["pte_repeat_sentence", "pte_describe_image", "pte_home_retell_story", "pte_home_story_listen_answer"],
+  duolingo_english_test_2026: ["det_read_select", "det_fill_blanks", "det_read_complete", "det_listen_type", "det_interactive_reading_complete_sentences", "det_interactive_reading_complete_passage", "det_interactive_reading_highlight_answer", "det_interactive_reading_identify_idea", "det_interactive_reading_title_passage", "det_interactive_listening_complete", "det_interactive_listening_respond", "det_interactive_listening_summary", "det_write_about_photo", "det_interactive_writing", "det_speak_about_photo", "det_read_then_speak", "det_interactive_speaking", "det_writing_sample", "det_speaking_sample"],
+  cambridge_a2_key_2026: ["cambridge_short_text_main_message", "cambridge_matching_people_texts", "cambridge_multiple_choice_reading", "cambridge_multiple_choice_cloze", "cambridge_open_cloze", "cambridge_guided_email", "cambridge_picture_story", "cambridge_listening_multiple_choice", "cambridge_listening_gap_fill", "cambridge_listening_multiple_matching", "cambridge_speaking_interview", "cambridge_speaking_collaborative"],
+  cambridge_b1_preliminary_2026: ["cambridge_short_text_main_message", "cambridge_matching_people_texts", "cambridge_multiple_choice_reading", "cambridge_gapped_text", "cambridge_multiple_choice_cloze", "cambridge_open_cloze", "cambridge_guided_email", "cambridge_article", "cambridge_picture_story", "cambridge_listening_multiple_choice", "cambridge_listening_gap_fill", "cambridge_listening_multiple_matching", "cambridge_speaking_interview", "cambridge_speaking_long_turn", "cambridge_speaking_collaborative", "cambridge_speaking_discussion"],
+  cambridge_b2_first_2026: ["cambridge_multiple_choice_cloze", "cambridge_open_cloze", "cambridge_word_formation", "cambridge_key_word_transformation", "cambridge_multiple_choice_reading", "cambridge_gapped_text", "cambridge_multiple_matching", "cambridge_essay", "cambridge_article", "cambridge_letter_email", "cambridge_report", "cambridge_review", "cambridge_listening_multiple_choice", "cambridge_listening_gap_fill", "cambridge_listening_multiple_matching", "cambridge_speaking_interview", "cambridge_speaking_long_turn", "cambridge_speaking_collaborative", "cambridge_speaking_discussion"],
+  cambridge_c1_advanced_2026: ["cambridge_multiple_choice_cloze", "cambridge_open_cloze", "cambridge_word_formation", "cambridge_key_word_transformation", "cambridge_multiple_choice_reading", "cambridge_gapped_text", "cambridge_multiple_matching", "cambridge_essay", "cambridge_letter_email", "cambridge_proposal", "cambridge_report", "cambridge_review", "cambridge_listening_multiple_choice", "cambridge_listening_gap_fill", "cambridge_listening_multiple_matching", "cambridge_speaking_interview", "cambridge_speaking_long_turn", "cambridge_speaking_collaborative", "cambridge_speaking_discussion"],
+  cambridge_c2_proficiency_2026: ["cambridge_multiple_choice_cloze", "cambridge_open_cloze", "cambridge_word_formation", "cambridge_key_word_transformation", "cambridge_multiple_choice_reading", "cambridge_gapped_text", "cambridge_multiple_matching", "cambridge_essay", "cambridge_article", "cambridge_letter_email", "cambridge_report", "cambridge_review", "cambridge_listening_multiple_choice", "cambridge_listening_gap_fill", "cambridge_listening_multiple_matching", "cambridge_speaking_interview", "cambridge_speaking_long_turn", "cambridge_speaking_collaborative"],
+  celpip_general_2026: ["celpip_listening_problem_solving", "celpip_listening_daily_life", "celpip_listening_information", "celpip_listening_news", "celpip_listening_discussion", "celpip_listening_viewpoints", "celpip_reading_correspondence", "celpip_reading_apply_diagram", "celpip_reading_information", "celpip_reading_viewpoints", "celpip_writing_email", "celpip_writing_survey", "celpip_speaking_advice", "celpip_speaking_personal_experience", "celpip_speaking_describe_scene", "celpip_speaking_prediction", "celpip_speaking_compare_persuade", "celpip_speaking_difficult_situation", "celpip_speaking_opinion", "celpip_speaking_unusual_situation"],
+  celpip_general_ls_2026: ["celpip_listening_problem_solving", "celpip_listening_daily_life", "celpip_listening_information", "celpip_listening_news", "celpip_listening_discussion", "celpip_listening_viewpoints", "celpip_speaking_advice", "celpip_speaking_personal_experience", "celpip_speaking_describe_scene", "celpip_speaking_prediction", "celpip_speaking_compare_persuade", "celpip_speaking_difficult_situation", "celpip_speaking_opinion", "celpip_speaking_unusual_situation"],
+  oet_2026: ["oet_listening_consultation_notes", "oet_listening_workplace_extract", "oet_listening_presentation_interview", "oet_reading_expeditious_matching", "oet_reading_expeditious_short_answer", "oet_reading_expeditious_sentence_completion", "oet_reading_workplace_text", "oet_reading_long_text", "oet_writing_referral_letter", "oet_writing_transfer_letter", "oet_writing_discharge_letter", "oet_writing_advice_information_letter", "oet_speaking_role_play"],
+  trinity_ise_2026: ["trinity_ise_long_reading", "trinity_ise_multi_text_reading", "trinity_ise_reading_into_writing", "trinity_ise_extended_writing", "trinity_ise_topic_discussion", "trinity_ise_conversation", "trinity_ise_collaborative_task", "trinity_ise_independent_listening", "trinity_ise_digital_levelling", "trinity_ise_digital_written_online_communication", "trinity_ise_digital_writing_from_sources", "trinity_ise_digital_prepared_talk", "trinity_ise_digital_summarise_talk"],
+  aptis_2026: ["aptis_grammar_sentence_completion", "aptis_vocabulary_synonym_matching", "aptis_vocabulary_definition_matching", "aptis_vocabulary_collocation_matching", "aptis_reading_sentence_comprehension", "aptis_reading_text_cohesion", "aptis_reading_opinion_matching", "aptis_reading_long_text_headings", "aptis_listening_information_recognition", "aptis_listening_information_matching", "aptis_listening_opinion_attitude", "aptis_listening_monologue_comprehension", "aptis_writing_word_short_phrase", "aptis_writing_social_responses", "aptis_writing_informal_email", "aptis_writing_formal_email", "aptis_speaking_personal_information", "aptis_speaking_describe_photo", "aptis_speaking_compare_photos", "aptis_speaking_abstract_topic"],
+  languagecert_2026: ["languagecert_listening_short_utterance_match", "languagecert_listening_best_reply", "languagecert_listening_conversation", "languagecert_listening_note_form_completion", "languagecert_listening_discussion", "languagecert_reading_gapped_text", "languagecert_reading_sentence_insertion", "languagecert_reading_short_text_matching", "languagecert_reading_short_answer", "languagecert_writing_short_communication", "languagecert_writing_extended_task", "languagecert_speaking_personal_information", "languagecert_speaking_role_play", "languagecert_speaking_picture_discussion", "languagecert_speaking_long_turn"],
+  gcse_english_language_2026: ["gcse_source_retrieval", "gcse_language_analysis", "gcse_structure_analysis", "gcse_source_comparison", "gcse_critical_evaluation", "gcse_descriptive_writing", "gcse_narrative_writing", "gcse_viewpoint_writing", "gcse_spoken_endorsement"],
+  gcse_english_literature_2026: ["gcse_literature_extract_essay", "gcse_literature_whole_text_essay", "gcse_poetry_comparison", "gcse_unseen_poetry_analysis", "gcse_unseen_poetry_comparison"],
+  gcse_mathematics_2026: ["gcse_math_short_calculation", "gcse_math_multistep_working", "gcse_math_proof_reasoning", "gcse_math_graph", "gcse_math_geometry_construction"],
+  gcse_combined_science_2026: ["gcse_science_multiple_choice", "gcse_science_structured_response", "gcse_science_equation_fill", "gcse_science_calculation", "gcse_science_data_analysis", "gcse_science_practical_method", "gcse_science_diagram_labelling"],
+  eleven_plus_2026: ["eleven_plus_comprehension", "eleven_plus_grammar_punctuation_spelling", "eleven_plus_creative_writing", "eleven_plus_arithmetic", "eleven_plus_word_problem", "eleven_plus_verbal_analogy", "eleven_plus_verbal_code", "eleven_plus_verbal_sequence", "eleven_plus_nonverbal_matrix", "eleven_plus_nonverbal_sequence", "eleven_plus_spatial_rotation", "eleven_plus_spatial_folding"],
+  iseb_common_entrance_2026: ["iseb_english_reading", "iseb_english_writing", "iseb_math_noncalculator", "iseb_math_calculator", "iseb_mental_arithmetic", "iseb_science_biology", "iseb_science_chemistry", "iseb_science_physics", "iseb_humanities_essay", "iseb_language_listening", "iseb_language_speaking"],
+  ssat_upper_middle_2026: ["ssat_quantitative", "ssat_verbal_synonym", "ssat_verbal_analogy", "ssat_reading_comprehension", "ssat_writing_sample", "ssat_experimental"],
+  sat_2026: ["sat_rw_central_ideas_details", "sat_rw_command_evidence", "sat_rw_inference", "sat_rw_words_context", "sat_rw_text_structure_purpose", "sat_rw_cross_text_connections", "sat_rw_rhetorical_synthesis", "sat_rw_transitions", "sat_rw_standard_english", "sat_math_multiple_choice", "sat_math_student_produced_response"],
+  act_2026: ["act_english_revision", "act_math_multiple_choice", "act_reading_comprehension", "act_science_data_representation", "act_science_research_summary", "act_science_conflicting_viewpoints", "act_writing_essay"],
+  hspt_2026: ["hspt_verbal_synonym_antonym", "hspt_verbal_analogy", "hspt_verbal_logic", "hspt_quantitative_series", "hspt_quantitative_comparison", "hspt_reading", "hspt_mathematics", "hspt_language"],
+  isee_upper_2026: ["isee_verbal_synonym", "isee_verbal_sentence_completion", "isee_quantitative_reasoning", "isee_reading_comprehension", "isee_mathematics_achievement", "isee_essay"],
+  naplan_2026: ["naplan_writing", "naplan_reading_multiple_choice", "naplan_reading_short_answer", "naplan_spelling", "naplan_grammar_punctuation", "naplan_numeracy_multiple_choice", "naplan_numeracy_constructed_response"],
+  canadian_cat4_2026: ["cat4_verbal_classification", "cat4_verbal_analogy", "cat4_figure_classification", "cat4_figure_matrix", "cat4_number_analogy", "cat4_number_series", "cat4_figure_analysis", "cat4_figure_recognition", "ccat_verbal_classification", "ccat_sentence_completion", "ccat_verbal_analogy", "ccat_number_analogy", "ccat_number_series", "ccat_number_puzzles", "ccat_figure_matrices", "ccat_paper_folding", "ccat_figure_classification"],
+  english_placement_test_2026: ["placement_grammar", "placement_vocabulary", "placement_reading", "placement_listening", "placement_writing", "placement_speaking", "placement_use_of_english"],
+  exam_prep_test_teach_test: ["ttt_pre_diagnostic", "ttt_video_or_text_lesson", "ttt_guided_practice", "ttt_post_test"]
+};
+
+// Paper/computer variants share task constructs; only delivery UI differs.
+EXAM_PROFILE_TASK_TYPE_MATRIX.ielts_academic_computer_2026 = EXAM_PROFILE_TASK_TYPE_MATRIX.ielts_academic_paper_2026;
+EXAM_PROFILE_TASK_TYPE_MATRIX.ielts_general_computer_2026 = EXAM_PROFILE_TASK_TYPE_MATRIX.ielts_general_paper_2026;
+EXAM_PROFILE_TASK_TYPE_MATRIX.ielts_ukvi_2026 = Array.from(new Set([
+  ...EXAM_PROFILE_TASK_TYPE_MATRIX.ielts_academic_paper_2026,
+  ...EXAM_PROFILE_TASK_TYPE_MATRIX.ielts_general_paper_2026,
+]));
+Object.freeze(EXAM_PROFILE_TASK_TYPE_MATRIX);
+
+export interface TaskTypeCoverageAudit {
+  profileCount: number;
+  catalogTaskTypeCount: number;
+  referencedTaskTypeCount: number;
+  missingByProfile: Record<string, string[]>;
+  complete: boolean;
+}
+
+export function auditExamTaskTypeCoverage(): TaskTypeCoverageAudit {
+  const missingByProfile: Record<string, string[]> = {};
+  const referenced = new Set<string>();
+  for (const [profileId, taskTypes] of Object.entries(EXAM_PROFILE_TASK_TYPE_MATRIX)) {
+    const missing: string[] = [];
+    for (const taskType of taskTypes) {
+      referenced.add(taskType);
+      if (!resolveExamTaskType(taskType)) missing.push(taskType);
+    }
+    if (missing.length) missingByProfile[profileId] = missing;
+  }
+  return {
+    profileCount: Object.keys(EXAM_PROFILE_TASK_TYPE_MATRIX).length,
+    catalogTaskTypeCount: EXAM_TASK_TYPE_CATALOG.length,
+    referencedTaskTypeCount: referenced.size,
+    missingByProfile,
+    complete: Object.keys(missingByProfile).length === 0,
+  };
+}
+
+export class ExamValidationError extends Error {
+  readonly issues: ValidationIssue[];
+
+  constructor(issues: ValidationIssue[]) {
+    super(
+      `Exam definition is invalid (${issues.length} issue${issues.length === 1 ? "" : "s"}).`,
+    );
+    this.name = "ExamValidationError";
+    this.issues = issues;
+  }
+}
+
+interface NormalizedOption {
+  optionId: string;
+  label: string;
+  disabled?: boolean;
+}
+
+interface NormalizedAudioSegment {
+  segmentId: string;
+  speakerTag: string;
+  speakerLabel: string;
+  text: string;
+  startMs: number | null;
+  endMs: number | null;
+}
+
+interface NormalizedAudio {
+  assetUrl: string | null;
+  assetStatus: string;
+  maxPlaybacks: number;
+  estimatedDurationMs: number | null;
+  transcriptPolicy: "always" | "hidden_until_submitted" | "disabled";
+  segments: NormalizedAudioSegment[];
+  taggedScript: string;
+}
+
+interface NormalizedVisual {
+  type: string;
+  altText: string;
+  data: unknown;
+}
+
+export type ExamResponseRendererType =
+  | "single_choice"
+  | "multiple_select"
+  | "true_false_not_given"
+  | "yes_no_not_given"
+  | "text"
+  | "numeric"
+  | "gap_fill"
+  | "dropdown_gaps"
+  | "matching"
+  | "categorization"
+  | "table_completion"
+  | "ordering"
+  | "sentence_builder"
+  | "complete_words"
+  | "rich_text"
+  | "voice_recording"
+  | "video_recording"
+  | "select_text"
+  | "multi_field"
+  | "instructional_content"
+  | "hotspot"
+  | "matrix_selection"
+  | "graph_interaction";
+
+interface NormalizedResponseSpec {
+  type: ExamResponseRendererType;
+  options: NormalizedOption[];
+  multipleLimit: number | null;
+  minWords: number | null;
+  maxWords: number | null;
+  minCharacters: number | null;
+  maxCharacters: number | null;
+  rows: number;
+  tokens: Array<{ tokenId: string; label: string }>;
+  gaps: Array<{ gapId: string; label: string; maxLength: number | null }>;
+  preparationSeconds: number;
+  responseSeconds: number;
+  maxAttempts: number;
+  spellcheck: boolean;
+  placeholder: string;
+  unitLabel: string;
+}
+
+interface NormalizedTask {
+  taskId: string;
+  taskType: string;
+  title: string;
+  instructions: string;
+  prompt: string;
+  passageText: string | null;
+  passageTitle: string | null;
+  audio: NormalizedAudio | null;
+  visual: NormalizedVisual | null;
+  formula: string | null;
+  responseSpec: NormalizedResponseSpec;
+  estimatedTimeSeconds: number | null;
+  publicMarks: number | null;
+  required: boolean;
+}
+
+interface NormalizedSection {
+  sectionId: string;
+  sectionTitle: string;
+  skillDomain: string;
+  instructions: string;
+  durationMinutes: number;
+  navigationPolicy: "linear" | "free_within_section";
+  tasks: NormalizedTask[];
+}
+
+interface NormalizedExamMetadata {
+  examId: string;
+  title: string;
+  examFamily: string;
+  standard: string;
+  totalDurationMinutes: number;
+  targetPassScorePercentage: number | null;
+  practiceTargetLabel: string;
+  deliveryMode: string;
+  independentSimulation: boolean;
+  instructions: string;
+  requireAudioCheck: boolean;
+  requireMicrophoneCheck: boolean;
+}
+
+interface CandidateExam {
+  schemaVersion: string;
+  runtimeCompatibility: string;
+  examMetadata: NormalizedExamMetadata;
+  sections: NormalizedSection[];
+}
+
+interface RuntimeConfiguration {
+  runtimeVersion: string;
+  locale: string;
+  timeZone: string;
+  sessionId: string;
+  assignmentId: string | null;
+  candidateReference: string | null;
+  strictMode: boolean;
+  submissionEndpoint: string;
+  submissionMode: SubmissionMode;
+  requestCredentials: "omit" | "same-origin" | "include";
+  requestTimeoutMs: number;
+  autosaveIntervalMs: number;
+  storageNamespace: string;
+  policyVersion: string;
+  privacyNotice: string;
+  examinerEmail: string | null;
+  featureFlags: Required<GeneratorFeatureFlags>;
+  accessibility: Required<AccessibilityOptions>;
+  telemetry: Required<TelemetryOptions>;
+  proctoring: Required<ProctoringOptions>;
+}
+
+const PRIVATE_FIELD_NAMES = new Set([
+  "answer",
+  "answerkey",
+  "answerkeypackage",
+  "acceptedanswer",
+  "acceptedanswers",
+  "correctanswer",
+  "correctanswers",
+  "correctoption",
+  "correctoptionid",
+  "correctoptionids",
+  "correctorder",
+  "correctsentence",
+  "distractoranalysis",
+  "evaluationcriteria",
+  "markscheme",
+  "moderationnotes",
+  "privaterubric",
+  "rationale",
+  "rubric",
+  "scoringguidelines",
+  "scoringpackage",
+  "solution",
+  "solutions",
+  "targetkeywords",
+  "workedsolution",
+]);
+
+const DEFAULT_OPTIONS: RuntimeConfiguration = {
+  runtimeVersion: EXAM_SIMULATOR_RUNTIME_VERSION,
+  locale: "en",
+  timeZone: "UTC",
+  sessionId: "local-session",
+  assignmentId: null,
+  candidateReference: null,
+  strictMode: false,
+  submissionEndpoint: "/api/exams/submit",
+  submissionMode: "post",
+  requestCredentials: "same-origin",
+  requestTimeoutMs: 30_000,
+  autosaveIntervalMs: 15_000,
+  storageNamespace: "exam-simulator",
+  policyVersion: "2026.1",
+  privacyNotice:
+    "This simulation records answers, timing, focus changes, and limited interaction telemetry. Printable key values and clipboard contents are never stored.",
+  examinerEmail: null,
+  featureFlags: {
+    annotations: true,
+    transcript: true,
+    review: true,
+    answerChanges: true,
+    calculator: false,
+    spellcheck: true,
+    audioReplay: true,
+    autosave: true,
+  },
+  accessibility: {
+    extraTimeMultiplier: 1,
+    reducedMotion: false,
+    highContrast: false,
+    largeText: false,
+    captions: true,
+    allowClipboard: false,
+    allowSelection: false,
+  },
+  telemetry: {
+    enabled: true,
+    consentRequired: true,
+    pointerSampleIntervalMs: 150,
+    maxPointerPointsPerTask: 400,
+    maxAuditEvents: 2_000,
+    idleThresholdMs: 15_000,
+  },
+  proctoring: {
+    enabled: false,
+    preventFocusLoss: false,
+    maxFocusLossWarnings: 3,
+    focusLossBehavior: "pause",
+    autoSubmitOnLock: true,
+    preventClipboardActions: false,
+    preventContextMenu: false,
+    preventProtectedSelection: false,
+  },
+};
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function record(value: unknown): UnknownRecord {
+  return isRecord(value) ? value : {};
+}
+
+function stringValue(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function nullableString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function finiteNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function nullableNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function booleanValue(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function arrayValue(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function firstString(
+  source: UnknownRecord,
+  keys: readonly string[],
+  fallback = "",
+): string {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return fallback;
+}
+
+function firstNumber(
+  source: UnknownRecord,
+  keys: readonly string[],
+  fallback: number,
+): number {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return fallback;
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function slug(value: string, fallback: string): string {
+  const normalized = value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+  return normalized || fallback;
+}
+
+function safeProtocolUrl(value: string): boolean {
+  if (!value) return false;
+  if (/^(?:javascript|vbscript|file):/i.test(value.trim())) return false;
+  if (/^data:/i.test(value.trim())) {
+    return /^data:audio\/(?:mpeg|mp3|wav|ogg|webm|mp4);/i.test(value.trim());
+  }
+  try {
+    const parsed = new URL(value, "https://exam.invalid");
+    return ["http:", "https:", "blob:"].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Safely embeds JSON inside a non-executable application/json script node. */
+export function safeSerializeForHtml(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/&/g, "\\u0026")
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+/**
+ * Defense-in-depth utility for consumers that need a candidate-safe clone.
+ * The generator itself uses explicit normalization and therefore never copies
+ * unknown authoring fields to the client.
+ */
+export function stripPrivateScoringData(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripPrivateScoringData);
+  if (!isRecord(value)) return value;
+
+  const result: UnknownRecord = {};
+  for (const [key, child] of Object.entries(value)) {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (PRIVATE_FIELD_NAMES.has(normalizedKey)) continue;
+    result[key] = stripPrivateScoringData(child);
+  }
+  return result;
+}
+
+function normalizeOptions(value: unknown): NormalizedOption[] {
+  return arrayValue(value).map((entry, index) => {
+    if (typeof entry === "string") {
+      return { optionId: `opt_${index + 1}`, label: entry };
+    }
+    const source = record(entry);
+    return {
+      optionId: firstString(
+        source,
+        ["optionId", "id", "value"],
+        `opt_${index + 1}`,
+      ),
+      label: firstString(
+        source,
+        ["label", "text", "title", "value"],
+        `Option ${index + 1}`,
+      ),
+      disabled: booleanValue(source.disabled, false) || undefined,
+    };
+  });
+}
+
+function normalizeTokens(value: unknown): Array<{ tokenId: string; label: string }> {
+  return arrayValue(value).map((entry, index) => {
+    if (typeof entry === "string") {
+      return { tokenId: `tok_${index + 1}`, label: entry };
+    }
+    const source = record(entry);
+    return {
+      tokenId: firstString(source, ["tokenId", "id"], `tok_${index + 1}`),
+      label: firstString(source, ["label", "text", "value"], `Token ${index + 1}`),
+    };
+  });
+}
+
+function normalizeGaps(value: unknown, fallbackRows: number): NormalizedResponseSpec["gaps"] {
+  const supplied = arrayValue(value);
+  if (supplied.length) {
+    return supplied.map((entry, index) => {
+      const source = record(entry);
+      return {
+        gapId: firstString(source, ["gapId", "id"], `gap_${index + 1}`),
+        label: firstString(source, ["label", "prompt"], `Gap ${index + 1}`),
+        maxLength: nullableNumber(source.maxLength),
+      };
+    });
+  }
+  return Array.from({ length: Math.max(1, fallbackRows) }, (_, index) => ({
+    gapId: `gap_${index + 1}`,
+    label: `Gap ${index + 1}`,
+    maxLength: null,
+  }));
+}
+
+function mapResponseType(rawType: string, taskType: string, source: UnknownRecord): NormalizedResponseSpec["type"] {
+  const compact = rawType.toLowerCase().replace(/[\s-]+/g, "_");
+  const aliases: Record<string, NormalizedResponseSpec["type"]> = {
+    multiple_choice: "single_choice",
+    radio: "single_choice",
+    single_choice: "single_choice",
+    multiple_select: "multiple_select",
+    checkboxes: "multiple_select",
+    true_false_not_given: "true_false_not_given",
+    yes_no_not_given: "yes_no_not_given",
+    text: "text",
+    text_input: "text",
+    short_answer: "text",
+    numeric: "numeric",
+    number: "numeric",
+    gap_fill: "gap_fill",
+    fill_in_blank: "gap_fill",
+    fill_in_the_blank: "gap_fill",
+    dropdown_gaps: "dropdown_gaps",
+    matching: "matching",
+    categorization: "categorization",
+    table_completion: "table_completion",
+    ordering: "ordering",
+    drag_drop: arrayValue(source.jumbledTokens).length
+      ? "sentence_builder"
+      : "ordering",
+    sentence_builder: "sentence_builder",
+    scramble_unscramble: "sentence_builder",
+    complete_words: "complete_words",
+    rich_editor: "rich_text",
+    rich_text: "rich_text",
+    essay: "rich_text",
+    voice_recording: "voice_recording",
+    audio_recording: "voice_recording",
+    video_recording: "video_recording",
+    video_statement: "video_recording",
+    select_text: "select_text",
+    highlight_text: "select_text",
+    multi_field: "multi_field",
+    worked_response: "multi_field",
+    instructional_content: "instructional_content",
+    lesson: "instructional_content",
+    hotspot: "hotspot",
+    matrix_selection: "matrix_selection",
+    graph_interaction: "graph_interaction",
+  };
+  if (aliases[compact]) return aliases[compact];
+
+  const definition = resolveExamTaskType(taskType);
+  if (definition) return definition.renderer;
+
+  const task = taskType.toLowerCase();
+  if (/speaking|repeat|interview|read_aloud|role_play/.test(task)) return "voice_recording";
+  if (/essay|writing|email|discussion|letter|summary/.test(task)) return "rich_text";
+  if (/order|reorder/.test(task)) return "ordering";
+  if (/scrambl|sentence_builder/.test(task)) return "sentence_builder";
+  if (/matrix|pattern/.test(task)) return "matrix_selection";
+  if (/numeric|math|calculation/.test(task)) return "numeric";
+  return normalizeOptions(source.options).length ? "single_choice" : "text";
+}
+
+function normalizeResponseSpec(rawTask: UnknownRecord, taskType: string): NormalizedResponseSpec {
+  const explicit = record(rawTask.responseSpec);
+  const legacy = record(rawTask.inputControls);
+  const source = Object.keys(explicit).length ? explicit : legacy;
+  const rawType = firstString(source, ["type"], "");
+  const options = normalizeOptions(source.options ?? rawTask.options);
+  const tokens = normalizeTokens(
+    source.tokens ?? source.jumbledTokens ?? source.items ?? rawTask.jumbledTokens,
+  );
+  const promptText = firstString(rawTask, ["prompt", "question"], "");
+  const inferredGapCount = (promptText.match(/_{2,}/g) ?? []).length;
+  const requestedRows = clamp(
+    Math.round(firstNumber(source, ["rows", "gapCount"], inferredGapCount || 1)),
+    1,
+    100,
+  );
+
+  return {
+    type: mapResponseType(rawType, taskType, source),
+    options,
+    multipleLimit: nullableNumber(source.maximumSelections ?? source.multipleLimit),
+    minWords: nullableNumber(source.minWords ?? source.minWordLimit),
+    maxWords: nullableNumber(source.maxWords ?? source.maxWordLimit),
+    minCharacters: nullableNumber(source.minCharacters ?? source.minCharacterLimit),
+    maxCharacters: nullableNumber(source.maxCharacters ?? source.maxCharacterLimit),
+    rows: requestedRows,
+    tokens,
+    gaps: normalizeGaps(source.gaps, requestedRows),
+    preparationSeconds: clamp(
+      Math.round(firstNumber(source, ["preparationSeconds", "preparationTimeSeconds"], 0)),
+      0,
+      600,
+    ),
+    responseSeconds: clamp(
+      Math.round(firstNumber(source, ["responseSeconds", "responseTimeSeconds", "maxDurationSeconds"], 60)),
+      1,
+      3_600,
+    ),
+    maxAttempts: clamp(Math.round(firstNumber(source, ["maxAttempts"], 1)), 1, 10),
+    spellcheck: booleanValue(source.spellcheck, true),
+    placeholder: firstString(source, ["placeholder"], "Enter your answer"),
+    unitLabel: firstString(source, ["unitLabel", "unit"], ""),
+  };
+}
+
+function speakerLabel(tag: string): string {
+  const match = /^(male|female)([1-4])$/i.exec(tag);
+  if (!match) return tag || "Speaker";
+  return `Speaker ${match[2]}`;
+}
+
+function parseTaggedScript(script: string): NormalizedAudioSegment[] {
+  const segments: NormalizedAudioSegment[] = [];
+  const expression = /\[(male[1-4]|female[1-4])\]([^[]*)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = expression.exec(script)) !== null) {
+    const text = match[2].trim();
+    if (!text) continue;
+    segments.push({
+      segmentId: `seg_${segments.length + 1}`,
+      speakerTag: match[1].toLowerCase(),
+      speakerLabel: speakerLabel(match[1]),
+      text,
+      startMs: null,
+      endMs: null,
+    });
+  }
+  if (!segments.length && script.trim()) {
+    segments.push({
+      segmentId: "seg_1",
+      speakerTag: "speaker",
+      speakerLabel: "Speaker",
+      text: script.replace(/\[(?:male|female)[1-4]\]/gi, "").trim(),
+      startMs: null,
+      endMs: null,
+    });
+  }
+  return segments;
+}
+
+function normalizeAudio(rawTask: UnknownRecord): NormalizedAudio | null {
+  const stimulus = record(rawTask.stimulus);
+  const rawAudio = record(stimulus.audio ?? rawTask.audio);
+  const taggedScript = firstString(
+    rawAudio,
+    ["taggedScript", "audioScript", "script"],
+    firstString(rawTask, ["audioScript"], ""),
+  );
+  const suppliedSegments = arrayValue(rawAudio.segments);
+  const segments = suppliedSegments.length
+    ? suppliedSegments.map((entry, index): NormalizedAudioSegment => {
+        const source = record(entry);
+        const tag = firstString(source, ["speakerTag", "speaker"], "speaker");
+        return {
+          segmentId: firstString(source, ["segmentId", "id"], `seg_${index + 1}`),
+          speakerTag: tag,
+          speakerLabel: firstString(source, ["speakerLabel"], speakerLabel(tag)),
+          text: firstString(source, ["text"], ""),
+          startMs: nullableNumber(source.startMs),
+          endMs: nullableNumber(source.endMs),
+        };
+      })
+    : parseTaggedScript(taggedScript);
+  const assetUrl = nullableString(
+    rawAudio.assetUrl ?? rawAudio.url ?? rawTask.audioUrl,
+  );
+  if (!assetUrl && !segments.length) return null;
+
+  return {
+    assetUrl,
+    assetStatus: firstString(
+      rawAudio,
+      ["assetStatus"],
+      assetUrl ? "ready" : "script_only_for_tts_pipeline",
+    ),
+    maxPlaybacks: clamp(
+      Math.round(
+        firstNumber(
+          rawAudio,
+          ["maxPlaybacks"],
+          firstNumber(rawTask, ["maxAudioPlaybacks"], 1),
+        ),
+      ),
+      1,
+      20,
+    ),
+    estimatedDurationMs: nullableNumber(rawAudio.estimatedDurationMs),
+    transcriptPolicy:
+      rawAudio.transcriptPolicy === "disabled" ||
+      rawAudio.transcriptPolicy === "hidden_until_submitted"
+        ? rawAudio.transcriptPolicy
+        : "always",
+    segments,
+    taggedScript:
+      taggedScript ||
+      segments.map((segment) => `[${segment.speakerTag}]${segment.text}`).join(" "),
+  };
+}
+
+function normalizeVisual(rawTask: UnknownRecord): NormalizedVisual | null {
+  const stimulus = record(rawTask.stimulus);
+  const rawVisual = record(stimulus.visual ?? rawTask.visual ?? rawTask.visualSpec);
+  if (!Object.keys(rawVisual).length && rawTask.imageUrl === undefined) return null;
+  const imageUrl = nullableString(rawTask.imageUrl);
+  const data = imageUrl ? { imageUrl } : stripPrivateScoringData(rawVisual);
+  return {
+    type: firstString(rawVisual, ["type"], imageUrl ? "image" : "structured_visual"),
+    altText: firstString(
+      rawVisual,
+      ["altText", "description"],
+      firstString(rawTask, ["imageAlt"], "Visual stimulus"),
+    ),
+    data,
+  };
+}
+
+function normalizeTask(
+  rawValue: unknown,
+  sectionIndex: number,
+  taskIndex: number,
+  sectionPassage: string | null,
+): NormalizedTask {
+  const rawTask = record(rawValue);
+  const stimulus = record(rawTask.stimulus);
+  const requestedTaskType = firstString(rawTask, ["taskType", "type"], "short_answer");
+  const taskType = resolveExamTaskType(requestedTaskType)?.taskType ?? requestedTaskType;
+  const passageText =
+    nullableString(
+      stimulus.passageText ??
+        stimulus.readingPassage ??
+        rawTask.readingPassage ??
+        rawTask.passageText ??
+        rawTask.passage,
+    ) ?? sectionPassage;
+  return {
+    taskId: firstString(
+      rawTask,
+      ["taskId", "questionId", "id"],
+      `task_${sectionIndex + 1}_${taskIndex + 1}`,
+    ),
+    taskType,
+    title: firstString(rawTask, ["title", "taskTitle"], `Question ${taskIndex + 1}`),
+    instructions: firstString(rawTask, ["instructions"], ""),
+    prompt: firstString(rawTask, ["prompt", "question"], "Respond to the task."),
+    passageText,
+    passageTitle: nullableString(
+      stimulus.passageTitle ?? rawTask.passageTitle,
+    ),
+    audio: normalizeAudio(rawTask),
+    visual: normalizeVisual(rawTask),
+    formula: nullableString(stimulus.formula ?? rawTask.formula),
+    responseSpec: normalizeResponseSpec(rawTask, taskType),
+    estimatedTimeSeconds: nullableNumber(
+      rawTask.estimatedTimeSeconds ?? record(rawTask.psychometricValidation).estimatedTimeSeconds,
+    ),
+    publicMarks: nullableNumber(
+      rawTask.publicMarks ?? record(rawTask.psychometricValidation).scoringWeightPoints,
+    ),
+    required: booleanValue(rawTask.required, true),
+  };
+}
+
+function normalizeCandidateExam(input: ExamAuthoringPackage | ExamDefinition | UnknownRecord): CandidateExam {
+  const root = record(input);
+  const metadata = record(root.examMetadata);
+  const proctoring = record(metadata.proctoringSettings);
+  const hardware = record(proctoring.requireHardwareChecks);
+  const rawSections = arrayValue(root.sections);
+  const sections = rawSections.map((rawSectionValue, sectionIndex): NormalizedSection => {
+    const rawSection = record(rawSectionValue);
+    const sectionPassage = nullableString(
+      rawSection.readingPassage ?? rawSection.passageText ?? rawSection.passage,
+    );
+    const tasks = arrayValue(rawSection.tasks ?? rawSection.questions).map(
+      (task, taskIndex) => normalizeTask(task, sectionIndex, taskIndex, sectionPassage),
+    );
+    return {
+      sectionId: firstString(rawSection, ["sectionId", "id"], `section_${sectionIndex + 1}`),
+      sectionTitle: firstString(rawSection, ["sectionTitle", "title"], `Section ${sectionIndex + 1}`),
+      skillDomain: firstString(rawSection, ["skillDomain"], "general"),
+      instructions: firstString(rawSection, ["instructions"], ""),
+      durationMinutes: clamp(
+        firstNumber(rawSection, ["durationMinutes"], 0),
+        0,
+        1_440,
+      ),
+      navigationPolicy:
+        rawSection.navigationPolicy === "linear" ? "linear" : "free_within_section",
+      tasks,
+    };
+  });
+
+  const sectionDuration = sections.reduce((sum, section) => sum + section.durationMinutes, 0);
+  const requestedTotal = firstNumber(metadata, ["totalDurationMinutes"], sectionDuration || 60);
+  const target = nullableNumber(metadata.targetPassScorePercentage);
+
+  return {
+    schemaVersion: firstString(root, ["schemaVersion"], EXAM_SIMULATOR_SCHEMA_VERSION),
+    runtimeCompatibility: EXAM_SIMULATOR_RUNTIME_VERSION,
+    examMetadata: {
+      examId: firstString(metadata, ["examId"], slug(firstString(metadata, ["examFamily", "title"], "exam"), "exam")),
+      title: firstString(metadata, ["title", "displayTitle", "examFamily"], "Interactive Exam Simulation"),
+      examFamily: firstString(metadata, ["examFamily"], "Custom Exam"),
+      standard: firstString(metadata, ["standard"], "Independent practice simulation"),
+      totalDurationMinutes: clamp(requestedTotal, 1, 1_440),
+      targetPassScorePercentage: target === null ? null : clamp(target, 0, 100),
+      practiceTargetLabel: firstString(
+        metadata,
+        ["practiceTargetLabel"],
+        target === null ? "No universal pass target" : "App-defined practice target",
+      ),
+      deliveryMode: firstString(metadata, ["deliveryMode"], "digital_simulation"),
+      independentSimulation: booleanValue(metadata.independentSimulation, true),
+      instructions: firstString(
+        metadata,
+        ["instructions"],
+        "Complete each task carefully. Your progress is saved automatically when enabled.",
+      ),
+      requireAudioCheck: booleanValue(hardware.audio, false),
+      requireMicrophoneCheck: booleanValue(hardware.microphone, false),
+    },
+    sections,
+  };
+}
+
+function normalizeRuntimeOptions(options: ExamSimulatorGeneratorOptions): RuntimeConfiguration {
+  const features = options.featureFlags ?? {};
+  const accessibility = options.accessibility ?? {};
+  const telemetry = options.telemetry ?? {};
+  const proctoring = options.proctoring ?? {};
+  const extraTimeMultiplier = clamp(
+    finiteNumber(accessibility.extraTimeMultiplier, 1),
+    0.5,
+    4,
+  );
+
+  return {
+    ...DEFAULT_OPTIONS,
+    locale: options.locale ?? DEFAULT_OPTIONS.locale,
+    timeZone: options.timeZone ?? DEFAULT_OPTIONS.timeZone,
+    sessionId: options.sessionId ?? DEFAULT_OPTIONS.sessionId,
+    assignmentId: options.assignmentId ?? null,
+    candidateReference: options.candidateReference ?? null,
+    strictMode: options.strictMode ?? DEFAULT_OPTIONS.strictMode,
+    submissionEndpoint: options.submissionEndpoint ?? DEFAULT_OPTIONS.submissionEndpoint,
+    submissionMode: options.submissionMode ?? DEFAULT_OPTIONS.submissionMode,
+    requestCredentials: options.requestCredentials ?? DEFAULT_OPTIONS.requestCredentials,
+    requestTimeoutMs: clamp(
+      finiteNumber(options.requestTimeoutMs, DEFAULT_OPTIONS.requestTimeoutMs),
+      2_000,
+      180_000,
+    ),
+    autosaveIntervalMs: clamp(
+      finiteNumber(options.autosaveIntervalMs, DEFAULT_OPTIONS.autosaveIntervalMs),
+      2_000,
+      300_000,
+    ),
+    storageNamespace: options.storageNamespace ?? DEFAULT_OPTIONS.storageNamespace,
+    policyVersion: options.policyVersion ?? DEFAULT_OPTIONS.policyVersion,
+    privacyNotice: options.privacyNotice ?? DEFAULT_OPTIONS.privacyNotice,
+    examinerEmail: options.examinerEmail ?? null,
+    featureFlags: {
+      annotations: features.annotations ?? DEFAULT_OPTIONS.featureFlags.annotations,
+      transcript: features.transcript ?? DEFAULT_OPTIONS.featureFlags.transcript,
+      review: features.review ?? DEFAULT_OPTIONS.featureFlags.review,
+      answerChanges: features.answerChanges ?? DEFAULT_OPTIONS.featureFlags.answerChanges,
+      calculator: features.calculator ?? DEFAULT_OPTIONS.featureFlags.calculator,
+      spellcheck: features.spellcheck ?? DEFAULT_OPTIONS.featureFlags.spellcheck,
+      audioReplay: features.audioReplay ?? DEFAULT_OPTIONS.featureFlags.audioReplay,
+      autosave: features.autosave ?? DEFAULT_OPTIONS.featureFlags.autosave,
+    },
+    accessibility: {
+      extraTimeMultiplier,
+      reducedMotion: accessibility.reducedMotion ?? DEFAULT_OPTIONS.accessibility.reducedMotion,
+      highContrast: accessibility.highContrast ?? DEFAULT_OPTIONS.accessibility.highContrast,
+      largeText: accessibility.largeText ?? DEFAULT_OPTIONS.accessibility.largeText,
+      captions: accessibility.captions ?? DEFAULT_OPTIONS.accessibility.captions,
+      allowClipboard: accessibility.allowClipboard ?? DEFAULT_OPTIONS.accessibility.allowClipboard,
+      allowSelection: accessibility.allowSelection ?? DEFAULT_OPTIONS.accessibility.allowSelection,
+    },
+    telemetry: {
+      enabled: telemetry.enabled ?? DEFAULT_OPTIONS.telemetry.enabled,
+      consentRequired: telemetry.consentRequired ?? DEFAULT_OPTIONS.telemetry.consentRequired,
+      pointerSampleIntervalMs: clamp(
+        finiteNumber(telemetry.pointerSampleIntervalMs, DEFAULT_OPTIONS.telemetry.pointerSampleIntervalMs),
+        50,
+        2_000,
+      ),
+      maxPointerPointsPerTask: clamp(
+        Math.round(
+          finiteNumber(
+            telemetry.maxPointerPointsPerTask,
+            DEFAULT_OPTIONS.telemetry.maxPointerPointsPerTask,
+          ),
+        ),
+        0,
+        5_000,
+      ),
+      maxAuditEvents: clamp(
+        Math.round(finiteNumber(telemetry.maxAuditEvents, DEFAULT_OPTIONS.telemetry.maxAuditEvents)),
+        100,
+        20_000,
+      ),
+      idleThresholdMs: clamp(
+        finiteNumber(telemetry.idleThresholdMs, DEFAULT_OPTIONS.telemetry.idleThresholdMs),
+        3_000,
+        300_000,
+      ),
+    },
+    proctoring: {
+      enabled: proctoring.enabled ?? booleanValue(record(record(options).proctoring).enabled, false),
+      preventFocusLoss: proctoring.preventFocusLoss ?? DEFAULT_OPTIONS.proctoring.preventFocusLoss,
+      maxFocusLossWarnings: clamp(
+        Math.round(
+          finiteNumber(
+            proctoring.maxFocusLossWarnings,
+            DEFAULT_OPTIONS.proctoring.maxFocusLossWarnings,
+          ),
+        ),
+        1,
+        100,
+      ),
+      focusLossBehavior: proctoring.focusLossBehavior ?? DEFAULT_OPTIONS.proctoring.focusLossBehavior,
+      autoSubmitOnLock: proctoring.autoSubmitOnLock ?? DEFAULT_OPTIONS.proctoring.autoSubmitOnLock,
+      preventClipboardActions:
+        proctoring.preventClipboardActions ?? DEFAULT_OPTIONS.proctoring.preventClipboardActions,
+      preventContextMenu:
+        proctoring.preventContextMenu ?? DEFAULT_OPTIONS.proctoring.preventContextMenu,
+      preventProtectedSelection:
+        proctoring.preventProtectedSelection ??
+        DEFAULT_OPTIONS.proctoring.preventProtectedSelection,
+    },
+  };
+}
+
+/** Validates both structural correctness and candidate-output safety. */
+export function validateExamDefinition(
+  input: ExamAuthoringPackage | ExamDefinition | UnknownRecord,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const normalized = normalizeCandidateExam(input);
+  const ids = new Map<string, string>();
+
+  if (!normalized.sections.length) {
+    issues.push({
+      path: "$.sections",
+      code: "sections.empty",
+      message: "At least one exam section is required.",
+    });
+  }
+
+  const registerId = (id: string, path: string): void => {
+    if (!id.trim()) {
+      issues.push({ path, code: "id.empty", message: "ID must not be empty." });
+      return;
+    }
+    const previous = ids.get(id);
+    if (previous) {
+      issues.push({
+        path,
+        code: "id.duplicate",
+        message: `ID '${id}' is already used at ${previous}.`,
+      });
+    } else {
+      ids.set(id, path);
+    }
+  };
+
+  normalized.sections.forEach((section, sectionIndex) => {
+    const sectionPath = `$.sections[${sectionIndex}]`;
+    registerId(section.sectionId, `${sectionPath}.sectionId`);
+    if (!section.tasks.length) {
+      issues.push({
+        path: `${sectionPath}.tasks`,
+        code: "tasks.empty",
+        message: "Each section must contain at least one task.",
+      });
+    }
+    section.tasks.forEach((task, taskIndex) => {
+      const taskPath = `${sectionPath}.tasks[${taskIndex}]`;
+      registerId(task.taskId, `${taskPath}.taskId`);
+      if (!task.prompt.trim()) {
+        issues.push({
+          path: `${taskPath}.prompt`,
+          code: "prompt.empty",
+          message: "Task prompt must not be empty.",
+        });
+      }
+      const optionIds = new Set<string>();
+      task.responseSpec.options.forEach((option, optionIndex) => {
+        if (optionIds.has(option.optionId)) {
+          issues.push({
+            path: `${taskPath}.responseSpec.options[${optionIndex}].optionId`,
+            code: "option.id.duplicate",
+            message: `Option ID '${option.optionId}' is duplicated within this task.`,
+          });
+        }
+        optionIds.add(option.optionId);
+      });
+      if (
+        ["single_choice", "multiple_select", "matrix_selection", "hotspot", "dropdown_gaps", "matching", "categorization"].includes(
+          task.responseSpec.type,
+        ) &&
+        task.responseSpec.options.length < 2
+      ) {
+        issues.push({
+          path: `${taskPath}.responseSpec.options`,
+          code: "options.insufficient",
+          message: `${task.responseSpec.type} requires at least two options.`,
+        });
+      }
+      if (task.audio?.assetUrl && !safeProtocolUrl(task.audio.assetUrl)) {
+        issues.push({
+          path: `${taskPath}.audio.assetUrl`,
+          code: "url.unsafe",
+          message: "Audio URL uses an unsupported or unsafe protocol.",
+        });
+      }
+      let lastCue = -1;
+      task.audio?.segments.forEach((segment, segmentIndex) => {
+        if (segment.startMs !== null && segment.startMs < lastCue) {
+          issues.push({
+            path: `${taskPath}.audio.segments[${segmentIndex}].startMs`,
+            code: "audio.cue.order",
+            message: "Audio cue timestamps must be chronological.",
+          });
+        }
+        if (
+          segment.startMs !== null &&
+          segment.endMs !== null &&
+          segment.endMs < segment.startMs
+        ) {
+          issues.push({
+            path: `${taskPath}.audio.segments[${segmentIndex}].endMs`,
+            code: "audio.cue.range",
+            message: "Audio cue end must not precede its start.",
+          });
+        }
+        if (segment.endMs !== null) lastCue = segment.endMs;
+      });
+    });
+  });
+
+  return issues;
+}
+
+function buildCsp(
+  options: ExamSimulatorGeneratorOptions,
+  runtime: RuntimeConfiguration,
+): string {
+  const nonce = options.cspNonce?.trim();
+  const inlinePolicy = nonce ? `'nonce-${nonce}'` : "'unsafe-inline'";
+  const connect = new Set<string>(["'self'"]);
+  const media = new Set<string>(["'self'", "blob:", "data:"]);
+
+  for (const source of options.cspConnectSources ?? []) connect.add(source);
+  for (const source of options.cspMediaSources ?? []) media.add(source);
+  try {
+    const endpoint = new URL(runtime.submissionEndpoint, "https://exam.invalid");
+    if (endpoint.origin !== "https://exam.invalid") connect.add(endpoint.origin);
+  } catch {
+    // Validation/fetch will provide the candidate-safe error later.
+  }
+  if (options.mode === "asset-referenced" && options.assets) {
+    for (const value of [options.assets.scriptUrl, options.assets.stylesheetUrl]) {
+      if (!value) continue;
+      try {
+        const parsed = new URL(value, "https://exam.invalid");
+        if (parsed.origin !== "https://exam.invalid") {
+          connect.add(parsed.origin);
+        }
+      } catch {
+        // Relative assets are covered by self.
+      }
+    }
+  }
+
+  return [
+    "default-src 'self'",
+    `script-src 'self' ${inlinePolicy} https://cdnjs.cloudflare.com`,
+    `style-src 'self' ${inlinePolicy}`,
+    "img-src 'self' data: blob:",
+    `media-src ${Array.from(media).join(" ")}`,
+    `connect-src ${Array.from(connect).join(" ")}`,
+    "font-src 'self'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    "worker-src 'self' blob:",
+  ].join("; ");
+}
+
+function attribute(name: string, value: string | undefined): string {
+  return value ? ` ${name}="${escapeHtml(value)}"` : "";
+}
+
+function runtimeAssets(
+  options: ExamSimulatorGeneratorOptions,
+  nonce: string | undefined,
+): { styles: string; scripts: string } {
+  if (options.mode === "asset-referenced") {
+    if (!options.assets?.scriptUrl) {
+      throw new Error(
+        "Asset-referenced mode requires options.assets.scriptUrl. Use self-contained mode when no compiled runtime is available.",
+      );
+    }
+    if (!safeProtocolUrl(options.assets.scriptUrl)) {
+      throw new Error("Runtime script URL is unsafe or unsupported.");
+    }
+    if (options.assets.stylesheetUrl && !safeProtocolUrl(options.assets.stylesheetUrl)) {
+      throw new Error("Runtime stylesheet URL is unsafe or unsupported.");
+    }
+    const crossOrigin = options.assets.crossOrigin
+      ? attribute("crossorigin", options.assets.crossOrigin)
+      : "";
+    const styles = options.assets.stylesheetUrl
+      ? `<link rel="stylesheet" href="${escapeHtml(options.assets.stylesheetUrl)}"${attribute(
+          "integrity",
+          options.assets.integrity?.stylesheet,
+        )}${crossOrigin}>`
+      : "";
+    const scripts = `<script type="module" src="${escapeHtml(options.assets.scriptUrl)}"${attribute(
+      "integrity",
+      options.assets.integrity?.script,
+    )}${crossOrigin}${attribute("nonce", nonce)}></script>`;
+    return { styles, scripts };
+  }
+
+  return {
+    styles: `<style${attribute("nonce", nonce)}>${SELF_CONTAINED_STYLES}</style>`,
+    scripts: `${JSZIP_INLINED_CODE ? `<script${attribute("nonce", nonce)}>${JSZIP_INLINED_CODE}</script>` : `<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>`}\n<script${attribute("nonce", nonce)}>${SELF_CONTAINED_RUNTIME}</script>`,
+  };
+}
+
+function withAuthoringPolicyDefaults(
+  input: ExamAuthoringPackage | ExamDefinition | UnknownRecord,
+  options: ExamSimulatorGeneratorOptions,
+): ExamSimulatorGeneratorOptions {
+  const metadata = record(record(input).examMetadata);
+  const authoringPolicy = record(metadata.proctoringSettings);
+  const requestedBehavior = authoringPolicy.focusLossBehavior;
+  const authoringBehavior: FocusLossBehavior =
+    requestedBehavior === "continue" || requestedBehavior === "lock"
+      ? requestedBehavior
+      : "pause";
+  const preventFocusLoss = booleanValue(authoringPolicy.preventFocusLoss, false);
+  const preventClipboardActions = booleanValue(
+    authoringPolicy.preventClipboardActions,
+    false,
+  );
+  const policyPresent =
+    preventFocusLoss ||
+    preventClipboardActions ||
+    booleanValue(authoringPolicy.preventContextMenu, false);
+
+  return {
+    ...options,
+    proctoring: {
+      enabled: options.proctoring?.enabled ?? policyPresent,
+      preventFocusLoss:
+        options.proctoring?.preventFocusLoss ?? preventFocusLoss,
+      maxFocusLossWarnings:
+        options.proctoring?.maxFocusLossWarnings ??
+        firstNumber(authoringPolicy, ["maxFocusLossWarnings"], 3),
+      focusLossBehavior:
+        options.proctoring?.focusLossBehavior ?? authoringBehavior,
+      autoSubmitOnLock:
+        options.proctoring?.autoSubmitOnLock ??
+        booleanValue(authoringPolicy.autoSubmitOnLock, true),
+      preventClipboardActions:
+        options.proctoring?.preventClipboardActions ?? preventClipboardActions,
+      preventContextMenu:
+        options.proctoring?.preventContextMenu ??
+        booleanValue(authoringPolicy.preventContextMenu, preventClipboardActions),
+      preventProtectedSelection:
+        options.proctoring?.preventProtectedSelection ??
+        booleanValue(authoringPolicy.preventProtectedSelection, false),
+    },
+  };
+}
+
+/**
+ * Generates a complete candidate-safe HTML document.
+ *
+ * In self-contained mode (default), the document has no external dependency.
+ * Asset-referenced mode is intended for a host application's compiled React
+ * runtime and stylesheet.
+ */
+export function generateExamSimulatorHtml(
+  input: ExamAuthoringPackage | ExamDefinition | UnknownRecord,
+  options: ExamSimulatorGeneratorOptions = {},
+): string {
+  const issues = validateExamDefinition(input);
+  if (issues.length) throw new ExamValidationError(issues);
+
+  const effectiveOptions = withAuthoringPolicyDefaults(input, options);
+  const exam = normalizeCandidateExam(input);
+  const runtime = normalizeRuntimeOptions(effectiveOptions);
+  exam.examMetadata.totalDurationMinutes = Math.ceil(
+    exam.examMetadata.totalDurationMinutes * runtime.accessibility.extraTimeMultiplier,
+  );
+
+  const nonce = effectiveOptions.cspNonce?.trim() || undefined;
+  const assets = runtimeAssets(effectiveOptions, nonce);
+  const title = effectiveOptions.documentTitle ?? exam.examMetadata.title;
+  const rootClasses = [
+    runtime.accessibility.highContrast ? "is-high-contrast" : "",
+    runtime.accessibility.largeText ? "is-large-text" : "",
+    runtime.accessibility.reducedMotion ? "reduce-motion" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `<!doctype html>
+<html lang="${escapeHtml(runtime.locale)}" class="${rootClasses}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="${escapeHtml(buildCsp(effectiveOptions, runtime))}">
+  <meta name="exam-simulator-runtime" content="${EXAM_SIMULATOR_RUNTIME_VERSION}">
+  <title>${escapeHtml(title)}</title>
+  ${assets.styles}
+</head>
+<body>
+  <a class="skip-link" href="#exam-main">Skip to exam content</a>
+  <div id="exam-app" data-runtime-version="${EXAM_SIMULATOR_RUNTIME_VERSION}">
+    <main id="exam-main" tabindex="-1" aria-busy="true">
+      <section class="boot-card" aria-labelledby="boot-title">
+        <p class="eyebrow">Secure exam simulation</p>
+        <h1 id="boot-title">Loading ${escapeHtml(exam.examMetadata.title)}</h1>
+        <p>Please wait while the exam interface is prepared.</p>
+      </section>
+    </main>
+  </div>
+  <noscript>
+    <div class="noscript">JavaScript is required for this interactive exam simulation.</div>
+  </noscript>
+  <script id="exam-definition" type="application/json"${attribute("nonce", nonce)}>${safeSerializeForHtml(exam)}</script>
+  <script id="exam-runtime-config" type="application/json"${attribute("nonce", nonce)}>${safeSerializeForHtml(runtime)}</script>
+  ${assets.scripts}
+</body>
+</html>`;
+}
+
+export class ExamSimulatorHtmlGenerator {
+  static readonly schemaVersion = EXAM_SIMULATOR_SCHEMA_VERSION;
+  static readonly runtimeVersion = EXAM_SIMULATOR_RUNTIME_VERSION;
+
+  generate(
+    input: ExamAuthoringPackage | ExamDefinition | UnknownRecord,
+    options: ExamSimulatorGeneratorOptions = {},
+  ): string {
+    return generateExamSimulatorHtml(input, options);
+  }
+
+  validate(input: ExamAuthoringPackage | ExamDefinition | UnknownRecord): ValidationIssue[] {
+    return validateExamDefinition(input);
+  }
+}
+
+export default generateExamSimulatorHtml;
+
+const SELF_CONTAINED_STYLES = String.raw`
+:root {
+  color-scheme: light;
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --surface-strong: #e2e8f0;
+  --text: #0f172a;
+  --muted: #475569;
+  --line: #cbd5e1;
+  --line-strong: #94a3b8;
+  --primary: #0f4c81;
+  --primary-hover: #0b3b66;
+  --primary-soft: #e0f2fe;
+  --success: #166534;
+  --success-soft: #dcfce7;
+  --warning: #92400e;
+  --warning-soft: #fef3c7;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --focus: #0284c7;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .08), 0 8px 24px rgba(15, 23, 42, .06);
+  --radius: .75rem;
+  --header-height: 4.5rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  background: var(--bg);
+  color: var(--text);
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); }
+button, input, textarea, select { font: inherit; }
+button, input[type="radio"], input[type="checkbox"], select { cursor: pointer; }
+button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: .58; }
+button, .choice, input, textarea, select { min-height: 44px; }
+button { border: 0; }
+input, textarea, select {
+  width: 100%; border: 1px solid var(--line-strong); border-radius: .6rem; background: #fff;
+  color: var(--text); padding: .7rem .8rem;
+}
+textarea { min-height: 10rem; resize: vertical; line-height: 1.65; }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus) 68%, transparent); outline-offset: 2px;
+}
+h1, h2, h3, h4 { margin: 0; line-height: 1.2; letter-spacing: -.015em; }
+p { line-height: 1.65; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.skip-link { position: fixed; z-index: 10000; top: .5rem; left: .5rem; transform: translateY(-150%); background: var(--text); color: #fff; padding: .75rem 1rem; border-radius: .5rem; }
+.skip-link:focus { transform: translateY(0); }
+.boot-card, .center-card { width: min(46rem, calc(100% - 2rem)); margin: clamp(2rem, 10vh, 7rem) auto; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); padding: clamp(1.25rem, 4vw, 2.5rem); }
+.eyebrow { margin: 0 0 .5rem; color: var(--primary); font-size: .78rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.muted { color: var(--muted); }
+.small { font-size: .875rem; }
+.stack { display: grid; gap: 1rem; }
+.stack-sm { display: grid; gap: .55rem; }
+.row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .7rem 1rem; border-radius: .58rem; background: var(--surface-strong); color: var(--text); font-weight: 750; border: 1px solid transparent; transition: background .16s ease, transform .16s ease; }
+.btn:hover:not(:disabled) { background: #cbd5e1; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-ghost { background: transparent; border-color: var(--line); }
+.btn-soft { background: var(--primary-soft); color: #0c4a6e; }
+.btn-small { min-height: 36px; padding: .45rem .65rem; font-size: .875rem; }
+.notice { border: 1px solid var(--line); border-left: 4px solid var(--primary); border-radius: .6rem; background: var(--surface-soft); padding: .9rem 1rem; }
+.notice-warning { background: var(--warning-soft); border-left-color: var(--warning); }
+.notice-danger { background: var(--danger-soft); border-left-color: var(--danger); }
+.check-row { display: grid; grid-template-columns: 1.25rem 1fr; gap: .7rem; align-items: start; }
+.check-row input { width: 1.15rem; min-height: 1.15rem; margin-top: .28rem; }
+.exam-header { position: sticky; top: 0; z-index: 40; min-height: var(--header-height); display: grid; grid-template-columns: minmax(12rem, 1fr) auto auto; align-items: center; gap: 1rem; padding: .65rem max(1rem, calc((100vw - 80rem) / 2)); background: rgba(255,255,255,.97); border-bottom: 1px solid var(--line); box-shadow: 0 2px 12px rgba(15,23,42,.05); }
+.header-title { min-width: 0; }
+.header-title strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.header-title span { color: var(--muted); font-size: .82rem; }
+.timer { min-width: 8.7rem; text-align: center; border: 1px solid var(--line); border-radius: .6rem; padding: .38rem .75rem; background: var(--surface-soft); }
+.timer-label { display: block; font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-weight: 800; }
+.timer-value { font-variant-numeric: tabular-nums; font-size: 1.18rem; font-weight: 850; }
+.timer.is-warning { background: var(--warning-soft); border-color: #f59e0b; color: var(--warning); }
+.timer.is-critical { background: var(--danger-soft); border-color: #ef4444; color: var(--danger); }
+.progress-track { height: .38rem; background: var(--surface-strong); overflow: hidden; }
+.progress-bar { height: 100%; width: 0; background: var(--primary); transition: width .25s linear; }
+.exam-layout { width: 100%; max-width: 80rem; margin: 0 auto; display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); gap: 1rem; padding: 1rem; min-height: calc(100vh - var(--header-height) - 4rem); }
+.navigator { align-self: start; position: sticky; top: calc(var(--header-height) + 1rem); max-height: calc(100vh - var(--header-height) - 2rem); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; }
+.nav-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: .8rem; }
+.nav-section + .nav-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.nav-section h3 { font-size: .85rem; margin-bottom: .6rem; }
+.nav-grid { display: grid; grid-template-columns: repeat(5, minmax(2.35rem, 1fr)); gap: .35rem; }
+.nav-item { position: relative; min-height: 2.5rem; border-radius: .45rem; background: var(--surface-soft); border: 1px solid var(--line); font-size: .82rem; font-weight: 800; }
+.nav-item.is-current { background: var(--primary); color: #fff; border-color: var(--primary); }
+.nav-item.is-answered:not(.is-current)::after { content: ""; position: absolute; width: .45rem; height: .45rem; right: .22rem; top: .22rem; border-radius: 50%; background: var(--success); }
+.nav-item.is-flagged { box-shadow: inset 0 -3px #f59e0b; }
+.exam-content { min-width: 0; }
+.task-card, .passage-panel, .question-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.task-card { padding: clamp(1rem, 2.5vw, 1.6rem); }
+.split-task { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(23rem, .95fr); gap: 1rem; align-items: start; }
+.passage-panel { position: sticky; top: calc(var(--header-height) + 1rem); max-height: calc(100vh - var(--header-height) - 5.2rem); display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; overflow: hidden; }
+.panel-head { padding: 1rem 1.1rem .75rem; border-bottom: 1px solid var(--line); }
+.annotation-tools { display: flex; flex-wrap: wrap; gap: .4rem; padding: .6rem 1rem; border-bottom: 1px solid var(--line); background: var(--surface-soft); }
+.color-dot { width: .85rem; height: .85rem; border-radius: 50%; border: 1px solid rgba(15,23,42,.2); margin-right: .38rem; }
+.passage-scroll { overflow: auto; padding: 1.15rem 1.25rem; line-height: 1.78; white-space: pre-line; user-select: text; }
+.passage-scroll mark { color: inherit; border-radius: .18rem; padding: .03rem 0; }
+mark.hl-yellow { background: #fde68a; }
+mark.hl-green { background: #bbf7d0; }
+mark.hl-pink { background: #fbcfe8; }
+.annotation-list { max-height: 9rem; overflow: auto; border-top: 1px solid var(--line); padding: .6rem 1rem; font-size: .82rem; }
+.annotation-item { display: grid; grid-template-columns: 1fr auto; gap: .5rem; padding: .45rem 0; }
+.question-panel { padding: clamp(1rem, 2.5vw, 1.6rem); }
+.question-number { font-size: .78rem; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: .07em; }
+.question-prompt { font-size: clamp(1.1rem, 2vw, 1.35rem); margin-top: .6rem; line-height: 1.45; }
+.instructions { color: var(--muted); border-left: 3px solid var(--line-strong); padding-left: .8rem; margin: .75rem 0; }
+.response-area { margin-top: 1.15rem; }
+.choice-list { display: grid; gap: .65rem; }
+.choice { display: grid; grid-template-columns: 1.25rem 1fr; align-items: start; gap: .75rem; border: 1px solid var(--line); border-radius: .65rem; padding: .85rem .9rem; background: #fff; }
+.choice:hover { background: var(--surface-soft); border-color: var(--line-strong); }
+.choice.is-selected { background: var(--primary-soft); border-color: #38bdf8; }
+.choice input { width: 1.15rem; min-height: 1.15rem; margin: .2rem 0 0; }
+.token-selection { display: flex; flex-wrap: wrap; gap: .35rem; align-items: baseline; padding: .85rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface-soft); line-height: 1.8; }
+.token-button { min-height: 36px; padding: .25rem .38rem; border-radius: .35rem; background: #fff; color: var(--text); border: 1px solid transparent; font-weight: 600; }
+.token-button:hover { border-color: var(--line-strong); }
+.token-button.is-selected { background: #fde68a; border-color: #d97706; color: #451a03; }
+.field-label { display: block; font-weight: 750; margin-bottom: .4rem; }
+.field-help { display: block; color: var(--muted); font-size: .82rem; margin-top: .4rem; }
+.gap-grid { display: grid; gap: .75rem; }
+.editor-meta { display: flex; justify-content: space-between; gap: 1rem; margin-top: .4rem; color: var(--muted); font-size: .82rem; }
+.word-progress { width: 100%; height: .35rem; margin-top: .45rem; border-radius: 2rem; background: var(--surface-strong); overflow: hidden; }
+.word-progress > span { display: block; height: 100%; background: var(--primary); }
+.order-list { display: grid; gap: .55rem; list-style: none; padding: 0; }
+.order-item { display: grid; grid-template-columns: 2.25rem minmax(0,1fr) auto; align-items: center; gap: .65rem; min-height: 3.4rem; padding: .55rem .65rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--surface-soft); }
+.order-index { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--surface-strong); font-weight: 850; }
+.order-actions { display: flex; gap: .25rem; }
+.audio-card, .recorder-card, .visual-card, .formula-card { border: 1px solid var(--line); border-radius: .7rem; background: var(--surface-soft); padding: .9rem; margin-top: 1rem; }
+.audio-progress { height: .45rem; background: var(--surface-strong); border-radius: 1rem; overflow: hidden; }
+.audio-progress > span { display: block; width: 0; height: 100%; background: var(--primary); }
+.transcript { max-height: 13rem; overflow: auto; border-top: 1px solid var(--line); margin-top: .8rem; padding-top: .6rem; }
+.transcript-line { padding: .45rem .55rem; border-radius: .45rem; }
+.transcript-line.is-active { background: var(--primary-soft); }
+.speaker { display: block; color: var(--primary); font-size: .75rem; font-weight: 850; text-transform: uppercase; }
+.recorder-status { display: inline-flex; align-items: center; gap: .5rem; font-weight: 800; }
+.record-dot { width: .7rem; height: .7rem; border-radius: 50%; background: var(--line-strong); }
+.is-recording .record-dot { background: #dc2626; animation: pulse 1s infinite; }
+.wave-canvas { display: block; width: 100%; height: 5rem; margin: .75rem 0; background: #0f172a; border-radius: .55rem; }
+.visual-card pre { max-width: 100%; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+.visual-grid { display: grid; gap: .55rem; width: 100%; }
+.visual-cell { min-height: 5rem; display: grid; place-items: center; border: 1px solid var(--line); border-radius: .55rem; background: #fff; padding: .35rem; overflow: hidden; }
+.visual-cell svg { width: 100%; max-width: 8rem; height: 5.5rem; }
+.visual-symbol { font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 800; text-align: center; }
+.formula-card code { display: block; overflow-x: auto; font-size: 1.1rem; padding: .4rem; }
+.task-footer { position: sticky; bottom: 0; z-index: 30; margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .7rem; background: rgba(248,250,252,.96); border: 1px solid var(--line); border-radius: .75rem; box-shadow: 0 -4px 18px rgba(15,23,42,.06); }
+.status-pill { display: inline-flex; align-items: center; min-height: 1.8rem; padding: .2rem .55rem; border-radius: 2rem; background: var(--surface-strong); color: var(--muted); font-size: .78rem; font-weight: 750; }
+.status-pill.is-saved { background: var(--success-soft); color: var(--success); }
+.review-list { display: grid; gap: .55rem; margin: 1rem 0; }
+.review-item { display: grid; grid-template-columns: 2.6rem 1fr auto; align-items: center; gap: .75rem; padding: .7rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--surface-soft); }
+.review-state { font-size: .8rem; font-weight: 800; color: var(--danger); }
+.review-state.is-complete { color: var(--success); }
+.focus-overlay, .modal-backdrop { position: fixed; z-index: 1000; inset: 0; display: none; place-items: center; background: rgba(2,6,23,.94); padding: 1rem; }
+.focus-overlay.is-visible, .modal-backdrop.is-visible { display: grid; }
+.focus-dialog, .modal { width: min(36rem, 100%); background: var(--surface); color: var(--text); border-radius: 1rem; padding: clamp(1.2rem, 4vw, 2rem); box-shadow: var(--shadow); }
+.focus-dialog { border-top: .55rem solid var(--danger); }
+.toast-region { position: fixed; z-index: 1100; right: 1rem; bottom: 1rem; width: min(24rem, calc(100% - 2rem)); display: grid; gap: .5rem; pointer-events: none; }
+.toast { background: var(--text); color: #fff; border-radius: .6rem; padding: .75rem .9rem; box-shadow: var(--shadow); }
+.calculator-grid { display: grid; grid-template-columns: repeat(5, minmax(2.5rem, 1fr)); gap: .4rem; }
+.calculator-grid .btn { min-width: 0; }
+.mobile-tabs { display: none; }
+.noscript { margin: 2rem; background: var(--danger-soft); color: var(--danger); border: 1px solid #fecaca; padding: 1rem; }
+.is-protected-selection { user-select: none; }
+.is-protected-selection .passage-scroll { user-select: text; }
+@keyframes pulse { 50% { opacity: .28; transform: scale(.85); } }
+@media (max-width: 900px) {
+  .exam-header { grid-template-columns: minmax(0,1fr) auto; }
+  .exam-header .header-actions { grid-column: 1 / -1; width: 100%; justify-content: flex-end; }
+  .exam-layout { grid-template-columns: 1fr; }
+  .navigator { position: static; max-height: none; }
+  .nav-grid { grid-template-columns: repeat(10, minmax(2.35rem, 1fr)); overflow-x: auto; }
+  .split-task { grid-template-columns: 1fr; }
+  .passage-panel { position: static; max-height: 60vh; }
+  .mobile-tabs { display: flex; gap: .4rem; margin-bottom: .65rem; }
+  .split-task[data-mobile-pane="passage"] .question-panel { display: none; }
+  .split-task[data-mobile-pane="question"] .passage-panel { display: none; }
+}
+@media (max-width: 560px) {
+  :root { --header-height: 6rem; }
+  .exam-header { gap: .5rem; padding: .55rem .75rem; }
+  .timer { min-width: 7rem; }
+  .exam-layout { padding: .65rem; }
+  .navigator { padding: .75rem; }
+  .nav-grid { grid-template-columns: repeat(8, 2.45rem); }
+  .task-card, .question-panel { padding: 1rem; }
+  .task-footer { align-items: stretch; flex-direction: column; }
+  .task-footer .row { width: 100%; }
+  .task-footer .btn { flex: 1; }
+  .order-item { grid-template-columns: 2rem minmax(0,1fr); }
+  .order-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+.is-large-text { font-size: 19px; }
+.is-high-contrast { --bg: #fff; --surface: #fff; --surface-soft: #f4f4f5; --surface-strong: #d4d4d8; --text: #000; --muted: #27272a; --line: #52525b; --line-strong: #18181b; --primary: #003f73; --focus: #005fcc; }
+
+.unscramble-container { display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1rem; }
+.word-pool { display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 4rem; padding: 1rem; border: 2px dashed var(--line); border-radius: 0.75rem; background: var(--surface-soft); align-content: flex-start; }
+.word-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 2.2rem; padding: 0.25rem 0.75rem; border-radius: 2rem; background: #ffffff; color: var(--text); border: 1px solid var(--line); font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03); user-select: none; transition: all 0.15s ease; }
+.word-pill:hover { border-color: var(--line-strong); background: var(--surface-soft); transform: translateY(-1px); }
+.word-pill:active { transform: translateY(1px); }
+.word-pill.is-clicked { opacity: 0.35; pointer-events: none; background: var(--surface-strong); }
+.assembled-box { display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 4.5rem; padding: 1rem; border: 2px solid var(--primary); border-radius: 0.75rem; background: var(--primary-soft); align-content: flex-start; position: relative; }
+.assembled-placeholder { display: grid; place-items: center; position: absolute; inset: 0; pointer-events: none; color: var(--muted); font-size: 0.9rem; text-align: center; }
+.assembled-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.25rem; }
+.active-speaker-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem; background: var(--primary-soft); color: var(--primary); font-size: 0.88rem; font-weight: 700; margin-top: 0.75rem; margin-bottom: 0.25rem; border: 1px solid rgba(56,189,248,0.2); }
+.unscramble-input { width: 100%; min-height: 3.2rem; padding: 0.75rem 0.9rem; font-size: 1.05rem; border: 1px solid var(--line); border-radius: 0.65rem; background: #ffffff; margin-top: 0.5rem; margin-bottom: 0.5rem; font-family: inherit; }
+.unscramble-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+`;
+
+const SELF_CONTAINED_RUNTIME = String.raw`
+(function () {
+  'use strict';
+
+  var exam = readJson('exam-definition');
+  var config = readJson('exam-runtime-config');
+  var app = document.getElementById('exam-app');
+  var main = document.getElementById('exam-main');
+  if (!app || !main || !exam || !config) return;
+
+  var tasks = [];
+  exam.sections.forEach(function (section, sectionIndex) {
+    section.tasks.forEach(function (task, taskIndex) {
+      tasks.push({ section: section, sectionIndex: sectionIndex, task: task, taskIndex: taskIndex });
+    });
+  });
+
+  var state = {
+    phase: 'welcome',
+    consent: !config.telemetry.consentRequired,
+    audioChecked: !exam.examMetadata.requireAudioCheck,
+    microphoneChecked: !exam.examMetadata.requireMicrophoneCheck,
+    current: 0,
+    answers: {},
+    orderDrafts: {},
+    flags: {},
+    notes: {},
+    warnings: 0,
+    annotations: {},
+    audioPlays: {},
+    recordings: {},
+    recordingUrls: {},
+    telemetry: {},
+    audit: [],
+    focusIncidents: [],
+    activeFocusIncident: null,
+    warningPending: false,
+    suppressFocusUntil: 0,
+    locked: false,
+    submitted: false,
+    submitting: false,
+    lastSaveAt: 0,
+    lastActivityMono: performance.now(),
+    idleStartedMono: null,
+    pointerLastMono: 0,
+    timer: {
+      running: false,
+      startedMono: null,
+      accumulatedMs: 0,
+      totalMs: exam.examMetadata.totalDurationMinutes * 60000,
+      lastWholeSecond: null
+    },
+    taskEnteredMono: null,
+    taskEnteredWall: null,
+    mobilePane: 'question',
+    annotationSelection: null,
+    wakeLock: null,
+    submitError: null
+  };
+
+  var memStorage = {};
+
+  var liveRegion = el('div', 'sr-only');
+  liveRegion.setAttribute('aria-live', 'polite');
+  liveRegion.setAttribute('aria-atomic', 'true');
+  document.body.appendChild(liveRegion);
+
+  var toastRegion = el('div', 'toast-region');
+  toastRegion.setAttribute('aria-live', 'polite');
+  document.body.appendChild(toastRegion);
+
+  var focusOverlay = buildFocusOverlay();
+  document.body.appendChild(focusOverlay);
+
+  var autosaveTimer = null;
+  var uiTimer = null;
+  var idleTimer = null;
+  var recorderRuntime = null;
+  var audioRuntime = null;
+
+  restoreSession();
+
+  if (window.speechSynthesis) {
+    var handleVoicesChanged = function () {
+      if (tasks.length) {
+        tasks.forEach(function (t) {
+          if (t.task.audio && t.task.audio.segments) {
+            assignSpeakerVoices(t.task.audio.segments, config.locale || 'en-US');
+          }
+        });
+      }
+    };
+    if (window.speechSynthesis.addEventListener) {
+      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+    }
+    window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
+  }
+  installGlobalListeners();
+  if (state.phase === 'active' || state.phase === 'review') {
+    startClock();
+    startBackgroundLoops();
+  }
+  render();
+  if (state.phase === 'active') startTaskTiming();
+
+  function readJson(id) {
+    var node = document.getElementById(id);
+    if (!node) return null;
+    try { return JSON.parse(node.textContent || '{}'); }
+    catch (_error) { return null; }
+  }
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+  }
+
+  function button(label, className, handler) {
+    var node = el('button', 'btn ' + (className || ''), label);
+    node.type = 'button';
+    node.addEventListener('click', handler);
+    return node;
+  }
+
+  function announce(message) {
+    liveRegion.textContent = '';
+    window.setTimeout(function () { liveRegion.textContent = message; }, 20);
+  }
+
+  function toast(message) {
+    var node = el('div', 'toast', message);
+    toastRegion.appendChild(node);
+    window.setTimeout(function () { node.remove(); }, 3400);
+  }
+
+  function nowWall() { return Date.now(); }
+  function nowMono() { return performance.now(); }
+
+  function audit(type, data) {
+    if (!config.telemetry.enabled) return;
+    state.audit.push({
+      sequence: state.audit.length + 1,
+      type: type,
+      wallTime: nowWall(),
+      monotonicOffsetMs: Math.round(nowMono()),
+      taskId: currentTask() ? currentTask().task.taskId : null,
+      data: data || null
+    });
+    if (state.audit.length > config.telemetry.maxAuditEvents) {
+      state.audit.splice(0, state.audit.length - config.telemetry.maxAuditEvents);
+    }
+  }
+
+  function ensureTelemetry(taskId) {
+    if (!state.telemetry[taskId]) {
+      state.telemetry[taskId] = {
+        questionId: taskId,
+        timeStarted: null,
+        timeFirstInteraction: null,
+        timeSubmitted: null,
+        totalTimeSpentMs: 0,
+        keystrokeCount: 0,
+        backspaceCount: 0,
+        deleteCount: 0,
+        idleTimeMs: 0,
+        focusLossCount: 0,
+        averageInterKeyIntervalMs: 0,
+        longestTypingPauseMs: 0,
+        hoverHeatmapPoints: [],
+        _lastKeyMono: null,
+        _interKeyTotal: 0,
+        _interKeyCount: 0
+      };
+    }
+    return state.telemetry[taskId];
+  }
+
+  function currentTask() { return tasks[state.current] || null; }
+
+  function markInteraction(type) {
+    var item = currentTask();
+    if (!item) return;
+    var metric = ensureTelemetry(item.task.taskId);
+    if (!metric.timeFirstInteraction) metric.timeFirstInteraction = nowWall();
+    state.lastActivityMono = nowMono();
+    if (state.idleStartedMono !== null) endIdle();
+    audit(type || 'interaction');
+  }
+
+  function startTaskTiming() {
+    var item = currentTask();
+    if (!item) return;
+    var metric = ensureTelemetry(item.task.taskId);
+    if (!metric.timeStarted) metric.timeStarted = nowWall();
+    state.taskEnteredMono = nowMono();
+    state.taskEnteredWall = nowWall();
+    audit('task_viewed', { index: state.current });
+  }
+
+  function endTaskTiming() {
+    var item = currentTask();
+    if (!item || state.taskEnteredMono === null) return;
+    var metric = ensureTelemetry(item.task.taskId);
+    metric.totalTimeSpentMs += Math.max(0, Math.round(nowMono() - state.taskEnteredMono));
+    state.taskEnteredMono = null;
+    state.taskEnteredWall = null;
+  }
+
+  function answered(taskId) {
+    var value = state.answers[taskId];
+    if (Array.isArray(value)) return value.length > 0 && value.some(function (entry) { return String(entry).trim().length > 0; });
+    if (value && typeof value === 'object') return Object.keys(value).some(function (key) { return String(value[key] || '').trim().length > 0; });
+    return value !== undefined && value !== null && String(value).trim().length > 0;
+  }
+
+  function allRequiredAnswered() {
+    return tasks.every(function (entry) { return !entry.task.required || answered(entry.task.taskId); });
+  }
+
+  function setAnswer(taskId, value) {
+    state.answers[taskId] = value;
+    markInteraction('answer_changed');
+    scheduleSave();
+    updateNavStates();
+  }
+
+  function storageKey() {
+    return config.storageNamespace + ':' + exam.examMetadata.examId + ':' + config.sessionId;
+  }
+
+  function serializableState() {
+    return {
+      schemaVersion: exam.schemaVersion,
+      examId: exam.examMetadata.examId,
+      sessionId: config.sessionId,
+      phase: state.phase === 'active' || state.phase === 'review' ? state.phase : 'welcome',
+      current: state.current,
+      consent: state.consent,
+      audioChecked: state.audioChecked,
+      microphoneChecked: state.microphoneChecked,
+      answers: state.answers,
+      flags: state.flags,
+      annotations: state.annotations,
+      audioPlays: state.audioPlays,
+      telemetry: state.telemetry,
+      audit: state.audit,
+      focusIncidents: state.focusIncidents,
+      timer: {
+        accumulatedMs: elapsedMs(),
+        totalMs: state.timer.totalMs
+      },
+      savedAt: nowWall()
+    };
+  }
+
+  function saveSession(showToast) {
+    if (!config.featureFlags.autosave) return;
+    var stateData = JSON.stringify(serializableState());
+    var key = storageKey();
+    var savedLocally = false;
+    try {
+      localStorage.setItem(key, stateData);
+      savedLocally = true;
+    } catch (_error) {
+      memStorage[key] = stateData;
+    }
+    state.lastSaveAt = nowWall();
+    var pill = document.getElementById('save-status');
+    if (pill) {
+      pill.textContent = savedLocally ? 'Saved' : 'Session Saved';
+      pill.classList.add('is-saved');
+    }
+    if (showToast) {
+      if (savedLocally) {
+        toast('Progress saved on this device.');
+      } else {
+        toast('Progress saved in session memory.');
+      }
+    }
+  }
+
+  function scheduleSave() {
+    var pill = document.getElementById('save-status');
+    if (pill) {
+      pill.textContent = 'Saving…';
+      pill.classList.remove('is-saved');
+    }
+    window.clearTimeout(state._saveDebounce);
+    state._saveDebounce = window.setTimeout(function () { saveSession(false); }, 450);
+  }
+
+  function restoreSession() {
+    if (!config.featureFlags.autosave) return;
+    try {
+      var key = storageKey();
+      var raw = null;
+      try {
+        raw = localStorage.getItem(key);
+      } catch (e) {}
+      if (!raw) {
+        raw = memStorage[key];
+      }
+      if (!raw) return;
+      var saved = JSON.parse(raw);
+      if (saved.examId !== exam.examMetadata.examId || saved.sessionId !== config.sessionId || saved.schemaVersion !== exam.schemaVersion) return;
+      state.current = Math.max(0, Math.min(tasks.length - 1, Number(saved.current) || 0));
+      state.consent = Boolean(saved.consent);
+      state.audioChecked = Boolean(saved.audioChecked);
+      state.microphoneChecked = Boolean(saved.microphoneChecked);
+      state.answers = saved.answers || {};
+      state.flags = saved.flags || {};
+      state.annotations = saved.annotations || {};
+      state.audioPlays = saved.audioPlays || {};
+      state.telemetry = saved.telemetry || {};
+      state.audit = Array.isArray(saved.audit) ? saved.audit : [];
+      state.focusIncidents = Array.isArray(saved.focusIncidents) ? saved.focusIncidents : [];
+      if (saved.timer && Number.isFinite(saved.timer.accumulatedMs)) {
+        state.timer.accumulatedMs = saved.timer.accumulatedMs;
+      }
+      if (saved.phase === 'active' || saved.phase === 'review') state.phase = saved.phase;
+    } catch (_error) {
+      try { localStorage.removeItem(storageKey()); } catch (_ignored) {}
+    }
+  }
+
+  function clearSavedSession() {
+    var key = storageKey();
+    try { localStorage.removeItem(key); } catch (_error) {}
+    delete memStorage[key];
+  }
+
+  function startClock() {
+    if (state.timer.running || state.submitted || state.locked) return;
+    state.timer.running = true;
+    state.timer.startedMono = nowMono();
+  }
+
+  function pauseClock(reason) {
+    if (!state.timer.running) return;
+    state.timer.accumulatedMs = elapsedMs();
+    state.timer.running = false;
+    state.timer.startedMono = null;
+    audit('timer_paused', { reason: reason });
+  }
+
+  function elapsedMs() {
+    if (!state.timer.running || state.timer.startedMono === null) return state.timer.accumulatedMs;
+    return state.timer.accumulatedMs + Math.max(0, nowMono() - state.timer.startedMono);
+  }
+
+  function remainingMs() { return Math.max(0, state.timer.totalMs - elapsedMs()); }
+
+  function formatTime(ms) {
+    var seconds = Math.max(0, Math.ceil(ms / 1000));
+    var hours = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds % 3600) / 60);
+    var remainder = seconds % 60;
+    return (hours ? String(hours).padStart(2, '0') + ':' : '') + String(minutes).padStart(2, '0') + ':' + String(remainder).padStart(2, '0');
+  }
+
+  function tick() {
+    if (state.phase !== 'active' && state.phase !== 'review') return;
+    var remaining = remainingMs();
+    var whole = Math.ceil(remaining / 1000);
+    var timerNode = document.getElementById('timer-value');
+    var timerBox = document.getElementById('timer-box');
+    var progress = document.getElementById('overall-progress');
+    if (timerNode) timerNode.textContent = formatTime(remaining);
+    if (progress) progress.style.width = Math.min(100, elapsedMs() / state.timer.totalMs * 100) + '%';
+    if (timerBox) {
+      timerBox.classList.toggle('is-warning', remaining <= 10 * 60000 && remaining > 2 * 60000);
+      timerBox.classList.toggle('is-critical', remaining <= 2 * 60000);
+    }
+    if (state.timer.lastWholeSecond !== whole) {
+      state.timer.lastWholeSecond = whole;
+      if (whole === 600) announce('Ten minutes remaining.');
+      if (whole === 300) announce('Five minutes remaining.');
+      if (whole === 60) announce('One minute remaining.');
+    }
+    if (remaining <= 0 && !state.submitting && !state.submitted) {
+      pauseClock('expired');
+      submitExam('timer_expired', true);
+    }
+  }
+
+  function startBackgroundLoops() {
+    window.clearInterval(uiTimer);
+    window.clearInterval(idleTimer);
+    window.clearInterval(autosaveTimer);
+    uiTimer = window.setInterval(tick, 250);
+    idleTimer = window.setInterval(checkIdle, 1000);
+    if (config.featureFlags.autosave) {
+      autosaveTimer = window.setInterval(function () { saveSession(false); }, config.autosaveIntervalMs);
+    }
+  }
+
+  function stopBackgroundLoops() {
+    window.clearInterval(uiTimer);
+    window.clearInterval(idleTimer);
+    window.clearInterval(autosaveTimer);
+  }
+
+  function checkIdle() {
+    if (state.phase !== 'active') return;
+    var inactiveFor = nowMono() - state.lastActivityMono;
+    if (inactiveFor >= config.telemetry.idleThresholdMs && state.idleStartedMono === null) {
+      state.idleStartedMono = nowMono();
+      audit('idle_started');
+    }
+  }
+
+  function endIdle() {
+    if (state.idleStartedMono === null) return;
+    var item = currentTask();
+    if (item) {
+      ensureTelemetry(item.task.taskId).idleTimeMs += Math.max(0, Math.round(nowMono() - state.idleStartedMono));
+    }
+    state.idleStartedMono = null;
+    audit('idle_ended');
+  }
+
+  function installGlobalListeners() {
+    window.addEventListener('beforeunload', function (event) {
+      if ((state.phase === 'active' || state.phase === 'review') && !state.submitted) {
+        saveSession(false);
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') beginFocusIncident('visibility_hidden');
+      else returnFromFocusIncident('visibility_visible');
+    });
+    window.addEventListener('blur', function () { beginFocusIncident('window_blur'); });
+    window.addEventListener('focus', function () { returnFromFocusIncident('window_focus'); });
+    window.addEventListener('pagehide', function () { beginFocusIncident('pagehide'); });
+    window.addEventListener('pageshow', function () { returnFromFocusIncident('pageshow'); });
+
+    document.addEventListener('keydown', function (event) {
+      if (state.phase !== 'active') return;
+      state.lastActivityMono = nowMono();
+      var item = currentTask();
+      if (item && isTypingTarget(event.target)) {
+        var metric = ensureTelemetry(item.task.taskId);
+        metric.keystrokeCount += 1;
+        if (event.key === 'Backspace') metric.backspaceCount += 1;
+        if (event.key === 'Delete') metric.deleteCount += 1;
+        var stamp = nowMono();
+        if (metric._lastKeyMono !== null) {
+          var interval = Math.max(0, stamp - metric._lastKeyMono);
+          metric._interKeyTotal += interval;
+          metric._interKeyCount += 1;
+          metric.averageInterKeyIntervalMs = Math.round(metric._interKeyTotal / metric._interKeyCount);
+          metric.longestTypingPauseMs = Math.max(metric.longestTypingPauseMs, Math.round(interval));
+        }
+        metric._lastKeyMono = stamp;
+      }
+      if (shouldBlockShortcut(event)) {
+        event.preventDefault();
+        audit('restricted_shortcut_attempt', { key: restrictedShortcutName(event) });
+        toast('That shortcut is disabled in this exam area.');
+      }
+    }, true);
+
+    ['copy', 'cut', 'paste'].forEach(function (type) {
+      document.addEventListener(type, function (event) {
+        if (!shouldProtectTarget(event.target) || config.accessibility.allowClipboard || !config.proctoring.preventClipboardActions) return;
+        event.preventDefault();
+        audit('clipboard_attempt', { action: type });
+        toast('Clipboard actions are disabled in this exam area.');
+      }, true);
+    });
+
+    document.addEventListener('contextmenu', function (event) {
+      if (!shouldProtectTarget(event.target) || !config.proctoring.preventContextMenu) return;
+      event.preventDefault();
+      audit('contextmenu_attempt');
+    }, true);
+
+    document.addEventListener('pointermove', samplePointer, { passive: true });
+    document.addEventListener('pointerdown', function () { state.lastActivityMono = nowMono(); }, { passive: true });
+  }
+
+  function isTypingTarget(target) {
+    return target && (target.matches('input, textarea, [contenteditable="true"]'));
+  }
+
+  function shouldProtectTarget(target) {
+    return state.phase === 'active' && target && app.contains(target);
+  }
+
+  function shouldBlockShortcut(event) {
+    if (!shouldProtectTarget(event.target)) return false;
+    var key = String(event.key || '').toLowerCase();
+    if (key === 'f12') return config.proctoring.preventClipboardActions;
+    if (!(event.ctrlKey || event.metaKey)) return false;
+    if (config.accessibility.allowClipboard) return false;
+    if (['c', 'v', 'x'].indexOf(key) >= 0) return config.proctoring.preventClipboardActions;
+    if (key === 'i' && event.shiftKey) return config.proctoring.preventClipboardActions;
+    return false;
+  }
+
+  function restrictedShortcutName(event) {
+    var bits = [];
+    if (event.ctrlKey) bits.push('Ctrl');
+    if (event.metaKey) bits.push('Meta');
+    if (event.shiftKey) bits.push('Shift');
+    bits.push(event.key);
+    return bits.join('+');
+  }
+
+  function samplePointer(event) {
+    if (!config.telemetry.enabled || state.phase !== 'active') return;
+    var stamp = nowMono();
+    if (stamp - state.pointerLastMono < config.telemetry.pointerSampleIntervalMs) return;
+    state.pointerLastMono = stamp;
+    var item = currentTask();
+    var surface = document.querySelector('[data-task-surface]');
+    if (!item || !surface) return;
+    var metric = ensureTelemetry(item.task.taskId);
+    if (metric.hoverHeatmapPoints.length >= config.telemetry.maxPointerPointsPerTask) return;
+    var rect = surface.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return;
+    metric.hoverHeatmapPoints.push({
+      x: Number(Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)).toFixed(4)),
+      y: Number(Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)).toFixed(4)),
+      t: Math.round(elapsedMs())
+    });
+  }
+
+  function focusSuppressed() { return nowMono() < state.suppressFocusUntil; }
+
+  function suppressFocusFor(ms, reason) {
+    state.suppressFocusUntil = Math.max(state.suppressFocusUntil, nowMono() + ms);
+    audit('controlled_focus_suppression', { reason: reason, durationMs: ms });
+  }
+
+  function beginFocusIncident(source) {
+    if (!config.proctoring.enabled || !config.proctoring.preventFocusLoss || state.phase !== 'active' || focusSuppressed()) return;
+    if (!state.activeFocusIncident) {
+      state.activeFocusIncident = {
+        id: 'focus_' + (state.focusIncidents.length + 1),
+        startWallTime: nowWall(),
+        startMonotonicMs: Math.round(nowMono()),
+        endWallTime: null,
+        endMonotonicMs: null,
+        sources: [source],
+        taskId: currentTask() ? currentTask().task.taskId : null
+      };
+      state.warningPending = true;
+      if (config.proctoring.focusLossBehavior === 'pause') pauseClock('focus_loss');
+      if (config.proctoring.focusLossBehavior === 'lock') lockExam('Focus loss policy');
+      var item = currentTask();
+      if (item) ensureTelemetry(item.task.taskId).focusLossCount += 1;
+      audit('focus_loss_started', { source: source });
+    } else if (state.activeFocusIncident.sources.indexOf(source) < 0) {
+      state.activeFocusIncident.sources.push(source);
+    }
+  }
+
+  function returnFromFocusIncident(source) {
+    if (!state.activeFocusIncident || focusSuppressed()) return;
+    state.activeFocusIncident.endWallTime = nowWall();
+    state.activeFocusIncident.endMonotonicMs = Math.round(nowMono());
+    if (state.activeFocusIncident.sources.indexOf(source) < 0) state.activeFocusIncident.sources.push(source);
+    state.focusIncidents.push(state.activeFocusIncident);
+    state.activeFocusIncident = null;
+    audit('focus_loss_ended', { warningCount: state.focusIncidents.length });
+    if (state.focusIncidents.length >= config.proctoring.maxFocusLossWarnings) {
+      lockExam('Maximum focus-loss warnings reached');
+      return;
+    }
+    showFocusOverlay();
+  }
+
+  function buildFocusOverlay() {
+    var overlay = el('div', 'focus-overlay');
+    overlay.id = 'focus-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'focus-title');
+    var dialog = el('div', 'focus-dialog stack');
+    var eyebrow = el('p', 'eyebrow', 'Proctoring warning');
+    var title = el('h2', '', 'WARNING: Focus Loss Detected');
+    title.id = 'focus-title';
+    var copy = el('p', '', 'This event has been logged for your examiner. Return to the exam only when you are ready to continue.');
+    var count = el('p', 'notice notice-warning');
+    count.id = 'focus-warning-count';
+    var acknowledge = button('Acknowledge and return', 'btn-primary', function () {
+      overlay.classList.remove('is-visible');
+      state.warningPending = false;
+      if (config.proctoring.focusLossBehavior === 'pause' && !state.locked) startClock();
+      var active = document.querySelector('[data-current-task="true"]');
+      if (active) active.focus(); else main.focus();
+      announce('Exam resumed.');
+    });
+    acknowledge.id = 'focus-acknowledge';
+    dialog.append(eyebrow, title, copy, count, acknowledge);
+    overlay.appendChild(dialog);
+    return overlay;
+  }
+
+  function showFocusOverlay() {
+    if (state.locked || state.submitted) return;
+    var count = document.getElementById('focus-warning-count');
+    if (count) count.textContent = 'Warning ' + state.focusIncidents.length + ' of ' + config.proctoring.maxFocusLossWarnings + '.';
+    focusOverlay.classList.add('is-visible');
+    window.setTimeout(function () {
+      var acknowledge = document.getElementById('focus-acknowledge');
+      if (acknowledge) acknowledge.focus();
+    }, 20);
+  }
+
+  function lockExam(reason) {
+    if (state.locked || state.submitted) return;
+    state.locked = true;
+    state.phase = 'locked';
+    pauseClock('locked');
+    endTaskTiming();
+    audit('exam_locked', { reason: reason });
+    render();
+    if (config.proctoring.autoSubmitOnLock) submitExam('policy_lock', true);
+  }
+
+  function render() {
+    cleanupTransientMedia(false);
+    main.setAttribute('aria-busy', 'false');
+    main.replaceChildren();
+    app.classList.toggle('is-protected-selection',
+      state.phase === 'active' && config.proctoring.preventProtectedSelection && !config.accessibility.allowSelection
+    );
+
+    if (state.phase === 'welcome') renderWelcome();
+    else if (state.phase === 'preflight') renderPreflight();
+    else if (state.phase === 'active') renderExam();
+    else if (state.phase === 'review') renderReview();
+    else if (state.phase === 'submitting') renderSubmitting();
+    else if (state.phase === 'submitted') renderSubmitted();
+    else if (state.phase === 'submit_error') renderSubmitError();
+    else if (state.phase === 'locked') renderLocked();
+  }
+
+  function renderWelcome() {
+    stopBackgroundLoops();
+    var card = el('section', 'center-card stack');
+    card.setAttribute('aria-labelledby', 'welcome-title');
+    card.appendChild(el('p', 'eyebrow', 'Independent exam simulation'));
+    var title = el('h1', '', exam.examMetadata.title);
+    title.id = 'welcome-title';
+    card.appendChild(title);
+    card.appendChild(el('p', 'muted', exam.examMetadata.standard));
+
+    var facts = el('div', 'row');
+    facts.appendChild(pill(formatTime(state.timer.totalMs) + ' total time'));
+    facts.appendChild(pill(tasks.length + (tasks.length === 1 ? ' task' : ' tasks')));
+    facts.appendChild(pill(exam.sections.length + (exam.sections.length === 1 ? ' section' : ' sections')));
+    card.appendChild(facts);
+    card.appendChild(el('p', '', exam.examMetadata.instructions));
+
+    if (config.telemetry.enabled || config.proctoring.enabled) {
+      var privacy = el('div', 'notice');
+      privacy.appendChild(el('strong', '', 'Privacy and session telemetry'));
+      privacy.appendChild(el('p', 'small', config.privacyNotice));
+      privacy.appendChild(el('p', 'small muted', 'Policy version ' + config.policyVersion + '. Audio is attached only when a speaking task requires a recording.'));
+      card.appendChild(privacy);
+    }
+
+    if (config.telemetry.consentRequired && config.telemetry.enabled) {
+      var consentLabel = el('label', 'check-row');
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = state.consent;
+      checkbox.addEventListener('change', function () { state.consent = checkbox.checked; });
+      consentLabel.appendChild(checkbox);
+      consentLabel.appendChild(el('span', '', 'I understand the telemetry and media notice and consent to starting this simulation.'));
+      card.appendChild(consentLabel);
+    }
+
+    var start = button('Continue to system check', 'btn-primary', function () {
+      if (config.telemetry.consentRequired && config.telemetry.enabled && !state.consent) {
+        toast('Consent is required before this simulation can start.');
+        return;
+      }
+      audit('consent_confirmed', { policyVersion: config.policyVersion });
+      state.phase = 'preflight';
+      render();
+    });
+    if (!exam.examMetadata.requireAudioCheck && !exam.examMetadata.requireMicrophoneCheck) start.textContent = 'Review readiness';
+    card.appendChild(start);
+    main.appendChild(card);
+    title.focus();
+  }
+
+  function pill(text) { return el('span', 'status-pill', text); }
+
+  function openCalculator() {
+    var overlay = el('div', 'modal-backdrop is-visible');
+    var dialog = el('section', 'modal stack');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'calculator-title');
+    var title = el('h2', '', 'Calculator');
+    title.id = 'calculator-title';
+    var label = el('label', 'field-label', 'Expression');
+    label.htmlFor = 'calculator-expression';
+    var input = document.createElement('input');
+    input.id = label.htmlFor;
+    input.type = 'text';
+    input.inputMode = 'text';
+    input.placeholder = 'Example: sqrt(81) + 3 * 4';
+    var output = el('output', 'notice', 'Result: —');
+    output.setAttribute('for', input.id);
+    var keypad = el('div', 'calculator-grid');
+    ['7','8','9','/','sqrt(','4','5','6','*','(','1','2','3','-',')','0','.','^','+','C'].forEach(function (key) {
+      keypad.appendChild(button(key, 'btn-ghost btn-small', function () {
+        if (key === 'C') input.value = '';
+        else input.value += key;
+        input.focus();
+      }));
+    });
+    var actions = el('div', 'row-between');
+    var close = button('Close', 'btn-ghost', closeDialog);
+    var calculate = button('Calculate', 'btn-primary', function () {
+      try {
+        var value = calculateSafely(input.value);
+        output.textContent = 'Result: ' + String(Number.isInteger(value) ? value : Number(value.toPrecision(12)));
+        audit('calculator_used');
+      } catch (_error) {
+        output.textContent = 'Result: Check the expression.';
+      }
+    });
+    actions.append(close, calculate);
+    dialog.append(title, label, input, keypad, output, actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    function closeDialog() {
+      overlay.remove();
+      var active = document.querySelector('[data-current-task="true"]');
+      if (active) active.focus();
+    }
+    overlay.addEventListener('mousedown', function (event) { if (event.target === overlay) closeDialog(); });
+    overlay.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { event.preventDefault(); closeDialog(); }
+      if (event.key === 'Enter' && event.target === input) { event.preventDefault(); calculate.click(); }
+    });
+    input.focus();
+  }
+
+  function calculateSafely(expression) {
+    var source = String(expression || '').replace(/\s+/g, '');
+    var index = 0;
+    if (!source || source.length > 200) throw new Error('Invalid expression');
+    function peek() { return source[index] || ''; }
+    function consume(value) {
+      if (source.slice(index, index + value.length) !== value) return false;
+      index += value.length;
+      return true;
+    }
+    function parseNumber() {
+      var start = index;
+      while (/[0-9.]/.test(peek())) index += 1;
+      if (start === index) throw new Error('Number expected');
+      var value = Number(source.slice(start, index));
+      if (!Number.isFinite(value)) throw new Error('Invalid number');
+      return value;
+    }
+    function parsePrimary() {
+      if (consume('+')) return parsePrimary();
+      if (consume('-')) return -parsePrimary();
+      if (consume('(')) {
+        var grouped = parseExpression();
+        if (!consume(')')) throw new Error('Missing parenthesis');
+        return grouped;
+      }
+      var names = ['sqrt', 'sin', 'cos', 'tan', 'log', 'abs'];
+      for (var i = 0; i < names.length; i += 1) {
+        if (source.slice(index, index + names[i].length) === names[i]) {
+          index += names[i].length;
+          if (!consume('(')) throw new Error('Missing parenthesis');
+          var argument = parseExpression();
+          if (!consume(')')) throw new Error('Missing parenthesis');
+          if (names[i] === 'sqrt') return Math.sqrt(argument);
+          if (names[i] === 'sin') return Math.sin(argument);
+          if (names[i] === 'cos') return Math.cos(argument);
+          if (names[i] === 'tan') return Math.tan(argument);
+          if (names[i] === 'log') return Math.log10(argument);
+          return Math.abs(argument);
+        }
+      }
+      if (consume('pi')) return Math.PI;
+      if (consume('e')) return Math.E;
+      return parseNumber();
+    }
+    function parsePower() {
+      var left = parsePrimary();
+      if (consume('^')) return Math.pow(left, parsePower());
+      return left;
+    }
+    function parseTerm() {
+      var value = parsePower();
+      while (true) {
+        if (consume('*')) value *= parsePower();
+        else if (consume('/')) value /= parsePower();
+        else break;
+      }
+      return value;
+    }
+    function parseExpression() {
+      var value = parseTerm();
+      while (true) {
+        if (consume('+')) value += parseTerm();
+        else if (consume('-')) value -= parseTerm();
+        else break;
+      }
+      return value;
+    }
+    var result = parseExpression();
+    if (index !== source.length || !Number.isFinite(result)) throw new Error('Invalid result');
+    return result;
+  }
+
+  function renderPreflight() {
+    var card = el('section', 'center-card stack');
+    card.setAttribute('aria-labelledby', 'preflight-title');
+    card.appendChild(el('p', 'eyebrow', 'Before you begin'));
+    var title = el('h1', '', 'System and readiness check');
+    title.id = 'preflight-title';
+    card.appendChild(title);
+    card.appendChild(el('p', '', 'Complete required checks, close unrelated applications, and make sure your connection and power supply are stable.'));
+
+    var checkList = el('div', 'stack');
+    if (exam.examMetadata.requireAudioCheck) checkList.appendChild(buildAudioCheck());
+    if (exam.examMetadata.requireMicrophoneCheck) checkList.appendChild(buildMicrophoneCheck());
+    if (!exam.examMetadata.requireAudioCheck && !exam.examMetadata.requireMicrophoneCheck) {
+      checkList.appendChild(el('div', 'notice', 'No audio or microphone hardware check is required for this form.'));
+    }
+    card.appendChild(checkList);
+
+    var readiness = el('div', 'notice notice-warning');
+    readiness.textContent = config.proctoring.enabled
+      ? 'Focus changes may be logged according to this session policy. Permission prompts opened by this page are not counted as warnings.'
+      : 'This is a practice session. Browser focus telemetry is not enabled.';
+    card.appendChild(readiness);
+
+    var actions = el('div', 'row-between');
+    actions.appendChild(button('Back', 'btn-ghost', function () { state.phase = 'welcome'; render(); }));
+    var begin = button('Start exam', 'btn-primary', function () {
+      if (!state.audioChecked || !state.microphoneChecked) {
+        toast('Complete the required hardware checks first.');
+        return;
+      }
+      beginExam();
+    });
+    begin.id = 'begin-exam';
+    begin.disabled = !state.audioChecked || !state.microphoneChecked;
+    actions.appendChild(begin);
+    card.appendChild(actions);
+    main.appendChild(card);
+    title.focus();
+  }
+
+  function buildAudioCheck() {
+    var box = el('div', 'task-card stack-sm');
+    box.appendChild(el('h2', '', 'Headset and audio'));
+    box.appendChild(el('p', 'small muted', 'Play the calibration tone and confirm that it is clear and comfortable.'));
+    var status = el('span', 'status-pill' + (state.audioChecked ? ' is-saved' : ''), state.audioChecked ? 'Passed' : 'Not checked');
+    status.id = 'audio-check-status';
+    var play = button('Play calibration tone', 'btn-soft', function () {
+      playCalibrationTone().then(function () {
+        toast('Calibration tone completed.');
+      }).catch(function () {
+        toast('The audio check could not play. Check browser audio permissions.');
+      });
+    });
+    var confirm = button('I can hear it clearly', 'btn', function () {
+      state.audioChecked = true;
+      status.textContent = 'Passed';
+      status.classList.add('is-saved');
+      updateBeginAvailability();
+      scheduleSave();
+    });
+    box.appendChild(el('div', 'row')).append(play, confirm, status);
+    return box;
+  }
+
+  function playCalibrationTone() {
+    return new Promise(function (resolve, reject) {
+      try {
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) throw new Error('AudioContext unsupported');
+        var context = new AudioContextClass();
+        var oscillator = context.createOscillator();
+        var gain = context.createGain();
+        oscillator.frequency.value = 440;
+        gain.gain.setValueAtTime(0.0001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.72);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.75);
+        oscillator.onended = function () { context.close(); resolve(); };
+      } catch (error) { reject(error); }
+    });
+  }
+
+  function buildMicrophoneCheck() {
+    var box = el('div', 'task-card stack-sm');
+    box.appendChild(el('h2', '', 'Microphone'));
+    box.appendChild(el('p', 'small muted', 'Speak normally and confirm that the input meter responds. No check audio is stored.'));
+    var meter = document.createElement('progress');
+    meter.max = 100;
+    meter.value = 0;
+    meter.setAttribute('aria-label', 'Microphone input level');
+    meter.style.width = '100%';
+    var status = el('span', 'status-pill' + (state.microphoneChecked ? ' is-saved' : ''), state.microphoneChecked ? 'Passed' : 'Not checked');
+    status.id = 'microphone-check-status';
+    var test = button('Test microphone', 'btn-soft', function () {
+      suppressFocusFor(6000, 'microphone_permission');
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        var context = new AudioContextClass();
+        var source = context.createMediaStreamSource(stream);
+        var analyser = context.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        var values = new Uint8Array(analyser.frequencyBinCount);
+        var highest = 0;
+        var started = nowMono();
+        function frame() {
+          analyser.getByteFrequencyData(values);
+          var sum = 0;
+          for (var i = 0; i < values.length; i += 1) sum += values[i];
+          var level = Math.min(100, Math.round(sum / values.length * 1.6));
+          highest = Math.max(highest, level);
+          meter.value = level;
+          if (nowMono() - started < 3500) requestAnimationFrame(frame);
+          else {
+            stream.getTracks().forEach(function (track) { track.stop(); });
+            context.close();
+            state.microphoneChecked = highest >= 2;
+            status.textContent = state.microphoneChecked ? 'Passed' : 'No signal detected';
+            status.classList.toggle('is-saved', state.microphoneChecked);
+            updateBeginAvailability();
+            scheduleSave();
+          }
+        }
+        frame();
+      }).catch(function () {
+        status.textContent = 'Permission denied or unavailable';
+        toast('Microphone access is required for speaking tasks.');
+      });
+    });
+    box.append(test, meter, status);
+    return box;
+  }
+
+  function updateBeginAvailability() {
+    var begin = document.getElementById('begin-exam');
+    if (begin) begin.disabled = !state.audioChecked || !state.microphoneChecked;
+  }
+
+  function beginExam() {
+    state.phase = 'active';
+    state.current = Math.max(0, Math.min(state.current, tasks.length - 1));
+    state.lastActivityMono = nowMono();
+    audit('exam_started', { policyVersion: config.policyVersion });
+    startClock();
+    startBackgroundLoops();
+    requestWakeLock();
+    render();
+    startTaskTiming();
+  }
+
+  function requestWakeLock() {
+    if (!navigator.wakeLock || !navigator.wakeLock.request) return;
+    navigator.wakeLock.request('screen').then(function (lock) { state.wakeLock = lock; }).catch(function () {});
+  }
+
+  function releaseWakeLock() {
+    if (state.wakeLock && state.wakeLock.release) state.wakeLock.release().catch(function () {});
+    state.wakeLock = null;
+  }
+
+  function renderHeader() {
+    var item = currentTask();
+    var header = el('header', 'exam-header');
+    var title = el('div', 'header-title');
+    title.appendChild(el('strong', '', exam.examMetadata.title));
+    title.appendChild(el('span', '', item ? item.section.sectionTitle : 'Review'));
+    var timer = el('div', 'timer');
+    timer.id = 'timer-box';
+    timer.appendChild(el('span', 'timer-label', 'Time remaining'));
+    var value = el('span', 'timer-value', formatTime(remainingMs()));
+    value.id = 'timer-value';
+    timer.appendChild(value);
+    var actions = el('div', 'row header-actions');
+    var save = el('span', 'status-pill is-saved', state.lastSaveAt ? 'Saved' : 'Autosave ready');
+    save.id = 'save-status';
+    actions.appendChild(save);
+    if (config.featureFlags.calculator) {
+      actions.appendChild(button('Calculator', 'btn-ghost btn-small', openCalculator));
+    }
+    if (config.featureFlags.review) {
+      actions.appendChild(button('Review', 'btn-ghost btn-small', function () { openReview(); }));
+    }
+    actions.appendChild(button('Finish', 'btn-primary btn-small', function () { openReview(); }));
+    header.append(title, timer, actions);
+    return header;
+  }
+
+  function renderExam() {
+    startBackgroundLoops();
+    var item = currentTask();
+    if (!item) { openReview(); return; }
+    main.appendChild(renderHeader());
+    var progressTrack = el('div', 'progress-track');
+    var progress = el('div', 'progress-bar');
+    progress.id = 'overall-progress';
+    progress.style.width = Math.min(100, elapsedMs() / state.timer.totalMs * 100) + '%';
+    progressTrack.appendChild(progress);
+    main.appendChild(progressTrack);
+
+    var layout = el('div', 'exam-layout');
+    layout.appendChild(renderNavigator());
+    var content = el('div', 'exam-content');
+    content.setAttribute('data-task-surface', 'true');
+    content.appendChild(renderTask(item));
+    content.appendChild(renderTaskFooter());
+    layout.appendChild(content);
+    main.appendChild(layout);
+    window.setTimeout(function () {
+      var heading = document.querySelector('[data-current-task="true"]');
+      if (heading) heading.focus();
+    }, 20);
+    tick();
+  }
+
+  function renderNavigator() {
+    var nav = el('nav', 'navigator');
+    nav.setAttribute('aria-label', 'Question navigator');
+    nav.appendChild(el('div', 'nav-title', 'Questions'));
+    exam.sections.forEach(function (section, sectionIndex) {
+      var group = el('section', 'nav-section');
+      group.appendChild(el('h3', '', section.sectionTitle));
+      var grid = el('div', 'nav-grid');
+      section.tasks.forEach(function (task, taskIndex) {
+        var globalIndex = tasks.findIndex(function (entry) { return entry.sectionIndex === sectionIndex && entry.taskIndex === taskIndex; });
+        var node = button(String(globalIndex + 1), 'nav-item', function () { navigate(globalIndex); });
+        node.dataset.taskId = task.taskId;
+        node.setAttribute('aria-label', 'Question ' + (globalIndex + 1) + (answered(task.taskId) ? ', answered' : ', unanswered') + (state.flags[task.taskId] ? ', flagged' : ''));
+        node.classList.toggle('is-current', globalIndex === state.current);
+        node.classList.toggle('is-answered', answered(task.taskId));
+        node.classList.toggle('is-flagged', Boolean(state.flags[task.taskId]));
+        if (section.navigationPolicy === 'linear' && globalIndex > state.current + 1) node.disabled = true;
+        grid.appendChild(node);
+      });
+      group.appendChild(grid);
+      nav.appendChild(group);
+    });
+    var legend = el('p', 'small muted', 'Dot = answered · underline = flagged');
+    nav.appendChild(legend);
+    return nav;
+  }
+
+  function updateNavStates() {
+    document.querySelectorAll('.nav-item[data-task-id]').forEach(function (node) {
+      var id = node.dataset.taskId;
+      node.classList.toggle('is-answered', answered(id));
+      node.classList.toggle('is-flagged', Boolean(state.flags[id]));
+    });
+  }
+
+  function renderTask(item) {
+    var task = item.task;
+    var isListening = /listening/i.test(task.taskType);
+    if (task.passageText && !isListening) {
+      var wrapper = el('div', 'stack');
+      var tabs = el('div', 'mobile-tabs');
+      var passageTab = button('Passage', state.mobilePane === 'passage' ? 'btn-primary' : 'btn-ghost', function () { state.mobilePane = 'passage'; render(); startTaskTiming(); });
+      var questionTab = button('Question', state.mobilePane === 'question' ? 'btn-primary' : 'btn-ghost', function () { state.mobilePane = 'question'; render(); startTaskTiming(); });
+      tabs.append(passageTab, questionTab);
+      var split = el('div', 'split-task');
+      split.dataset.mobilePane = state.mobilePane;
+      split.appendChild(renderPassage(task));
+      split.appendChild(renderQuestion(task, item));
+      wrapper.append(tabs, split);
+      return wrapper;
+    }
+    return renderQuestion(task, item, true);
+  }
+
+  function renderQuestion(task, item, standalone) {
+    var panel = el('article', standalone ? 'task-card' : 'question-panel');
+    var number = el('div', 'question-number', 'Question ' + (state.current + 1) + ' of ' + tasks.length);
+    panel.appendChild(number);
+    var title = el('h1', 'question-prompt', task.prompt);
+    title.tabIndex = -1;
+    title.dataset.currentTask = 'true';
+    panel.appendChild(title);
+    if (task.instructions) panel.appendChild(el('p', 'instructions', task.instructions));
+    if (task.publicMarks !== null) panel.appendChild(pill(task.publicMarks + (task.publicMarks === 1 ? ' mark' : ' marks')));
+    if (task.formula) {
+      var formula = el('div', 'formula-card');
+      formula.setAttribute('aria-label', 'Formula');
+      formula.appendChild(el('code', '', task.formula));
+      panel.appendChild(formula);
+    }
+    if (task.visual) panel.appendChild(renderVisual(task.visual));
+    if (task.audio) panel.appendChild(renderAudio(task));
+    var response = el('div', 'response-area');
+    response.appendChild(renderResponse(task));
+    panel.appendChild(response);
+    return panel;
+  }
+
+  function renderVisual(visual) {
+    var card = el('figure', 'visual-card');
+    card.setAttribute('aria-label', visual.altText || 'Visual stimulus');
+    var caption = el('figcaption', 'field-label', visual.altText || 'Visual stimulus');
+    card.appendChild(caption);
+    if (visual.type === 'image' && visual.data && visual.data.imageUrl) {
+      var image = document.createElement('img');
+      image.src = visual.data.imageUrl;
+      image.alt = visual.altText || '';
+      image.style.maxWidth = '100%';
+      image.style.height = 'auto';
+      card.appendChild(image);
+    } else {
+      var structured = renderStructuredVisual(visual.data);
+      if (structured) card.appendChild(structured);
+      else card.appendChild(el('pre', '', JSON.stringify(visual.data, null, 2)));
+    }
+    return card;
+  }
+
+  function renderStructuredVisual(data) {
+    if (!data || typeof data !== 'object') return null;
+    var cells = Array.isArray(data.cells) ? data.cells : (Array.isArray(data.grid) ? data.grid : null);
+    if (!cells) return null;
+    var flat = [];
+    cells.forEach(function (entry) {
+      if (Array.isArray(entry)) entry.forEach(function (nested) { flat.push(nested); });
+      else flat.push(entry);
+    });
+    var columns = Number(data.columns) || (Array.isArray(cells[0]) ? cells[0].length : Math.ceil(Math.sqrt(flat.length)));
+    var grid = el('div', 'visual-grid');
+    grid.style.gridTemplateColumns = 'repeat(' + Math.max(1, Math.min(12, columns)) + ', minmax(3.5rem, 1fr))';
+    flat.forEach(function (cell, index) {
+      var item = el('div', 'visual-cell');
+      var source = cell && typeof cell === 'object' ? cell : { label: String(cell === null || cell === undefined ? '' : cell) };
+      item.setAttribute('aria-label', source.altText || source.label || 'Cell ' + (index + 1));
+      if (Array.isArray(source.shapes)) item.appendChild(renderShapeCanvas(source.shapes));
+      else item.appendChild(el('span', 'visual-symbol', source.symbol || source.label || '?'));
+      grid.appendChild(item);
+    });
+    return grid;
+  }
+
+  function renderShapeCanvas(shapes) {
+    var namespace = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(namespace, 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('aria-hidden', 'true');
+    var palette = { primary: '#0f4c81', secondary: '#64748b', accent: '#d97706', dark: '#0f172a', light: '#e2e8f0', none: 'none' };
+    shapes.slice(0, 30).forEach(function (shape) {
+      if (!shape || typeof shape !== 'object') return;
+      var type = ['circle', 'rect', 'line', 'polygon'].indexOf(shape.type) >= 0 ? shape.type : 'circle';
+      var node = document.createElementNS(namespace, type);
+      function number(name, fallback) {
+        var value = Number(shape[name]);
+        return Number.isFinite(value) ? Math.max(-200, Math.min(200, value)) : fallback;
+      }
+      if (type === 'circle') {
+        node.setAttribute('cx', String(number('cx', 50)));
+        node.setAttribute('cy', String(number('cy', 50)));
+        node.setAttribute('r', String(Math.max(1, number('r', 18))));
+      } else if (type === 'rect') {
+        node.setAttribute('x', String(number('x', 25)));
+        node.setAttribute('y', String(number('y', 25)));
+        node.setAttribute('width', String(Math.max(1, number('width', 50))));
+        node.setAttribute('height', String(Math.max(1, number('height', 50))));
+      } else if (type === 'line') {
+        node.setAttribute('x1', String(number('x1', 20)));
+        node.setAttribute('y1', String(number('y1', 20)));
+        node.setAttribute('x2', String(number('x2', 80)));
+        node.setAttribute('y2', String(number('y2', 80)));
+      } else {
+        var points = Array.isArray(shape.points) ? shape.points.slice(0, 16).map(function (point) {
+          return Math.max(-200, Math.min(200, Number(point[0]) || 0)) + ',' + Math.max(-200, Math.min(200, Number(point[1]) || 0));
+        }).join(' ') : '50,10 90,90 10,90';
+        node.setAttribute('points', points);
+      }
+      node.setAttribute('fill', palette[shape.fillRole] || palette.light);
+      node.setAttribute('stroke', palette[shape.strokeRole] || palette.dark);
+      node.setAttribute('stroke-width', String(Math.max(0, number('strokeWidth', 2))));
+      var rotation = number('rotation', 0);
+      if (rotation) node.setAttribute('transform', 'rotate(' + rotation + ' 50 50)');
+      svg.appendChild(node);
+    });
+    return svg;
+  }
+
+  function renderPassage(task) {
+    var panel = el('aside', 'passage-panel');
+    panel.setAttribute('aria-label', 'Reading passage');
+    var head = el('div', 'panel-head');
+    head.appendChild(el('p', 'eyebrow', 'Reading passage'));
+    head.appendChild(el('h2', '', task.passageTitle || 'Passage'));
+    panel.appendChild(head);
+
+    var tools = el('div', 'annotation-tools');
+    if (config.featureFlags.annotations) {
+      [['yellow', '#fde68a'], ['green', '#bbf7d0'], ['pink', '#fbcfe8']].forEach(function (entry) {
+        var node = button('Highlight ' + entry[0], 'btn-ghost btn-small', function () { addHighlight(task, entry[0]); });
+        var dot = el('span', 'color-dot');
+        dot.style.background = entry[1];
+        node.prepend(dot);
+        tools.appendChild(node);
+      });
+      tools.appendChild(button('Add note', 'btn-ghost btn-small', function () { addNote(task); }));
+    } else {
+      tools.appendChild(el('span', 'small muted', 'Annotations are disabled for this form.'));
+    }
+    panel.appendChild(tools);
+
+    var passage = el('div', 'passage-scroll');
+    passage.dataset.passageId = task.taskId;
+    passage.tabIndex = 0;
+    passage.addEventListener('mouseup', function () { capturePassageSelection(passage); });
+    passage.addEventListener('keyup', function () { capturePassageSelection(passage); });
+    renderAnnotatedText(passage, task);
+    panel.appendChild(passage);
+    panel.appendChild(renderAnnotationList(task));
+    return panel;
+  }
+
+  function annotationKey(task) { return task.taskId + ':passage'; }
+
+  function capturePassageSelection(root) {
+    var selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) { state.annotationSelection = null; return; }
+    var range = selection.getRangeAt(0);
+    if (!root.contains(range.commonAncestorContainer)) { state.annotationSelection = null; return; }
+    var before = range.cloneRange();
+    before.selectNodeContents(root);
+    before.setEnd(range.startContainer, range.startOffset);
+    var start = before.toString().length;
+    var text = range.toString();
+    state.annotationSelection = { taskId: root.dataset.passageId, start: start, end: start + text.length, text: text };
+  }
+
+  function addHighlight(task, color) {
+    var selection = state.annotationSelection;
+    if (!selection || selection.taskId !== task.taskId || selection.end <= selection.start) {
+      toast('Select passage text first.');
+      return;
+    }
+    var key = annotationKey(task);
+    var list = state.annotations[key] || [];
+    var overlaps = list.some(function (item) { return Math.max(item.start, selection.start) < Math.min(item.end, selection.end); });
+    if (overlaps) { toast('Choose text that does not overlap an existing annotation.'); return; }
+    list.push({ id: 'ann_' + nowWall(), start: selection.start, end: selection.end, text: selection.text, color: color, note: '' });
+    state.annotations[key] = list;
+    state.annotationSelection = null;
+    markInteraction('annotation_created');
+    render();
+    startTaskTiming();
+  }
+
+  function addNote(task) {
+    var selection = state.annotationSelection;
+    if (!selection || selection.taskId !== task.taskId || selection.end <= selection.start) {
+      toast('Select passage text first.');
+      return;
+    }
+    var key = annotationKey(task);
+    var list = state.annotations[key] || [];
+    var overlaps = list.some(function (item) { return Math.max(item.start, selection.start) < Math.min(item.end, selection.end); });
+    if (overlaps) { toast('Choose text that does not overlap an existing annotation.'); return; }
+    openAnnotationNoteDialog(task, selection);
+  }
+
+  function openAnnotationNoteDialog(task, selection) {
+    var overlay = el('div', 'modal-backdrop is-visible');
+    overlay.setAttribute('role', 'presentation');
+    var dialog = el('section', 'modal stack');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'annotation-note-title');
+    var title = el('h2', '', 'Add margin note');
+    title.id = 'annotation-note-title';
+    var quote = el('div', 'notice small', 'Selected text: “' + selection.text.slice(0, 180) + (selection.text.length > 180 ? '…' : '') + '”');
+    var label = el('label', 'field-label', 'Note');
+    label.htmlFor = 'annotation-note-input';
+    var input = document.createElement('textarea');
+    input.id = label.htmlFor;
+    input.maxLength = 300;
+    input.rows = 5;
+    input.placeholder = 'Write a short note';
+    var help = el('span', 'field-help', 'Maximum 300 characters.');
+    var actions = el('div', 'row-between');
+    var cancel = button('Cancel', 'btn-ghost', close);
+    var save = button('Save note', 'btn-primary', function () {
+      var note = input.value.trim().slice(0, 300);
+      var key = annotationKey(task);
+      var list = state.annotations[key] || [];
+      list.push({ id: 'ann_' + nowWall(), start: selection.start, end: selection.end, text: selection.text, color: 'yellow', note: note });
+      state.annotations[key] = list;
+      state.annotationSelection = null;
+      markInteraction('annotation_note_created');
+      close();
+      render();
+      startTaskTiming();
+    });
+    actions.append(cancel, save);
+    dialog.append(title, quote, label, input, help, actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    function close() {
+      overlay.remove();
+      var passage = document.querySelector('[data-passage-id="' + CSS.escape(task.taskId) + '"]');
+      if (passage) passage.focus();
+    }
+
+    overlay.addEventListener('mousedown', function (event) {
+      if (event.target === overlay) close();
+    });
+    overlay.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { event.preventDefault(); close(); return; }
+      if (event.key !== 'Tab') return;
+      var focusable = [input, cancel, save];
+      var currentIndex = focusable.indexOf(document.activeElement);
+      if (event.shiftKey && currentIndex <= 0) { event.preventDefault(); save.focus(); }
+      else if (!event.shiftKey && currentIndex === focusable.length - 1) { event.preventDefault(); input.focus(); }
+    });
+    input.focus();
+  }
+
+  function renderAnnotatedText(root, task) {
+    var text = task.passageText || '';
+    var annotations = (state.annotations[annotationKey(task)] || []).slice().sort(function (a, b) { return a.start - b.start; });
+    var cursor = 0;
+    annotations.forEach(function (annotation) {
+      var start = Math.max(cursor, Math.min(text.length, annotation.start));
+      var end = Math.max(start, Math.min(text.length, annotation.end));
+      if (start > cursor) root.appendChild(document.createTextNode(text.slice(cursor, start)));
+      var mark = el('mark', 'hl-' + annotation.color, text.slice(start, end));
+      mark.id = annotation.id;
+      if (annotation.note) mark.title = annotation.note;
+      root.appendChild(mark);
+      cursor = end;
+    });
+    if (cursor < text.length) root.appendChild(document.createTextNode(text.slice(cursor)));
+  }
+
+  function renderAnnotationList(task) {
+    var box = el('div', 'annotation-list');
+    var list = state.annotations[annotationKey(task)] || [];
+    if (!list.length) {
+      box.appendChild(el('span', 'muted', 'No annotations yet.'));
+      return box;
+    }
+    list.forEach(function (annotation) {
+      var row = el('div', 'annotation-item');
+      var text = '“' + annotation.text.slice(0, 70) + (annotation.text.length > 70 ? '…' : '') + '”';
+      if (annotation.note) text += ' — ' + annotation.note;
+      var jump = button(text, 'btn-ghost btn-small', function () {
+        var mark = document.getElementById(annotation.id);
+        if (mark) mark.scrollIntoView({ block: 'center' });
+      });
+      var remove = button('Delete', 'btn-ghost btn-small', function () {
+        state.annotations[annotationKey(task)] = list.filter(function (item) { return item.id !== annotation.id; });
+        markInteraction('annotation_deleted');
+        render();
+        startTaskTiming();
+      });
+      row.append(jump, remove);
+      box.appendChild(row);
+    });
+    return box;
+  }
+
+  var speakerVoices = {};
+
+  function cleanTextOfSimulationNotes(text) {
+    if (typeof text !== 'string') return text;
+    return text
+      .replace(/\(Audio script for simulation - in a real test, this would be an audio file\)/gi, '')
+      .replace(/\[Audio script for simulation - in a real test, this would be an audio file\]/gi, '')
+      .replace(/\(Audio script for simulation.*?\)/gi, '')
+      .replace(/\[Audio script for simulation.*?\]/gi, '')
+      .replace(/\(In a real test, this would be.*?\)/gi, '')
+      .replace(/\[In a real test, this would be.*?\]/gi, '')
+      .replace(/\(Audio script.*?\)/gi, '')
+      .replace(/\[Audio script.*?\]/gi, '')
+      .replace(/\(In a real test,.*?this would be an audio file\)/gi, '')
+      .replace(/\[In a real test,.*?this would be an audio file\]/gi, '')
+      .trim();
+  }
+
+  function getAccentName(lang) {
+    var l = lang.toLowerCase();
+    if (l.indexOf('en-us') >= 0 || l.indexOf('en_us') >= 0) return 'US Accent';
+    if (l.indexOf('en-gb') >= 0 || l.indexOf('en_gb') >= 0) return 'UK Accent';
+    if (l.indexOf('en-au') >= 0 || l.indexOf('en_au') >= 0) return 'AU Accent';
+    if (l.indexOf('en-ca') >= 0 || l.indexOf('en_ca') >= 0) return 'CA Accent';
+    return 'English Accent';
+  }
+
+  function assignSpeakerVoices(segments, locale) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices || !voices.length) return;
+
+    var englishVoices = voices.filter(function (v) {
+      var l = v.lang.toLowerCase();
+      var name = v.name.toLowerCase();
+      return (l.indexOf('en-') === 0 || l.indexOf('en_') === 0) && name.indexOf('david') === -1 && name.indexOf('zira') === -1;
+    });
+    if (!englishVoices.length) {
+      englishVoices = voices.filter(function (v) {
+        var l = v.lang.toLowerCase();
+        return l.indexOf('en-') === 0 || l.indexOf('en_') === 0;
+      });
+    }
+    if (!englishVoices.length) englishVoices = voices;
+
+    var speakers = [];
+    segments.forEach(function (seg) {
+      var label = seg.speakerLabel || 'Speaker';
+      if (speakers.indexOf(label) === -1) {
+        speakers.push(label);
+      }
+    });
+
+    var accentLocales = ['en-US', 'en-GB', 'en-AU', 'en-CA'];
+    speakers.forEach(function (speaker, index) {
+      if (speakerVoices[speaker]) return; // already assigned
+      
+      var spLocale = accentLocales[index % accentLocales.length];
+      var isFemale = (index % 2 === 0);
+      var labelLower = speaker.toLowerCase();
+      if (labelLower.indexOf('mr') >= 0 || labelLower.indexOf('john') >= 0 || labelLower.indexOf('mike') >= 0 || labelLower.indexOf('guy') >= 0 || labelLower.indexOf('employee') >= 0 || labelLower.indexOf('man') >= 0 || labelLower.indexOf('professor') >= 0) {
+        isFemale = false;
+      }
+      if (labelLower.indexOf('mrs') >= 0 || labelLower.indexOf('ms') >= 0 || labelLower.indexOf('sarah') >= 0 || labelLower.indexOf('jenny') >= 0 || labelLower.indexOf('clara') >= 0 || labelLower.indexOf('mary') >= 0 || labelLower.indexOf('woman') >= 0 || labelLower.indexOf('student') >= 0) {
+        isFemale = true;
+      }
+
+      // Try matching Edge natural voices first
+      var chosenVoice = null;
+      for (var i = 0; i < englishVoices.length; i++) {
+        var v = englishVoices[i];
+        var vName = v.name.toLowerCase();
+        var vLang = v.lang.toLowerCase().replace('_', '-');
+        if (vLang.indexOf(spLocale.toLowerCase()) === 0) {
+          if (vName.indexOf('online') >= 0 && vName.indexOf('natural') >= 0) {
+            var isVFemale = vName.indexOf('aria') >= 0 || vName.indexOf('jenny') >= 0 || vName.indexOf('sonia') >= 0 || vName.indexOf('natasha') >= 0 || vName.indexOf('clara') >= 0;
+            if (isFemale === isVFemale) {
+              chosenVoice = v;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!chosenVoice) {
+        // Fallback to any voice with matching locale & gender
+        var localeVoices = englishVoices.filter(function (v) {
+          return v.lang.toLowerCase().replace('_', '-').indexOf(spLocale.toLowerCase()) === 0;
+        });
+        if (!localeVoices.length) localeVoices = englishVoices;
+        
+        var genderVoices = localeVoices.filter(function (v) {
+          var name = v.name.toLowerCase();
+          var femaleKeywords = ['jenny', 'aria', 'zira', 'sonia', 'natasha', 'clara', 'samantha', 'karen', 'moira', 'tessa', 'veena', 'fiona', 'hazel', 'female', 'susan', 'linda', 'heather', 'en-us-neural-f', 'en-gb-neural-f'];
+          var maleKeywords = ['guy', 'david', 'ryan', 'william', 'liam', 'john', 'daniel', 'george', 'oliver', 'harry', 'james', 'arthur', 'male', 'mark', 'richard', 'steve', 'en-us-neural-m', 'en-gb-neural-m'];
+          
+          // Completely avoid David or Zira if we can
+          if (name.indexOf('david') >= 0 || name.indexOf('zira') >= 0) return false;
+          
+          if (isFemale) {
+            return femaleKeywords.some(function (k) { return name.indexOf(k) >= 0; }) && !maleKeywords.some(function (k) { return name.indexOf(k) >= 0; });
+          } else {
+            return maleKeywords.some(function (k) { return name.indexOf(k) >= 0; }) && !femaleKeywords.some(function (k) { return name.indexOf(k) >= 0; });
+          }
+        });
+        
+        // If empty because we filtered out David/Zira, fall back to anything that matches locale & gender even with David/Zira
+        if (!genderVoices.length) {
+          genderVoices = localeVoices.filter(function (v) {
+            var name = v.name.toLowerCase();
+            var femaleKeywords = ['jenny', 'aria', 'zira', 'sonia', 'natasha', 'clara', 'samantha', 'karen', 'moira', 'tessa', 'veena', 'fiona', 'hazel', 'female', 'susan', 'linda', 'heather', 'en-us-neural-f', 'en-gb-neural-f'];
+            var maleKeywords = ['guy', 'david', 'ryan', 'william', 'liam', 'john', 'daniel', 'george', 'oliver', 'harry', 'james', 'arthur', 'male', 'mark', 'richard', 'steve', 'en-us-neural-m', 'en-gb-neural-m'];
+            if (isFemale) {
+              return femaleKeywords.some(function (k) { return name.indexOf(k) >= 0; }) && !maleKeywords.some(function (k) { return name.indexOf(k) >= 0; });
+            } else {
+              return maleKeywords.some(function (k) { return name.indexOf(k) >= 0; }) && !femaleKeywords.some(function (k) { return name.indexOf(k) >= 0; });
+            }
+          });
+        }
+        chosenVoice = genderVoices.length ? genderVoices[0] : (localeVoices.length ? localeVoices[0] : englishVoices[0]);
+      }
+      
+      speakerVoices[speaker] = chosenVoice;
+    });
+  }
+
+  function renderAudio(task) {
+    var audio = task.audio;
+    var card = el('section', 'audio-card stack-sm');
+    card.setAttribute('aria-label', 'Audio stimulus');
+    var used = state.audioPlays[task.taskId] || 0;
+    var remaining = Math.max(0, audio.maxPlaybacks - used);
+    var header = el('div', 'row-between');
+    header.appendChild(el('strong', '', 'Listening audio'));
+    var counter = pill(remaining + (remaining === 1 ? ' play remaining' : ' plays remaining'));
+    counter.id = 'audio-counter-' + task.taskId;
+    header.appendChild(counter);
+    card.appendChild(header);
+
+    var play = button(used > 0 ? 'Play again' : 'Play audio', 'btn-primary', function () { playTaskAudio(task, card); });
+    play.id = 'audio-play-' + task.taskId;
+    play.disabled = remaining <= 0;
+    card.appendChild(el('div', 'row')).append(play);
+    var progress = el('div', 'audio-progress');
+    progress.setAttribute('role', 'progressbar');
+    progress.setAttribute('aria-label', 'Audio progress');
+    progress.setAttribute('aria-valuemin', '0');
+    progress.setAttribute('aria-valuemax', '100');
+    var fill = el('span');
+    fill.id = 'audio-progress-' + task.taskId;
+    progress.appendChild(fill);
+    card.appendChild(progress);
+
+    var activeSpeakerBadge = el('div', 'active-speaker-badge');
+    activeSpeakerBadge.id = 'active-speaker-' + task.taskId;
+    activeSpeakerBadge.textContent = '🔊 Press Play to listen to the recording';
+    card.appendChild(activeSpeakerBadge);
+
+    var uniqSpeakers = [];
+    audio.segments.forEach(function (seg) {
+      var speaker = seg.speakerLabel || 'Speaker';
+      if (uniqSpeakers.indexOf(speaker) === -1) uniqSpeakers.push(speaker);
+    });
+    if (uniqSpeakers.length > 0) {
+      var info = el('div', 'small muted', 'Participants: ' + uniqSpeakers.join(', '));
+      card.appendChild(info);
+    }
+
+    if (config.featureFlags.transcript && audio.transcriptPolicy !== 'disabled') {
+      if (state.phase === 'review' || state.submitted) {
+        var details = document.createElement('details');
+        if (audio.transcriptPolicy === 'always') details.open = config.accessibility.captions;
+        var summary = el('summary', '', 'Review Transcript');
+        details.appendChild(summary);
+        var transcript = el('div', 'transcript');
+        transcript.id = 'transcript-' + task.taskId;
+        audio.segments.forEach(function (segment, index) {
+          var line = el('div', 'transcript-line');
+          line.dataset.segmentIndex = String(index);
+          line.appendChild(el('span', 'speaker', segment.speakerLabel));
+          line.appendChild(document.createTextNode(cleanTextOfSimulationNotes(segment.text)));
+          transcript.appendChild(line);
+        });
+        details.appendChild(transcript);
+        card.appendChild(details);
+      } else {
+        var notice = el('div', 'notice small muted', '🔒 Audio transcript will be available in the review panel after submitting the exam.');
+        card.appendChild(notice);
+      }
+    }
+    return card;
+  }
+
+  function playTaskAudio(task, card) {
+    var audio = task.audio;
+    var used = state.audioPlays[task.taskId] || 0;
+    if (used >= audio.maxPlaybacks) return;
+    if (audioRuntime) stopTaskAudio();
+    state.audioPlays[task.taskId] = used + 1;
+    audit('audio_play_started', { playback: used + 1, maximum: audio.maxPlaybacks });
+    updateAudioCounter(task);
+    markInteraction('audio_play');
+
+    if (audio.assetUrl) playAudioAsset(task, card);
+    else playSpeechScript(task, card);
+  }
+
+  function updateAudioCounter(task) {
+    var used = state.audioPlays[task.taskId] || 0;
+    var remaining = Math.max(0, task.audio.maxPlaybacks - used);
+    var counter = document.getElementById('audio-counter-' + task.taskId);
+    var play = document.getElementById('audio-play-' + task.taskId);
+    if (counter) counter.textContent = remaining + (remaining === 1 ? ' play remaining' : ' plays remaining');
+    if (play) play.disabled = remaining <= 0;
+  }
+
+  function playAudioAsset(task, card) {
+    var media = new Audio(task.audio.assetUrl);
+    media.preload = 'auto';
+    media.controls = false;
+    audioRuntime = { type: 'media', media: media, frame: null };
+    var playButton = document.getElementById('audio-play-' + task.taskId);
+    if (playButton) playButton.disabled = true;
+    media.addEventListener('timeupdate', function () { updateAudioUi(task, media.currentTime * 1000, media.duration * 1000); });
+    media.addEventListener('ended', function () {
+      updateAudioUi(task, media.duration * 1000, media.duration * 1000);
+      audit('audio_play_completed');
+      audioRuntime = null;
+      updateAudioCounter(task);
+    });
+    media.addEventListener('error', function () {
+      toast('The audio could not be played. Notify the examiner.');
+      audit('audio_play_error');
+      audioRuntime = null;
+      updateAudioCounter(task);
+    });
+    media.play().catch(function () {
+      toast('Playback was blocked. Select Play audio again.');
+      state.audioPlays[task.taskId] = Math.max(0, state.audioPlays[task.taskId] - 1);
+      audioRuntime = null;
+      updateAudioCounter(task);
+    });
+  }
+
+  function playSpeechScript(task, card) {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      toast('No audio asset or speech service is available.');
+      audit('audio_play_error', { reason: 'speech_synthesis_unavailable' });
+      return;
+    }
+    
+    window.speechSynthesis.cancel();
+    if (audioRuntime && audioRuntime.frame) {
+      cancelAnimationFrame(audioRuntime.frame);
+    }
+    
+    assignSpeakerVoices(task.audio.segments, config.locale || 'en-US');
+    
+    var segments = task.audio.segments;
+    var totalSegments = segments.length;
+    var estimatedTotalMs = task.audio.estimatedDurationMs || (totalSegments * 4500);
+    var startTime = nowMono();
+    
+    audioRuntime = {
+      type: 'speech_sequential',
+      task: task,
+      index: 0,
+      total: totalSegments,
+      frame: null,
+      startTime: startTime,
+      estimatedDurationMs: estimatedTotalMs
+    };
+    
+    var playButton = document.getElementById('audio-play-' + task.taskId);
+    if (playButton) {
+      playButton.textContent = 'Playing...';
+    }
+    
+    function playNext() {
+      if (!audioRuntime || audioRuntime.type !== 'speech_sequential') return;
+      
+      var index = audioRuntime.index;
+      if (index >= totalSegments) {
+        updateAudioUi(task, estimatedTotalMs, estimatedTotalMs);
+        audit('audio_play_completed', { sequentialSpeech: true });
+        audioRuntime = null;
+        updateAudioCounter(task);
+        var activeSpeakerBadge = document.getElementById('active-speaker-' + task.taskId);
+        if (activeSpeakerBadge) {
+          activeSpeakerBadge.textContent = '✅ Playback completed';
+          activeSpeakerBadge.className = 'active-speaker-badge';
+        }
+        var btn = document.getElementById('audio-play-' + task.taskId);
+        if (btn) btn.textContent = 'Play again';
+        return;
+      }
+      
+      var segment = segments[index];
+      var text = cleanTextOfSimulationNotes(segment.text);
+      var speaker = segment.speakerLabel || 'Speaker';
+      
+      var utterance = new SpeechSynthesisUtterance(text);
+      var voice = speakerVoices[speaker];
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = config.locale || 'en-US';
+      }
+      
+      utterance.rate = 0.95;
+      
+      var activeSpeakerBadge = document.getElementById('active-speaker-' + task.taskId);
+      if (activeSpeakerBadge) {
+        var accentName = getAccentName(utterance.lang);
+        activeSpeakerBadge.textContent = '🗣️ ' + speaker + ' (' + accentName + ') is speaking...';
+        activeSpeakerBadge.className = 'active-speaker-badge animate-pulse';
+      }
+      
+      var lines = document.querySelectorAll('#transcript-' + task.taskId + ' .transcript-line');
+      lines.forEach(function (line, idx) {
+        line.classList.toggle('is-active', idx === index);
+      });
+      
+      utterance.onend = function () {
+        setTimeout(function () {
+          if (audioRuntime && audioRuntime.type === 'speech_sequential' && audioRuntime.index === index) {
+            audioRuntime.index = index + 1;
+            playNext();
+          }
+        }, 750);
+      };
+      
+      utterance.onerror = function () {
+        setTimeout(function () {
+          if (audioRuntime && audioRuntime.type === 'speech_sequential' && audioRuntime.index === index) {
+            audioRuntime.index = index + 1;
+            playNext();
+          }
+        }, 100);
+      };
+      
+      audioRuntime.utterance = utterance;
+      window.speechSynthesis.speak(utterance);
+    }
+    
+    function animateUi() {
+      if (!audioRuntime || audioRuntime.type !== 'speech_sequential') return;
+      var elapsed = Math.min(estimatedTotalMs - 100, nowMono() - audioRuntime.startTime);
+      updateAudioUi(task, elapsed, estimatedTotalMs);
+      audioRuntime.frame = requestAnimationFrame(animateUi);
+    }
+    
+    playNext();
+    animateUi();
+  }
+
+  function updateAudioUi(task, positionMs, durationMs) {
+    var ratio = durationMs > 0 && Number.isFinite(durationMs) ? Math.min(1, positionMs / durationMs) : 0;
+    var fill = document.getElementById('audio-progress-' + task.taskId);
+    var time = document.getElementById('audio-time-' + task.taskId);
+    var progress = fill && fill.parentElement;
+    if (fill) fill.style.width = ratio * 100 + '%';
+    if (progress) progress.setAttribute('aria-valuenow', String(Math.round(ratio * 100)));
+    if (time) time.textContent = formatTime(positionMs) + ' / ' + (durationMs && Number.isFinite(durationMs) ? formatTime(durationMs) : '--:--');
+    var lines = document.querySelectorAll('#transcript-' + task.taskId + ' .transcript-line');
+    if (lines.length) {
+      var activeIndex = -1;
+      task.audio.segments.forEach(function (segment, index) {
+        if (segment.startMs !== null && segment.endMs !== null && positionMs >= segment.startMs && positionMs < segment.endMs) activeIndex = index;
+      });
+      if (activeIndex < 0) activeIndex = Math.min(lines.length - 1, Math.floor(ratio * lines.length));
+      lines.forEach(function (line, index) { line.classList.toggle('is-active', index === activeIndex); });
+    }
+  }
+
+  function stopTaskAudio() {
+    if (!audioRuntime) return;
+    if (audioRuntime.type === 'media') {
+      audioRuntime.media.pause();
+      audioRuntime.media.src = '';
+    } else if (audioRuntime.type === 'speech' || audioRuntime.type === 'speech_sequential') {
+      window.speechSynthesis.cancel();
+      if (audioRuntime.frame) cancelAnimationFrame(audioRuntime.frame);
+    }
+    audioRuntime = null;
+  }
+
+  function renderResponse(task) {
+    var spec = task.responseSpec;
+    if (spec.type === 'single_choice' || spec.type === 'true_false_not_given' || spec.type === 'yes_no_not_given' || spec.type === 'matrix_selection' || spec.type === 'hotspot') return renderSingleChoice(task);
+    if (spec.type === 'multiple_select') return renderMultipleSelect(task);
+    if (spec.type === 'rich_text') return renderEditor(task);
+    if (spec.type === 'ordering' || spec.type === 'sentence_builder') return renderOrdering(task);
+    if (spec.type === 'voice_recording') return renderRecorder(task, false);
+    if (spec.type === 'video_recording') return renderRecorder(task, true);
+    if (spec.type === 'select_text') return renderSelectText(task);
+    if (spec.type === 'multi_field') return renderMultiField(task);
+    if (spec.type === 'instructional_content') return renderInstructionalContent(task);
+    if (spec.type === 'dropdown_gaps') return renderDropdownGaps(task);
+    if (spec.type === 'graph_interaction') return renderMultiField(task);
+    if (spec.type === 'gap_fill' || spec.type === 'table_completion' || spec.type === 'complete_words') return renderGaps(task);
+    if (spec.type === 'matching' || spec.type === 'categorization') return renderMatching(task);
+    return renderTextInput(task);
+  }
+
+  function renderSingleChoice(task) {
+    var spec = task.responseSpec;
+    var fieldset = document.createElement('fieldset');
+    fieldset.className = 'choice-list';
+    fieldset.appendChild(el('legend', 'sr-only', 'Select one answer'));
+    var options = spec.options.length ? spec.options : (spec.type === 'yes_no_not_given' ? [
+      { optionId: 'yes', label: 'Yes' },
+      { optionId: 'no', label: 'No' },
+      { optionId: 'not_given', label: 'Not given' }
+    ] : [
+      { optionId: 'true', label: 'True' },
+      { optionId: 'false', label: 'False' },
+      { optionId: 'not_given', label: 'Not given' }
+    ]);
+    options.forEach(function (option) {
+      var label = el('label', 'choice');
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'answer-' + task.taskId;
+      input.value = option.optionId;
+      input.checked = state.answers[task.taskId] === option.optionId;
+      input.disabled = Boolean(option.disabled);
+      label.classList.toggle('is-selected', input.checked);
+      input.addEventListener('change', function () {
+        setAnswer(task.taskId, option.optionId);
+        document.querySelectorAll('input[name="answer-' + CSS.escape(task.taskId) + '"]').forEach(function (radio) { radio.closest('.choice').classList.toggle('is-selected', radio.checked); });
+      });
+      label.append(input, el('span', '', option.label));
+      fieldset.appendChild(label);
+    });
+    return fieldset;
+  }
+
+  function renderMultipleSelect(task) {
+    var fieldset = document.createElement('fieldset');
+    fieldset.className = 'choice-list';
+    fieldset.appendChild(el('legend', 'sr-only', 'Select all that apply'));
+    var selected = Array.isArray(state.answers[task.taskId]) ? state.answers[task.taskId].slice() : [];
+    task.responseSpec.options.forEach(function (option) {
+      var label = el('label', 'choice');
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.value = option.optionId;
+      input.checked = selected.indexOf(option.optionId) >= 0;
+      label.classList.toggle('is-selected', input.checked);
+      input.addEventListener('change', function () {
+        var next = Array.isArray(state.answers[task.taskId]) ? state.answers[task.taskId].slice() : [];
+        if (input.checked) {
+          if (task.responseSpec.multipleLimit && next.length >= task.responseSpec.multipleLimit) {
+            input.checked = false;
+            toast('Maximum ' + task.responseSpec.multipleLimit + ' selections.');
+            return;
+          }
+          if (next.indexOf(option.optionId) < 0) next.push(option.optionId);
+        } else next = next.filter(function (id) { return id !== option.optionId; });
+        label.classList.toggle('is-selected', input.checked);
+        setAnswer(task.taskId, next);
+      });
+      label.append(input, el('span', '', option.label));
+      fieldset.appendChild(label);
+    });
+    return fieldset;
+  }
+
+  function renderTextInput(task) {
+    var wrapper = el('div', 'stack-sm');
+    var label = el('label', 'field-label', 'Your answer');
+    label.htmlFor = 'response-' + task.taskId;
+    var input = document.createElement(task.responseSpec.type === 'text' ? 'textarea' : 'input');
+    input.id = 'response-' + task.taskId;
+    if (task.responseSpec.type === 'numeric') {
+      input.type = 'text';
+      input.inputMode = 'decimal';
+    }
+    input.placeholder = task.responseSpec.placeholder;
+    input.value = state.answers[task.taskId] || '';
+    input.spellcheck = config.featureFlags.spellcheck && task.responseSpec.spellcheck;
+    if (task.responseSpec.maxCharacters) input.maxLength = task.responseSpec.maxCharacters;
+    input.addEventListener('input', function () { setAnswer(task.taskId, input.value); });
+    wrapper.append(label, input);
+    if (task.responseSpec.unitLabel) wrapper.appendChild(el('span', 'field-help', 'Required unit: ' + task.responseSpec.unitLabel));
+    return wrapper;
+  }
+
+  function renderCompletionCard(task, isDropdown) {
+    var current = state.answers[task.taskId] && typeof state.answers[task.taskId] === 'object' ? state.answers[task.taskId] : {};
+    var gaps = (task.responseSpec && task.responseSpec.gaps) || [];
+    var taskOptions = (task.responseSpec && task.responseSpec.options) || [];
+    var typeStr = ((task.taskType || '') + ' ' + (task.responseSpec?.type || '') + ' ' + (task.prompt || '')).toLowerCase();
+
+    var isTable = typeStr.indexOf('table') >= 0;
+    var isSummary = typeStr.indexOf('summary') >= 0;
+    var isNotes = typeStr.indexOf('note') >= 0;
+    var isSentence = typeStr.indexOf('sentence') >= 0;
+    var isForm = typeStr.indexOf('form') >= 0;
+    var isFlowchart = typeStr.indexOf('flowchart') >= 0;
+
+    var item = tasks[state.current];
+    var sectionPassage = item ? item.sectionPassage : null;
+    var text = task.passageText || task.stimulusText || '';
+
+    if (text && text === sectionPassage && !/listening/i.test(task.taskType)) {
+      text = '';
+    }
+    if (!text && task.prompt && (task.prompt.indexOf('___') >= 0 || task.prompt.indexOf('|') >= 0)) {
+      text = task.prompt;
+    }
+
+    var gapCounter = { count: 0 };
+
+    function createControl(gapId, index) {
+      if (isDropdown) {
+        var select = document.createElement('select');
+        select.className = 'inline-block p-1.5 px-2.5 bg-indigo-50/90 border border-indigo-300 rounded-lg font-semibold text-indigo-950 focus:bg-white focus:ring-2 focus:ring-indigo-500 text-xs transition-all mx-1 my-0.5 shadow-sm max-w-[220px] cursor-pointer';
+        select.appendChild(new Option('Choose... (Gap ' + (index + 1) + ')', ''));
+        taskOptions.forEach(function (opt) {
+          select.appendChild(new Option(opt.label || opt.text || opt.optionId, opt.optionId));
+        });
+        select.value = current[gapId] || '';
+        select.addEventListener('change', function () {
+          var next = Object.assign({}, state.answers[task.taskId] || {});
+          next[gapId] = select.value;
+          setAnswer(task.taskId, next);
+        });
+        return select;
+      } else {
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'inline-block p-1.5 px-2.5 bg-indigo-50/70 border border-indigo-300 focus:border-indigo-600 focus:bg-white focus:ring-2 focus:ring-indigo-200 rounded-lg font-semibold text-slate-900 text-xs transition-all mx-1 my-0.5 shadow-sm min-w-[110px] max-w-[210px]';
+        input.placeholder = '(' + (index + 1) + ') Type answer...';
+        input.value = current[gapId] || '';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+        input.addEventListener('input', function () {
+          var next = Object.assign({}, state.answers[task.taskId] || {});
+          next[gapId] = input.value;
+          setAnswer(task.taskId, next);
+        });
+        return input;
+      }
+    }
+
+    function populateInlineText(parentEl, rawStr) {
+      if (!rawStr) return;
+      var gapPattern = /______+|\[gap_\w+\]|gap_\w+|\(\d+\)|\[\d+\]/gi;
+      var lastIndex = 0;
+      var match;
+      while ((match = gapPattern.exec(rawStr)) !== null) {
+        if (match.index > lastIndex) {
+          parentEl.appendChild(document.createTextNode(rawStr.slice(lastIndex, match.index)));
+        }
+        var matchedText = match[0];
+        var gapId = '';
+        if (/gap_\w+/i.test(matchedText)) {
+          var m = matchedText.match(/gap_\w+/i);
+          if (m) gapId = m[0];
+        }
+        if (!gapId) {
+          var currentGapObj = gaps[gapCounter.count];
+          gapId = currentGapObj ? currentGapObj.gapId : ('gap_' + (gapCounter.count + 1));
+        }
+        var control = createControl(gapId, gapCounter.count);
+        parentEl.appendChild(control);
+        gapCounter.count++;
+        lastIndex = gapPattern.lastIndex;
+      }
+      if (lastIndex < rawStr.length) {
+        parentEl.appendChild(document.createTextNode(rawStr.slice(lastIndex)));
+      }
+    }
+
+    var hasTableSyntax = text && text.indexOf('|') >= 0;
+    if (isTable || hasTableSyntax) {
+      var container = el('div', 'table-completion-card my-3 p-4 bg-slate-50 border border-slate-200 rounded-xl shadow-sm');
+      var header = el('div', 'font-extrabold text-xs text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-1.5');
+      header.innerHTML = '<i class="fas fa-table text-indigo-600"></i> Complete the Table';
+      container.appendChild(header);
+
+      if (hasTableSyntax) {
+        var lines = text.split('\n').filter(function(l) { return l.trim().indexOf('|') >= 0; });
+        var table = el('table', 'w-full text-left border-collapse border border-slate-300 bg-white rounded-lg overflow-hidden text-xs');
+        var thead = el('thead', 'bg-indigo-50 border-b border-slate-300 text-indigo-950 font-bold');
+        var tbody = el('tbody');
+        var isHeader = true;
+
+        lines.forEach(function(line) {
+          if (/\|?\s*:\?-+:?\s*\|/i.test(line) || /\|?\s*-{3,}\s*\|/i.test(line)) {
+            return;
+          }
+          var cells = line.split('|').map(function(c) { return c.trim(); });
+          if (cells[0] === '') cells.shift();
+          if (cells.length && cells[cells.length - 1] === '') cells.pop();
+
+          if (isHeader) {
+            var trHead = el('tr');
+            cells.forEach(function(c) {
+              var th = el('th', 'p-3 border border-slate-300 bg-indigo-50 text-indigo-950 font-bold');
+              populateInlineText(th, c);
+              trHead.appendChild(th);
+            });
+            thead.appendChild(trHead);
+            table.appendChild(thead);
+            isHeader = false;
+          } else {
+            var tr = el('tr', 'border-b border-slate-200 hover:bg-slate-50/80 transition-colors');
+            cells.forEach(function(c) {
+              var td = el('td', 'p-3 border border-slate-200 text-slate-800 font-medium');
+              populateInlineText(td, c);
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          }
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+        return container;
+      } else {
+        var table = el('table', 'w-full text-left border-collapse border border-slate-300 bg-white rounded-lg overflow-hidden text-xs');
+        var thead = el('thead', 'bg-indigo-50 border-b border-slate-300 text-indigo-950 font-bold');
+        var trHead = el('tr');
+        trHead.appendChild(el('th', 'p-3 border-r border-slate-300 w-2/5', 'Category / Item'));
+        trHead.appendChild(el('th', 'p-3', 'Completion Answer'));
+        thead.appendChild(trHead);
+        table.appendChild(thead);
+
+        var tbody = el('tbody');
+        gaps.forEach(function (gap, index) {
+          var tr = el('tr', 'border-b border-slate-200 hover:bg-slate-50 transition-colors');
+          var tdLabel = el('td', 'p-3 font-bold text-slate-800 border-r border-slate-200 bg-slate-50/50');
+          var rawLabel = gap.label || ('Row ' + (index + 1));
+          tdLabel.textContent = rawLabel.replace(/^gap_?\d*:?\s*/i, '');
+          var tdInput = el('td', 'p-3');
+          tdInput.appendChild(createControl(gap.gapId, index));
+          tr.append(tdLabel, tdInput);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+        return container;
+      }
+    }
+
+    if (isNotes || (text && (text.indexOf('1.') >= 0 || text.indexOf('- ') >= 0 || text.indexOf('•') >= 0))) {
+      var container = el('div', 'notes-completion-card my-3 p-4 bg-sky-50/40 border border-sky-200 rounded-xl shadow-sm');
+      var header = el('div', 'font-extrabold text-xs text-sky-900 uppercase tracking-wider mb-2 flex items-center gap-1.5');
+      header.innerHTML = '<i class="fas fa-list-ul text-sky-600"></i> Complete the Notes';
+      container.appendChild(header);
+
+      if (text) {
+        var notesBody = el('div', 'p-4 bg-white rounded-lg border border-sky-200/80 space-y-2.5 text-xs text-slate-800 leading-relaxed');
+        var lines = text.split('\n');
+        lines.forEach(function(line) {
+          var trimmed = line.trim();
+          if (!trimmed) return;
+          if (/^(\d+\.|[A-Z]\.|[I|V|X]+\.|[A-Z][a-z\s]+:)/.test(trimmed) && trimmed.indexOf('___') === -1) {
+            var heading = el('div', 'font-bold text-slate-900 text-sm mt-3 mb-1 border-b border-sky-100 pb-1');
+            heading.textContent = trimmed;
+            notesBody.appendChild(heading);
+          } else if (/^[-*•]\s*/.test(trimmed) || /^\d+\.\s*/.test(trimmed)) {
+            var bullet = el('div', 'flex items-start gap-2 pl-2 my-1');
+            var bulletIcon = el('span', 'text-sky-600 font-bold shrink-0 mt-0.5', '•');
+            var bulletText = el('div', 'flex-1 text-slate-800 leading-relaxed font-medium');
+            populateInlineText(bulletText, trimmed.replace(/^[-*•]\s*/, ''));
+            bullet.append(bulletIcon, bulletText);
+            notesBody.appendChild(bullet);
+          } else {
+            var para = el('p', 'my-1 font-medium text-slate-800');
+            populateInlineText(para, trimmed);
+            notesBody.appendChild(para);
+          }
+        });
+        container.appendChild(notesBody);
+        return container;
+      } else {
+        var list = el('div', 'p-4 bg-white rounded-lg border border-sky-200/80 space-y-3 text-xs');
+        gaps.forEach(function (gap, index) {
+          var bullet = el('div', 'flex items-start gap-2.5 p-2.5 bg-sky-50/50 rounded-lg border border-sky-100');
+          var icon = el('span', 'text-sky-600 mt-0.5 font-bold text-sm', '•');
+          var textWrapper = el('div', 'flex-1 space-y-1');
+          var labelText = el('span', 'font-semibold text-slate-800 block leading-relaxed', gap.label || ('Note point ' + (index + 1)));
+          textWrapper.append(labelText, createControl(gap.gapId, index));
+          bullet.append(icon, textWrapper);
+          list.appendChild(bullet);
+        });
+        container.appendChild(list);
+        return container;
+      }
+    }
+
+    if (isForm || (text && /form/i.test(text))) {
+      var container = el('div', 'form-completion-card my-3 p-4 bg-emerald-50/40 border border-emerald-200 rounded-xl shadow-sm');
+      var header = el('div', 'font-extrabold text-xs text-emerald-900 uppercase tracking-wider mb-3 flex items-center gap-1.5');
+      header.innerHTML = '<i class="fas fa-file-signature text-emerald-600"></i> Complete the Form';
+      container.appendChild(header);
+
+      if (text) {
+        var formBox = el('div', 'p-4 bg-white rounded-lg border border-emerald-200/80 space-y-2.5 text-xs');
+        var lines = text.split('\n');
+        lines.forEach(function(line) {
+          var trimmed = line.trim();
+          if (!trimmed) return;
+          var fieldBox = el('div', 'p-2.5 bg-emerald-50/40 rounded-lg border border-emerald-100 flex flex-col md:flex-row md:items-center justify-between gap-2');
+          populateInlineText(fieldBox, trimmed);
+          formBox.appendChild(fieldBox);
+        });
+        container.appendChild(formBox);
+        return container;
+      } else {
+        var grid = el('div', 'grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-white rounded-lg border border-emerald-200/80 text-xs');
+        gaps.forEach(function (gap, index) {
+          var fieldBox = el('div', 'p-2.5 bg-emerald-50/50 rounded-lg border border-emerald-100 space-y-1');
+          var label = el('label', 'font-bold text-slate-800 block text-[11px] uppercase tracking-wide', gap.label || ('Form Field ' + (index + 1)));
+          fieldBox.append(label, createControl(gap.gapId, index));
+          grid.appendChild(fieldBox);
+        });
+        container.appendChild(grid);
+        return container;
+      }
+    }
+
+    if (isSummary) {
+      var container = el('div', 'summary-completion-card my-3 p-4 bg-amber-50/40 border border-amber-200 rounded-xl shadow-sm');
+      var header = el('div', 'font-extrabold text-xs text-amber-900 uppercase tracking-wider mb-2 flex items-center gap-1.5');
+      header.innerHTML = '<i class="fas fa-file-alt text-amber-600"></i> Complete the Summary';
+      container.appendChild(header);
+
+      if (text) {
+        var summaryBox = el('div', 'p-4 bg-white rounded-lg border border-amber-200/80 text-xs text-slate-800 leading-relaxed font-medium');
+        populateInlineText(summaryBox, text);
+        container.appendChild(summaryBox);
+        return container;
+      } else {
+        var list = el('div', 'p-4 bg-white rounded-lg border border-amber-200/80 space-y-3 text-xs');
+        gaps.forEach(function (gap, index) {
+          var gapRow = el('div', 'p-3 bg-amber-50/60 rounded-lg border border-amber-200/80 flex flex-col md:flex-row md:items-center gap-2');
+          var labelSpan = el('span', 'font-bold text-amber-950 text-xs min-w-[130px]', (gap.label || ('Summary Gap ' + (index + 1))) + ':');
+          gapRow.append(labelSpan, createControl(gap.gapId, index));
+          list.appendChild(gapRow);
+        });
+        container.appendChild(list);
+        return container;
+      }
+    }
+
+    if (isSentence) {
+      var container = el('div', 'sentence-completion-card my-3 p-4 bg-indigo-50/40 border border-indigo-200 rounded-xl shadow-sm');
+      var header = el('div', 'font-extrabold text-xs text-indigo-900 uppercase tracking-wider mb-2 flex items-center gap-1.5');
+      header.innerHTML = '<i class="fas fa-align-left text-indigo-600"></i> Complete the Sentences';
+      container.appendChild(header);
+
+      if (text) {
+        var sentenceList = el('div', 'space-y-3');
+        var lines = text.split('\n').filter(function(l) { return l.trim().length > 0; });
+        lines.forEach(function(line, idx) {
+          var item = el('div', 'p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 text-xs shadow-sm');
+          var label = el('div', 'font-bold text-slate-900 flex items-start gap-2.5');
+          var num = el('span', 'w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5', String(idx + 1));
+          var txt = el('span', 'flex-1 text-slate-800 font-medium leading-relaxed');
+          populateInlineText(txt, line.replace(/^\d+\.\s*/, ''));
+          label.append(num, txt);
+          item.appendChild(label);
+          sentenceList.appendChild(item);
+        });
+        container.appendChild(sentenceList);
+        return container;
+      } else {
+        var list = el('div', 'space-y-3');
+        gaps.forEach(function (gap, index) {
+          var item = el('div', 'p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 text-xs shadow-sm');
+          var label = el('div', 'font-bold text-slate-900 flex items-start gap-2.5');
+          var num = el('span', 'w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5', String(index + 1));
+          var txt = el('span', 'flex-1 text-slate-800 font-medium leading-relaxed', gap.label || ('Sentence ' + (index + 1)));
+          label.append(num, txt);
+          item.append(label, createControl(gap.gapId, index));
+          list.appendChild(item);
+        });
+        container.appendChild(list);
+        return container;
+      }
+    }
+
+    if (text) {
+      var genContainer = el('div', 'generic-completion-card my-3 p-4 bg-slate-50 border border-slate-200 rounded-xl shadow-sm');
+      var box = el('div', 'p-4 bg-white rounded-lg border border-slate-200 text-xs text-slate-800 leading-relaxed font-medium');
+      populateInlineText(box, text);
+      genContainer.appendChild(box);
+      return genContainer;
+    }
+
+    var wrapper = el('div', 'gap-grid');
+    gaps.forEach(function (gap, index) {
+      var field = el('div');
+      var label = el('label', 'field-label', gap.label || 'Gap ' + (index + 1));
+      label.htmlFor = 'gap-' + task.taskId + '-' + gap.gapId;
+      field.append(label, createControl(gap.gapId, index));
+      wrapper.appendChild(field);
+    });
+    return wrapper;
+  }
+
+  function renderGaps(task) {
+    return renderCompletionCard(task, false);
+  }
+
+  function renderDropdownGaps(task) {
+    return renderCompletionCard(task, true);
+  }
+
+  function renderMatching(task) {
+    var wrapper = el('div', 'gap-grid');
+    var current = state.answers[task.taskId] && typeof state.answers[task.taskId] === 'object' ? state.answers[task.taskId] : {};
+    task.responseSpec.gaps.forEach(function (gap, index) {
+      var label = el('label', 'field-label', gap.label || 'Item ' + (index + 1));
+      var select = document.createElement('select');
+      select.appendChild(new Option('Choose an option', ''));
+      task.responseSpec.options.forEach(function (option) { select.appendChild(new Option(option.label, option.optionId)); });
+      select.value = current[gap.gapId] || '';
+      select.addEventListener('change', function () {
+        var next = Object.assign({}, state.answers[task.taskId] || {});
+        next[gap.gapId] = select.value;
+        setAnswer(task.taskId, next);
+      });
+      label.appendChild(select);
+      wrapper.appendChild(label);
+    });
+    return wrapper;
+  }
+
+  function wordCount(value) {
+    var matches = String(value || '').trim().match(/[\\p{L}\\p{N}][\\p{L}\\p{N}'’-]*/gu);
+    return matches ? matches.length : 0;
+  }
+
+  function renderEditor(task) {
+    var wrapper = el('div', 'stack-sm');
+    var label = el('label', 'field-label', 'Your response');
+    label.htmlFor = 'editor-' + task.taskId;
+    var editor = document.createElement('textarea');
+    editor.id = label.htmlFor;
+    editor.value = state.answers[task.taskId] || '';
+    editor.placeholder = task.responseSpec.placeholder || 'Write your response here';
+    editor.spellcheck = config.featureFlags.spellcheck && task.responseSpec.spellcheck;
+    editor.style.minHeight = '20rem';
+    var words = el('span', '', '0 words');
+    var chars = el('span', '', '0 characters');
+    var progressFill = el('span');
+    function updateMeta() {
+      var count = wordCount(editor.value);
+      words.textContent = count + (count === 1 ? ' word' : ' words');
+      chars.textContent = editor.value.length + (editor.value.length === 1 ? ' character' : ' characters');
+      var target = task.responseSpec.minWords || task.responseSpec.maxWords || 1;
+      progressFill.style.width = Math.min(100, count / target * 100) + '%';
+      if (task.responseSpec.maxWords && count > task.responseSpec.maxWords) words.style.color = 'var(--danger)';
+      else words.style.color = '';
+    }
+    editor.addEventListener('input', function () { setAnswer(task.taskId, editor.value); updateMeta(); });
+    var meta = el('div', 'editor-meta');
+    meta.append(words, chars);
+    var progress = el('div', 'word-progress');
+    progress.setAttribute('role', 'progressbar');
+    progress.setAttribute('aria-label', 'Word target progress');
+    progress.appendChild(progressFill);
+    wrapper.append(label, editor, meta, progress);
+    var targets = [];
+    if (task.responseSpec.minWords) targets.push('minimum ' + task.responseSpec.minWords + ' words');
+    if (task.responseSpec.maxWords) targets.push('maximum ' + task.responseSpec.maxWords + ' words');
+    if (targets.length) wrapper.appendChild(el('span', 'field-help', 'Target: ' + targets.join(', ') + '.'));
+    updateMeta();
+    return wrapper;
+  }
+
+  function renderSelectText(task) {
+    var wrapper = el('div', 'stack-sm');
+    wrapper.appendChild(el('span', 'field-label', 'Select the relevant word or phrase'));
+    var selected = Array.isArray(state.answers[task.taskId]) ? state.answers[task.taskId].slice() : [];
+    var options = task.responseSpec.options.length ? task.responseSpec.options : [];
+    if (!options.length) {
+      var source = task.passageText || task.prompt || '';
+      var matches = source.match(/\S+/g) || [];
+      options = matches.map(function (word, index) { return { optionId: 'word_' + index, label: word }; });
+    }
+    var surface = el('div', 'token-selection');
+    surface.setAttribute('role', 'group');
+    surface.setAttribute('aria-label', 'Selectable text');
+    options.forEach(function (option) {
+      var token = button(option.label, selected.indexOf(option.optionId) >= 0 ? 'token-button is-selected' : 'token-button', function () {
+        var next = Array.isArray(state.answers[task.taskId]) ? state.answers[task.taskId].slice() : [];
+        var present = next.indexOf(option.optionId);
+        if (present >= 0) next.splice(present, 1);
+        else {
+          if (task.responseSpec.multipleLimit && next.length >= task.responseSpec.multipleLimit) {
+            toast('Maximum ' + task.responseSpec.multipleLimit + ' selections.');
+            return;
+          }
+          next.push(option.optionId);
+        }
+        setAnswer(task.taskId, next);
+        token.classList.toggle('is-selected', next.indexOf(option.optionId) >= 0);
+        token.setAttribute('aria-pressed', next.indexOf(option.optionId) >= 0 ? 'true' : 'false');
+      });
+      token.setAttribute('aria-pressed', selected.indexOf(option.optionId) >= 0 ? 'true' : 'false');
+      surface.appendChild(token);
+    });
+    wrapper.appendChild(surface);
+    wrapper.appendChild(el('span', 'field-help', 'Selected words are visually highlighted and included in your response.'));
+    return wrapper;
+  }
+
+  function renderMultiField(task) {
+    var wrapper = el('div', 'stack');
+    var current = state.answers[task.taskId] && typeof state.answers[task.taskId] === 'object' ? state.answers[task.taskId] : {};
+    var fields = current.fields || {};
+    var grid = el('div', 'gap-grid');
+    task.responseSpec.gaps.forEach(function (gap, index) {
+      var field = el('div');
+      var label = el('label', 'field-label', gap.label || 'Part ' + (index + 1));
+      var input = document.createElement('input');
+      input.id = 'multi-' + task.taskId + '-' + gap.gapId;
+      label.htmlFor = input.id;
+      input.value = fields[gap.gapId] || '';
+      input.inputMode = /math|numeric|calculation/i.test(task.taskType) ? 'decimal' : 'text';
+      input.addEventListener('input', function () {
+        var next = Object.assign({}, state.answers[task.taskId] || {});
+        next.fields = Object.assign({}, next.fields || {});
+        next.fields[gap.gapId] = input.value;
+        setAnswer(task.taskId, next);
+      });
+      field.append(label, input);
+      grid.appendChild(field);
+    });
+    var workingLabel = el('label', 'field-label', 'Working, explanation, or supporting response');
+    var working = document.createElement('textarea');
+    working.id = 'working-' + task.taskId;
+    workingLabel.htmlFor = working.id;
+    working.value = current.working || '';
+    working.placeholder = 'Show your method or explain your answer where required.';
+    working.spellcheck = config.featureFlags.spellcheck;
+    working.addEventListener('input', function () {
+      var next = Object.assign({}, state.answers[task.taskId] || {});
+      next.working = working.value;
+      setAnswer(task.taskId, next);
+    });
+    wrapper.append(grid, workingLabel, working);
+    return wrapper;
+  }
+
+  function renderInstructionalContent(task) {
+    var wrapper = el('section', 'stack-sm');
+    wrapper.appendChild(el('div', 'notice', 'Review the lesson content and examples before continuing. This instructional step is not scored unless the blueprint says otherwise.'));
+    var complete = Boolean(state.answers[task.taskId]);
+    var action = button(complete ? 'Lesson reviewed' : 'Mark lesson as reviewed', complete ? 'btn-soft' : 'btn-primary', function () {
+      setAnswer(task.taskId, true);
+      action.textContent = 'Lesson reviewed';
+      action.className = 'btn btn-soft';
+      action.setAttribute('aria-pressed', 'true');
+    });
+    action.setAttribute('aria-pressed', complete ? 'true' : 'false');
+    wrapper.appendChild(action);
+    return wrapper;
+  }
+
+  function getOrderingTokensFallback(task) {
+    var tokens = [];
+    if (task.responseSpec) {
+      if (Array.isArray(task.responseSpec.options) && task.responseSpec.options.length > 0) {
+        tokens = task.responseSpec.options.map(function(opt, idx) {
+          if (typeof opt === 'string') {
+            return { tokenId: 'tok_' + idx, label: opt };
+          }
+          return { tokenId: opt.optionId || opt.id || 'tok_' + idx, label: opt.label || opt.text || '' };
+        });
+      } else {
+        var ansStr = task.responseSpec.correctResponse || task.responseSpec.correctAnswer || task.responseSpec.sampleAnswer;
+        if (!ansStr && state.scoringPackage && state.scoringPackage.taskKeys && state.scoringPackage.taskKeys[task.taskId]) {
+          var keyObj = state.scoringPackage.taskKeys[task.taskId];
+          ansStr = keyObj.correctResponse || keyObj.correctAnswer || keyObj.key;
+        }
+        if (typeof ansStr === 'string' && ansStr.trim().length > 0) {
+          var rawWords = ansStr.trim().split(/\s+/).filter(Boolean);
+          var shuffled = rawWords.slice();
+          for (var i = shuffled.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = shuffled[i];
+            shuffled[i] = shuffled[j];
+            shuffled[j] = temp;
+          }
+          tokens = shuffled.map(function(word, idx) {
+            return { tokenId: 'tok_' + idx, label: word };
+          });
+        }
+      }
+    }
+    return tokens;
+  }
+
+  function initialOrder(task) {
+    var existing = state.answers[task.taskId];
+    if (Array.isArray(existing) && existing.length) return existing.slice();
+    if (Array.isArray(state.orderDrafts[task.taskId])) return state.orderDrafts[task.taskId].slice();
+    var tokens = task.responseSpec.tokens || [];
+    if (!tokens || tokens.length === 0) {
+      tokens = getOrderingTokensFallback(task);
+      task.responseSpec.tokens = tokens;
+    }
+    var ids = tokens.map(function (token) { return token.tokenId; });
+    state.orderDrafts[task.taskId] = ids;
+    return ids.slice();
+  }
+
+  function renderOrdering(task) {
+    var wrapper = el('div', 'stack-sm');
+    var tokens = task.responseSpec.tokens || [];
+    if (!tokens || tokens.length === 0) {
+      tokens = getOrderingTokensFallback(task);
+      task.responseSpec.tokens = tokens;
+    }
+    
+    // Check if it's a word-unscramble task
+    var isWordUnscramble = true;
+    tokens.forEach(function (t) {
+      if (t.label.trim().indexOf(' ') >= 0 || t.label.length > 25) {
+        isWordUnscramble = false;
+      }
+    });
+    
+    if (isWordUnscramble) {
+      var container = el('div', 'unscramble-container');
+      
+      var label = el('label', 'field-label', 'Arrange the words to form a correct sentence:');
+      container.appendChild(label);
+      
+      // Assembled box
+      var assembledBox = el('div', 'assembled-box');
+      var placeholder = el('div', 'assembled-placeholder', 'Click the word pills below to build your sentence...');
+      assembledBox.appendChild(placeholder);
+      
+      // Pool of available words
+      var pool = el('div', 'word-pool');
+      
+      // Text Input Field (Type option)
+      var textInput = document.createElement('input');
+      textInput.className = 'unscramble-input';
+      textInput.type = 'text';
+      textInput.placeholder = 'Or type the correct sentence here directly...';
+      textInput.autocomplete = 'off';
+      textInput.spellcheck = false;
+      
+      var currentAnswer = state.answers[task.taskId];
+      var selectedTokenIds = [];
+      var typedText = '';
+      
+      if (Array.isArray(currentAnswer)) {
+        selectedTokenIds = currentAnswer.slice();
+        var words = [];
+        selectedTokenIds.forEach(function (tid) {
+          var tok = tokens.find(function (t) { return t.tokenId === tid; });
+          if (tok) words.push(tok.label);
+        });
+        typedText = words.join(' ');
+      } else if (typeof currentAnswer === 'string') {
+        typedText = currentAnswer;
+      }
+      
+      textInput.value = typedText;
+      
+      function updateUnscrambleState() {
+        if (selectedTokenIds.length > 0) {
+          placeholder.style.display = 'none';
+          setAnswer(task.taskId, selectedTokenIds);
+          
+          var words = [];
+          selectedTokenIds.forEach(function (tid) {
+            var tok = tokens.find(function (t) { return t.tokenId === tid; });
+            if (tok) words.push(tok.label);
+          });
+          textInput.value = words.join(' ');
+        } else {
+          placeholder.style.display = 'grid';
+          if (textInput.value.trim() === '') {
+            setAnswer(task.taskId, []);
+          }
+        }
+        renderActivePills();
+      }
+      
+      textInput.addEventListener('input', function () {
+        setAnswer(task.taskId, textInput.value);
+        selectedTokenIds = [];
+        placeholder.style.display = textInput.value.trim() === '' ? 'grid' : 'none';
+        renderActivePills();
+      });
+      
+      var actionsRow = el('div', 'assembled-actions');
+      var clearBtn = button('Clear', 'btn-soft btn-small', function () {
+        selectedTokenIds = [];
+        textInput.value = '';
+        setAnswer(task.taskId, []);
+        updateUnscrambleState();
+      });
+      actionsRow.appendChild(clearBtn);
+      
+      function renderActivePills() {
+        assembledBox.innerHTML = '';
+        assembledBox.appendChild(placeholder);
+        
+        if (selectedTokenIds.length > 0) {
+          placeholder.style.display = 'none';
+          selectedTokenIds.forEach(function (tid, idx) {
+            var tok = tokens.find(function (t) { return t.tokenId === tid; });
+            if (tok) {
+              var pill = el('span', 'word-pill', tok.label);
+              pill.addEventListener('click', function () {
+                selectedTokenIds.splice(idx, 1);
+                updateUnscrambleState();
+              });
+              assembledBox.appendChild(pill);
+            }
+          });
+        } else {
+          placeholder.style.display = 'grid';
+        }
+        
+        pool.innerHTML = '';
+        tokens.forEach(function (tok) {
+          var pill = el('span', 'word-pill', tok.label);
+          var isUsed = selectedTokenIds.indexOf(tok.tokenId) >= 0;
+          if (isUsed) {
+            pill.classList.add('is-clicked');
+          } else {
+            pill.addEventListener('click', function () {
+              selectedTokenIds.push(tok.tokenId);
+              updateUnscrambleState();
+            });
+          }
+          pool.appendChild(pill);
+        });
+      }
+      
+      renderActivePills();
+      
+      container.appendChild(assembledBox);
+      container.appendChild(actionsRow);
+      container.appendChild(pool);
+      container.appendChild(textInput);
+      
+      wrapper.appendChild(container);
+      return wrapper;
+    } else {
+      var tokensById = {};
+      tokens.forEach(function (token) { tokensById[token.tokenId] = token; });
+      var order = initialOrder(task);
+      var list = el('ol', 'order-list');
+      order.forEach(function (tokenId, index) {
+        var token = tokensById[tokenId] || { label: tokenId };
+        var row = el('li', 'order-item');
+        row.appendChild(el('span', 'order-index', index + 1));
+        row.appendChild(el('span', '', token.label));
+        var actions = el('div', 'order-actions');
+        var up = button('Up', 'btn-ghost btn-small', function () { moveOrder(task, index, -1); });
+        var down = button('Down', 'btn-ghost btn-small', function () { moveOrder(task, index, 1); });
+        up.disabled = index === 0;
+        down.disabled = index === order.length - 1;
+        actions.append(up, down);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+      wrapper.appendChild(list);
+      wrapper.appendChild(el('span', 'field-help', 'Use the Up and Down controls to create the required order.'));
+      return wrapper;
+    }
+  }
+
+  function moveOrder(task, index, direction) {
+    var order = initialOrder(task);
+    var nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= order.length) return;
+    var temporary = order[index];
+    order[index] = order[nextIndex];
+    order[nextIndex] = temporary;
+    setAnswer(task.taskId, order);
+    render();
+    startTaskTiming();
+    window.setTimeout(function () {
+      var rows = document.querySelectorAll('.order-item');
+      if (rows[nextIndex]) rows[nextIndex].querySelector('button').focus();
+    }, 20);
+  }
+
+  function renderRecorder(task, includeVideo) {
+    var card = el('section', 'recorder-card stack-sm');
+    card.setAttribute('aria-label', includeVideo ? 'Video response recorder' : 'Voice recorder');
+    var status = el('div', 'recorder-status');
+    status.id = 'recorder-status-' + task.taskId;
+    status.append(el('span', 'record-dot'), el('span', '', state.recordings[task.taskId] ? 'Recording saved' : 'Ready to record'));
+    card.appendChild(status);
+    var canvas = document.createElement('canvas');
+    canvas.className = 'wave-canvas';
+    canvas.width = 900;
+    canvas.height = 120;
+    canvas.id = 'wave-' + task.taskId;
+    canvas.setAttribute('aria-label', 'Live microphone waveform');
+    card.appendChild(canvas);
+    var timing = [];
+    if (task.responseSpec.preparationSeconds) timing.push(task.responseSpec.preparationSeconds + ' seconds preparation');
+    timing.push(task.responseSpec.responseSeconds + ' seconds response');
+    card.appendChild(el('p', 'small muted', timing.join(' · ') + ' · ' + task.responseSpec.maxAttempts + (task.responseSpec.maxAttempts === 1 ? ' attempt' : ' attempts')));
+    var actions = el('div', 'row');
+    var start = button(task.responseSpec.preparationSeconds ? 'Start preparation' : (includeVideo ? 'Start video recording' : 'Start recording'), 'btn-primary', function () { startRecordingSequence(task, includeVideo); });
+    start.id = 'record-start-' + task.taskId;
+    var stop = button('Stop recording', 'btn-danger', function () { stopRecording('candidate_stop'); });
+    stop.id = 'record-stop-' + task.taskId;
+    stop.disabled = true;
+    actions.append(start, stop);
+    card.appendChild(actions);
+    if (state.recordings[task.taskId]) {
+      var preview = document.createElement(includeVideo ? 'video' : 'audio');
+      preview.controls = true;
+      preview.src = recordingUrl(task.taskId);
+      preview.setAttribute('aria-label', includeVideo ? 'Recorded video response preview' : 'Recorded audio response preview');
+      if (includeVideo) {
+        preview.style.width = '100%';
+        preview.style.maxHeight = '22rem';
+      }
+      card.appendChild(preview);
+    }
+    return card;
+  }
+
+  function recordingUrl(taskId) {
+    if (state.recordingUrls[taskId]) return state.recordingUrls[taskId];
+    var blob = state.recordings[taskId];
+    if (!blob) return '';
+    var url = URL.createObjectURL(blob);
+    state.recordingUrls[taskId] = url;
+    return url;
+  }
+
+  function supportedRecorderMime(includeVideo) {
+    if (!window.MediaRecorder) return '';
+    var choices = includeVideo
+      ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+      : ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/mp4'];
+    for (var i = 0; i < choices.length; i += 1) {
+      if (!MediaRecorder.isTypeSupported || MediaRecorder.isTypeSupported(choices[i])) return choices[i];
+    }
+    return '';
+  }
+
+  function startRecordingSequence(task, includeVideo) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+      toast('Audio recording is not supported by this browser.');
+      audit('recording_error', { reason: 'unsupported' });
+      return;
+    }
+    if (recorderRuntime) return;
+    var attempts = Number((state.answers[task.taskId] && state.answers[task.taskId].attempts) || 0);
+    if (attempts >= task.responseSpec.maxAttempts) {
+      toast('No recording attempts remain.');
+      return;
+    }
+    suppressFocusFor(10000, includeVideo ? 'camera_microphone_permission' : 'microphone_permission');
+    var constraints = {
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      video: includeVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } : false
+    };
+    navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+      setupRecorder(task, stream, attempts + 1, includeVideo);
+      if (task.responseSpec.preparationSeconds > 0) runPreparation(task);
+      else beginMediaRecorder(task);
+    }).catch(function () {
+      toast(includeVideo ? 'Camera or microphone permission was denied, or a required device is unavailable.' : 'Microphone permission was denied or no device is available.');
+      audit('recording_error', { reason: 'permission_or_device', mediaKind: includeVideo ? 'video' : 'audio' });
+    });
+  }
+
+  function setupRecorder(task, stream, attempt, includeVideo) {
+    var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    var context = new AudioContextClass();
+    var source = context.createMediaStreamSource(stream);
+    var analyser = context.createAnalyser();
+    analyser.fftSize = 1024;
+    source.connect(analyser);
+    recorderRuntime = {
+      task: task,
+      stream: stream,
+      context: context,
+      analyser: analyser,
+      mediaRecorder: null,
+      chunks: [],
+      attempt: attempt,
+      includeVideo: includeVideo,
+      waveFrame: null,
+      autoStop: null,
+      prepTimer: null,
+      liveVideo: null
+    };
+    if (includeVideo) {
+      var liveVideo = document.createElement('video');
+      liveVideo.autoplay = true;
+      liveVideo.muted = true;
+      liveVideo.playsInline = true;
+      liveVideo.srcObject = stream;
+      liveVideo.setAttribute('aria-label', 'Live camera preview');
+      liveVideo.style.width = '100%';
+      liveVideo.style.maxHeight = '22rem';
+      liveVideo.style.borderRadius = '.55rem';
+      var canvas = document.getElementById('wave-' + task.taskId);
+      if (canvas && canvas.parentNode) canvas.parentNode.insertBefore(liveVideo, canvas);
+      recorderRuntime.liveVideo = liveVideo;
+    }
+    drawWave(task.taskId);
+  }
+
+  function runPreparation(task) {
+    var remaining = task.responseSpec.preparationSeconds;
+    var status = document.getElementById('recorder-status-' + task.taskId);
+    function update() {
+      if (!recorderRuntime) return;
+      if (status) status.lastChild.textContent = 'Preparation time: ' + remaining + ' seconds';
+      if (remaining <= 0) {
+        window.clearInterval(recorderRuntime.prepTimer);
+        beginMediaRecorder(task);
+      }
+      remaining -= 1;
+    }
+    update();
+    recorderRuntime.prepTimer = window.setInterval(update, 1000);
+    audit('recording_preparation_started', { seconds: task.responseSpec.preparationSeconds });
+  }
+
+  function beginMediaRecorder(task) {
+    if (!recorderRuntime) return;
+    var mime = supportedRecorderMime(Boolean(recorderRuntime.includeVideo));
+    var recorder;
+    try { recorder = mime ? new MediaRecorder(recorderRuntime.stream, { mimeType: mime }) : new MediaRecorder(recorderRuntime.stream); }
+    catch (_error) { recorder = new MediaRecorder(recorderRuntime.stream); }
+    recorderRuntime.mediaRecorder = recorder;
+    recorderRuntime.chunks = [];
+    recorder.addEventListener('dataavailable', function (event) { if (event.data && event.data.size) recorderRuntime.chunks.push(event.data); });
+    recorder.addEventListener('stop', function () { finalizeRecording(task, recorder.mimeType || mime || (recorderRuntime && recorderRuntime.includeVideo ? 'video/webm' : 'audio/webm')); });
+    recorder.start(250);
+    var status = document.getElementById('recorder-status-' + task.taskId);
+    if (status) {
+      status.classList.add('is-recording');
+      status.lastChild.textContent = 'Recording now';
+    }
+    var start = document.getElementById('record-start-' + task.taskId);
+    var stop = document.getElementById('record-stop-' + task.taskId);
+    if (start) start.disabled = true;
+    if (stop) stop.disabled = false;
+    recorderRuntime.autoStop = window.setTimeout(function () { stopRecording('time_limit'); }, task.responseSpec.responseSeconds * 1000);
+    audit('recording_started', { attempt: recorderRuntime.attempt, mimeType: recorder.mimeType || mime });
+    announce('Recording started.');
+  }
+
+  function stopRecording(reason) {
+    if (!recorderRuntime) return;
+    window.clearInterval(recorderRuntime.prepTimer);
+    window.clearTimeout(recorderRuntime.autoStop);
+    if (recorderRuntime.mediaRecorder && recorderRuntime.mediaRecorder.state !== 'inactive') {
+      audit('recording_stopped', { reason: reason });
+      recorderRuntime.mediaRecorder.stop();
+    } else cleanupRecorderRuntime();
+  }
+
+  function finalizeRecording(task, mime) {
+    if (!recorderRuntime) return;
+    var blob = new Blob(recorderRuntime.chunks, { type: mime });
+    state.recordings[task.taskId] = blob;
+    if (state.recordingUrls[task.taskId]) URL.revokeObjectURL(state.recordingUrls[task.taskId]);
+    delete state.recordingUrls[task.taskId];
+    state.answers[task.taskId] = {
+      recorded: true,
+      mediaKind: recorderRuntime.includeVideo ? 'video' : 'audio',
+      mimeType: blob.type,
+      size: blob.size,
+      attempts: recorderRuntime.attempt
+    };
+    markInteraction('recording_saved');
+    cleanupRecorderRuntime();
+    render();
+    startTaskTiming();
+    announce('Recording saved.');
+  }
+
+  function drawWave(taskId) {
+    if (!recorderRuntime) return;
+    var canvas = document.getElementById('wave-' + taskId);
+    if (!canvas) return;
+    var context2d = canvas.getContext('2d');
+    var values = new Uint8Array(recorderRuntime.analyser.fftSize);
+    function frame() {
+      if (!recorderRuntime) return;
+      recorderRuntime.analyser.getByteTimeDomainData(values);
+      context2d.fillStyle = '#0f172a';
+      context2d.fillRect(0, 0, canvas.width, canvas.height);
+      context2d.strokeStyle = '#38bdf8';
+      context2d.lineWidth = 3;
+      context2d.beginPath();
+      for (var i = 0; i < values.length; i += 1) {
+        var x = i / (values.length - 1) * canvas.width;
+        var y = values[i] / 255 * canvas.height;
+        if (i === 0) context2d.moveTo(x, y); else context2d.lineTo(x, y);
+      }
+      context2d.stroke();
+      recorderRuntime.waveFrame = requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  function cleanupRecorderRuntime() {
+    if (!recorderRuntime) return;
+    window.clearInterval(recorderRuntime.prepTimer);
+    window.clearTimeout(recorderRuntime.autoStop);
+    if (recorderRuntime.waveFrame) cancelAnimationFrame(recorderRuntime.waveFrame);
+    if (recorderRuntime.liveVideo) {
+      recorderRuntime.liveVideo.srcObject = null;
+      recorderRuntime.liveVideo.remove();
+    }
+    recorderRuntime.stream.getTracks().forEach(function (track) { track.stop(); });
+    recorderRuntime.context.close().catch(function () {});
+    recorderRuntime = null;
+  }
+
+  function cleanupTransientMedia(stopRecorder) {
+    stopTaskAudio();
+    if (stopRecorder && recorderRuntime) stopRecording('navigation');
+  }
+
+  function renderTaskFooter() {
+    var footer = el('footer', 'task-footer');
+    var item = currentTask();
+    var left = el('div', 'row');
+    var flag = button(state.flags[item.task.taskId] ? 'Unflag question' : 'Flag for review', 'btn-ghost', function () {
+      state.flags[item.task.taskId] = !state.flags[item.task.taskId];
+      markInteraction('flag_changed');
+      render();
+      startTaskTiming();
+    });
+    left.appendChild(flag);
+    var right = el('div', 'row');
+    var previous = button('Previous', 'btn-ghost', function () { navigate(state.current - 1); });
+    previous.disabled = state.current === 0 || item.section.navigationPolicy === 'linear';
+    var nextLabel = state.current === tasks.length - 1 ? 'Review answers' : 'Next';
+    var next = button(nextLabel, 'btn-primary', function () {
+      if (state.current === tasks.length - 1) openReview(); else navigate(state.current + 1);
+    });
+    right.append(previous, next);
+    footer.append(left, right);
+    return footer;
+  }
+
+  function navigate(index) {
+    if (index < 0 || index >= tasks.length || index === state.current) return;
+    var current = currentTask();
+    if (current && current.section.navigationPolicy === 'linear' && index > state.current + 1) return;
+    cleanupTransientMedia(true);
+    endIdle();
+    endTaskTiming();
+    state.current = index;
+    state.mobilePane = 'question';
+    saveSession(false);
+    render();
+    startTaskTiming();
+  }
+
+  function openReview() {
+    cleanupTransientMedia(true);
+    endIdle();
+    endTaskTiming();
+    state.phase = 'review';
+    audit('review_opened');
+    saveSession(false);
+    render();
+  }
+
+  function renderReview() {
+    main.appendChild(renderHeader());
+    var card = el('section', 'center-card stack');
+    card.setAttribute('aria-labelledby', 'review-title');
+    card.appendChild(el('p', 'eyebrow', 'Final review'));
+    var title = el('h1', '', 'Review your responses');
+    title.id = 'review-title';
+    card.appendChild(title);
+    var complete = tasks.filter(function (entry) { return answered(entry.task.taskId); }).length;
+    card.appendChild(el('p', '', complete + ' of ' + tasks.length + ' tasks have a response.'));
+    if (!allRequiredAnswered()) card.appendChild(el('div', 'notice notice-warning', 'Some required tasks are unanswered. You may still submit if your exam policy allows it.'));
+    var list = el('div', 'review-list');
+    tasks.forEach(function (entry, index) {
+      var row = el('div', 'review-item');
+      row.appendChild(el('strong', '', String(index + 1)));
+      var text = el('div');
+      text.appendChild(el('strong', '', entry.section.sectionTitle));
+      text.appendChild(el('div', 'small muted', entry.task.prompt.slice(0, 120)));
+      var status = el('span', 'review-state' + (answered(entry.task.taskId) ? ' is-complete' : ''), answered(entry.task.taskId) ? 'Answered' : 'Unanswered');
+      var edit = button('Open', 'btn-ghost btn-small', function () {
+        state.current = index;
+        state.phase = 'active';
+        render();
+        startTaskTiming();
+      });
+      var action = el('div', 'row');
+      action.append(status, edit);
+      row.append(text, action);
+      list.appendChild(row);
+    });
+    card.appendChild(list);
+    var confirmLabel = el('label', 'check-row');
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'submit-confirm';
+    confirmLabel.append(checkbox, el('span', '', 'I have reviewed my responses and understand that final submission cannot be undone.'));
+    card.appendChild(confirmLabel);
+    var actions = el('div', 'row-between');
+    actions.appendChild(button('Return to exam', 'btn-ghost', function () { state.phase = 'active'; render(); startTaskTiming(); }));
+    var submit = button('Submit exam', 'btn-primary', function () {
+      if (!checkbox.checked) { toast('Confirm final submission first.'); return; }
+      submitExam('candidate_submit', false);
+    });
+    actions.appendChild(submit);
+    card.appendChild(actions);
+    main.appendChild(card);
+    title.focus();
+    tick();
+  }
+
+  function gradeTaskV1(task, answer) {
+    if (answer === undefined || answer === null || answer === '') return { earned: 0, max: task.points || 1, correct: false };
+    
+    var max = task.points || 1;
+    var taskKeys = (state.scoringPackage && state.scoringPackage.taskKeys && state.scoringPackage.taskKeys[task.taskId]) || {};
+    var type = (task.responseSpec && task.responseSpec.type) || task.taskType || '';
+    
+    // Check type of question
+    if (type === 'single_choice' || type === 'image_choice' || type === 'yes_no_not_given' || type === 'true_false_not_given' || /choice/i.test(type)) {
+      var correctId = '';
+      if (task.responseSpec && task.responseSpec.options) {
+        task.responseSpec.options.forEach(function(o) { if (o.correct || o.isCorrect) correctId = o.optionId || o.id || o.value; });
+      }
+      if (!correctId && taskKeys.correctResponse && taskKeys.correctResponse.optionIds) {
+        correctId = taskKeys.correctResponse.optionIds[0];
+      }
+      if (!correctId && task.responseSpec) {
+        correctId = task.responseSpec.correctOptionId || task.responseSpec.correctResponse || task.responseSpec.correctAnswer || '';
+      }
+      var normUser = formatOptionIdToLetter(answer).toLowerCase();
+      var normCorrect = formatOptionIdToLetter(correctId).toLowerCase();
+      var rawUserStr = String(answer).trim().toLowerCase();
+      var rawCorrStr = String(correctId).trim().toLowerCase();
+
+      var isOk = (normUser && normCorrect && normUser === normCorrect) || (rawUserStr === rawCorrStr) || (rawCorrStr.indexOf(rawUserStr) >= 0 && rawUserStr.length > 0);
+      return { earned: isOk ? max : 0, max: max, correct: isOk };
+    }
+    
+    if (type === 'multiple_select' || /multiple/i.test(type)) {
+      var correctIds = [];
+      if (task.responseSpec && task.responseSpec.options) {
+        task.responseSpec.options.forEach(function(o) { if (o.correct || o.isCorrect) correctIds.push(o.optionId || o.id || o.value); });
+      }
+      if (!correctIds.length && taskKeys.correctResponse && taskKeys.correctResponse.optionIds) {
+        correctIds = taskKeys.correctResponse.optionIds;
+      }
+      var userAns = Array.isArray(answer) ? answer : [answer];
+      var normUserList = userAns.map(function(u) { return formatOptionIdToLetter(u).toLowerCase(); });
+      var normCorrectList = correctIds.map(function(c) { return formatOptionIdToLetter(c).toLowerCase(); });
+
+      var correctCount = 0;
+      normCorrectList.forEach(function(id) {
+        if (normUserList.indexOf(id) >= 0) correctCount++;
+      });
+      var isPerfect = correctCount === normCorrectList.length && normUserList.length === normCorrectList.length;
+      return { earned: isPerfect ? max : 0, max: max, correct: isPerfect };
+    }
+    
+    if (type === 'matching' || /matching/i.test(type)) {
+      var correctMap = (task.responseSpec && task.responseSpec.correctMap) || (taskKeys.correctResponse && taskKeys.correctResponse.map) || {};
+      var totalKeys = Object.keys(correctMap).length || 1;
+      var matchedCount = 0;
+      Object.keys(correctMap).forEach(function(k) {
+        var userVal = answer && answer[k];
+        var corrVal = correctMap[k];
+        if (userVal && (userVal === corrVal || formatOptionIdToLetter(userVal) === formatOptionIdToLetter(corrVal))) {
+          matchedCount++;
+        }
+      });
+      var perfectMatching = matchedCount === totalKeys;
+      return { earned: perfectMatching ? max : 0, max: max, correct: perfectMatching };
+    }
+    
+    if (type === 'gaps' || type === 'dropdown_gaps' || /gap/i.test(type)) {
+      var gaps = (task.responseSpec && task.responseSpec.gaps) || [];
+      var totalGaps = gaps.length || 1;
+      var matchedGaps = 0;
+      gaps.forEach(function(gap, index) {
+        var userVal = String((answer && answer[index]) || (answer && answer[gap.id]) || (answer && answer[gap.gapId]) || '').trim().toLowerCase().replace(/[’']/g, "'");
+        var correctVals = [].concat(gap.correct || gap.correctAnswer || gap.expectedAnswers || gap.acceptedAnswers || []);
+        var normCorrectVals = correctVals.map(function(v) { return String(v).trim().toLowerCase().replace(/[’']/g, "'"); });
+        if (normCorrectVals.indexOf(userVal) >= 0) {
+          matchedGaps++;
+        }
+      });
+      var allGapsOk = matchedGaps === totalGaps;
+      return { earned: allGapsOk ? max : 0, max: max, correct: allGapsOk };
+    }
+    
+    if (type === 'ordering' || /order/i.test(type)) {
+      var correctOrder = (task.responseSpec && task.responseSpec.correctOrder) || (taskKeys.correctResponse && taskKeys.correctResponse.order) || [];
+      var userOrder = Array.isArray(answer) ? answer : [];
+      var normUserOrder = userOrder.map(function(u) { return formatOptionIdToLetter(u).toLowerCase(); });
+      var normCorrOrder = correctOrder.map(function(c) { return formatOptionIdToLetter(c).toLowerCase(); });
+      var isOrderCorrect = JSON.stringify(normCorrOrder) === JSON.stringify(normUserOrder) || JSON.stringify(correctOrder) === JSON.stringify(userOrder);
+      return { earned: isOrderCorrect ? max : 0, max: max, correct: isOrderCorrect };
+    }
+    
+    // Fallback text input or short answers
+    var accAnswers = [].concat(
+      (task.responseSpec && task.responseSpec.correctAnswer) || 
+      (task.responseSpec && task.responseSpec.correctResponse) || 
+      (task.responseSpec && task.responseSpec.expectedAnswers) || 
+      (task.responseSpec && task.responseSpec.acceptedAnswers) || 
+      (task.responseSpec && task.responseSpec.sampleAnswer) || 
+      (taskKeys.correctResponse && (taskKeys.correctResponse.key || taskKeys.correctResponse.correctAnswer || taskKeys.correctResponse)) ||
+      []
+    ).map(function(x) { return String(x).trim().toLowerCase(); });
+    
+    var uAns = String(answer).trim().toLowerCase();
+    var okText = accAnswers.indexOf(uAns) >= 0;
+    return { earned: okText ? max : 0, max: max, correct: okText };
+  }
+
+  function buildResultsV1() {
+    var sectionsBreakdown = [];
+    var totalEarned = 0;
+    var totalMax = 0;
+    var correctCount = 0;
+    var totalCount = 0;
+    var incorrectTasks = [];
+    
+    exam.sections.forEach(function (section, sectionIndex) {
+      var sectionEarned = 0;
+      var sectionMax = 0;
+      var items = [];
+      
+      section.tasks.forEach(function (task, taskIndex) {
+        var ans = state.answers[task.taskId];
+        var grade = gradeTaskV1(task, ans);
+        sectionEarned += grade.earned;
+        sectionMax += grade.max;
+        totalEarned += grade.earned;
+        totalMax += grade.max;
+        totalCount++;
+        if (grade.correct) {
+          correctCount++;
+        } else {
+          incorrectTasks.push({
+            taskId: task.taskId,
+            sectionId: section.sectionId,
+            sectionTitle: section.sectionTitle,
+            taskType: task.taskType,
+            prompt: task.prompt,
+            userAnswer: ans,
+            correctAnswer: (task.responseSpec && (task.responseSpec.correctAnswer || task.responseSpec.correctResponse)) || (state.scoringPackage && state.scoringPackage.taskKeys && state.scoringPackage.taskKeys[task.taskId] && (state.scoringPackage.taskKeys[task.taskId].correctResponse || state.scoringPackage.taskKeys[task.taskId].key)) || 'See evaluation rubrics'
+          });
+        }
+        
+        items.push({
+          id: task.taskId,
+          order: taskIndex + 1,
+          type: task.taskType,
+          prompt: task.prompt,
+          answer: ans || null,
+          correct: grade.correct,
+          earned: grade.earned,
+          max: grade.max,
+          flagged: Boolean(state.flags && state.flags[task.taskId]),
+          notes: (state.notes && state.notes[task.taskId]) || '',
+          visits: (state.telemetry && state.telemetry[task.taskId] && state.telemetry[task.taskId].visits) || 0,
+          totalMs: (state.telemetry && state.telemetry[task.taskId] && state.telemetry[task.taskId].totalMs) || 0
+        });
+      });
+      
+      sectionsBreakdown.push({
+        id: section.sectionId,
+        title: section.sectionTitle,
+        type: section.sectionType || 'general',
+        percent: sectionMax ? Math.round((sectionEarned / sectionMax) * 100) : 0,
+        items: items
+      });
+    });
+    
+    var percent = totalMax ? Math.round((totalEarned / totalMax) * 100) : 0;
+    return {
+      totalEarned: totalEarned,
+      totalMax: totalMax,
+      percent: percent,
+      passed: percent >= (exam.passPercent || 60),
+      bySection: sectionsBreakdown,
+      incorrectTasks: incorrectTasks,
+      correctCount: correctCount,
+      totalCount: totalCount
+    };
+  }
+
+  function submissionPayload(reason) {
+    endIdle();
+    endTaskTiming();
+    if (state.telemetry) {
+      Object.keys(state.telemetry).forEach(function (taskId) {
+        var metric = state.telemetry[taskId];
+        if (metric) {
+          metric.timeSubmitted = nowWall();
+          delete metric._lastKeyMono;
+          delete metric._interKeyTotal;
+          delete metric._interKeyCount;
+        }
+      });
+    }
+
+    var results = buildResultsV1();
+
+    return {
+      schemaVersion: exam.schemaVersion,
+      runtimeVersion: config.runtimeVersion,
+      examId: exam.examMetadata.examId,
+      examFamily: exam.examMetadata.examFamily,
+      exam: {
+        id: exam.examMetadata.examId,
+        name: exam.examMetadata.title,
+        provider: exam.examMetadata.provider || 'AI Studio',
+        deliveryMode: 'browser'
+      },
+      session: {
+        mode: 'test',
+        completedAt: nowWall(),
+        warnings: state.warnings || 0,
+        durationSpentMs: Math.round(elapsedMs())
+      },
+      scoring: {
+        rawPercent: results.percent,
+        weightedPercent: results.percent,
+        passed: results.passed,
+        passPercent: exam.passPercent || 60,
+        correctCount: results.correctCount,
+        totalCount: results.totalCount
+      },
+      sections: results.bySection,
+      sessionId: config.sessionId,
+      assignmentId: config.assignmentId,
+      candidateReference: config.candidateReference,
+      policyVersion: config.policyVersion,
+      consent: { telemetry: state.consent, timestamp: nowWall() },
+      completionReason: reason,
+      timing: {
+        totalTimeSpentMs: Math.round(elapsedMs()),
+        allowedTimeMs: (state.timer && state.timer.totalMs) || 0,
+        submittedAt: nowWall()
+      },
+      answers: state.answers || {},
+      telemetry: Object.keys(state.telemetry || {}).map(function (id) { return state.telemetry[id]; }),
+      focusLossEvents: (state.focusIncidents || []).concat(state.activeFocusIncident ? [state.activeFocusIncident] : []),
+      auditEvents: state.audit || [],
+      mediaManifest: Object.keys(state.recordings || {}).map(function (taskId) {
+        var blob = state.recordings[taskId];
+        var answer = (state.answers && state.answers[taskId]) || {};
+        var mediaKind = answer.mediaKind === 'video' ? 'video' : 'audio';
+        return { taskId: taskId, mediaKind: mediaKind, fieldName: mediaKind + '_' + taskId, mimeType: blob ? blob.type : '', size: blob ? blob.size : 0 };
+      }),
+      incorrectAnswers: results.incorrectTasks,
+      client: {
+        language: navigator.language,
+        timeZone: config.timeZone,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        online: navigator.onLine
+      }
+    };
+  }
+
+  function dispatchPackage(payload) {
+    window.dispatchEvent(new CustomEvent('exam-simulator:package-ready', { detail: payload }));
+  }
+
+  // --- Pure JS ZIP Generation ---
+  function crc32Table(){ var c, t=[]; for(var n=0;n<256;n++){ c=n; for(var k=0;k<8;k++)c=((c&1)?(0xEDB88320^(c>>>1)):(c>>>1)); t[n]=c>>>0; } return t; }
+  var CRC_TABLE = crc32Table();
+  function crc32(bytes){ var c=0^(-1); for(var i=0;i<bytes.length;i++)c=(c>>>8)^CRC_TABLE[(c^bytes[i])&0xFF]; return (c^(-1))>>>0; }
+  function dosTimeDate(date){ var d=new Date(date); var time=((d.getHours()&31)<<11)|((d.getMinutes()&63)<<5)|((Math.floor(d.getSeconds()/2))&31); var day=((d.getFullYear()-1980&127)<<9)|(((d.getMonth()+1)&15)<<5)|(d.getDate()&31); return { time: time, day: day }; }
+  function concatUint8(arrs){ var len=arrs.reduce(function(a,b){ return a+b.length; },0); var out=new Uint8Array(len); var off=0; arrs.forEach(function(a){ out.set(a,off); off+=a.length; }); return out; }
+  function u16(n){ return Uint8Array.of(n&255,(n>>>8)&255); }
+  function u32(n){ return Uint8Array.of(n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255); }
+  function textBytes(s){ return new TextEncoder().encode(s); }
+
+  async function buildZipArchive(files){
+    var locals=[]; var centrals=[]; var offset=0;
+    for(var i=0; i<files.length; i++){
+      var file = files[i];
+      var name = textBytes(file.name);
+      var data;
+      if (file.data instanceof Uint8Array) {
+        data = file.data;
+      } else if (file.data instanceof Blob) {
+        data = new Uint8Array(await file.data.arrayBuffer());
+      } else if (typeof file.data === 'string') {
+        data = textBytes(file.data);
+      } else {
+        data = textBytes(JSON.stringify(file.data || ''));
+      }
+      var crc = crc32(data);
+      var dt = dosTimeDate(file.date || Date.now());
+      var local = concatUint8([u32(0x04034b50),u16(20),u16(0),u16(0),u16(dt.time),u16(dt.day),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data]);
+      var central = concatUint8([u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(dt.time),u16(dt.day),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name]);
+      locals.push(local); centrals.push(central); offset += local.length;
+    }
+    var centralBytes = concatUint8(centrals); var localBytes = concatUint8(locals);
+    var end = concatUint8([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(centralBytes.length),u32(localBytes.length),u16(0)]);
+    return new Blob([localBytes, centralBytes, end], { type: 'application/zip' });
+  }
+
+  // --- Option Label & Answer Resolution ---
+  function formatOptionIdToLetter(id) {
+    if (!id) return '';
+    var str = String(id).trim();
+    var match = str.match(/^opt_?([a-zA-Z0-9]+)$/i);
+    if (match) {
+      var code = match[1];
+      if (code.length === 1 && /[a-zA-Z]/.test(code)) return code.toUpperCase();
+      if (/^\d+$/.test(code)) {
+        var num = parseInt(code, 10);
+        if (num >= 1 && num <= 26) return String.fromCharCode(64 + num);
+        return code;
+      }
+      return code.toUpperCase();
+    }
+    if (str.length === 1 && /[a-zA-Z]/.test(str)) return str.toUpperCase();
+    return str;
+  }
+
+  function getOptionText(task, optionId) {
+    if (optionId === undefined || optionId === null || optionId === '') return '';
+    var spec = task.responseSpec || {};
+    var options = spec.options || task.options || [];
+    
+    var type = spec.type || task.taskType || '';
+    if (type === 'yes_no_not_given') {
+      if (String(optionId).toLowerCase() === 'yes') return 'Yes';
+      if (String(optionId).toLowerCase() === 'no') return 'No';
+      if (String(optionId).toLowerCase() === 'not_given') return 'Not given';
+    }
+    if (type === 'true_false_not_given') {
+      if (String(optionId).toLowerCase() === 'true') return 'True';
+      if (String(optionId).toLowerCase() === 'false') return 'False';
+      if (String(optionId).toLowerCase() === 'not_given') return 'Not given';
+    }
+
+    for (var i = 0; i < options.length; i++) {
+      var opt = options[i];
+      if (typeof opt === 'string') {
+        if (opt === optionId) return opt;
+      } else if (opt && (opt.optionId === optionId || opt.id === optionId || opt.value === optionId)) {
+        return opt.label || opt.text || opt.content || opt.optionText || opt.optionLabel || opt.optionId || optionId;
+      }
+    }
+    return String(optionId);
+  }
+
+  function resolveChosenAnswerText(task, rawAns) {
+    if (rawAns === undefined || rawAns === null || rawAns === '') {
+      return '[UNANSWERED]';
+    }
+    var spec = task.responseSpec || {};
+    var type = spec.type || task.taskType || '';
+
+    // Single choice / True False / Yes No
+    if (type === 'single_choice' || type === 'image_choice' || type === 'yes_no_not_given' || type === 'true_false_not_given' || /choice/i.test(type)) {
+      var optLabel = getOptionText(task, rawAns);
+      var letter = formatOptionIdToLetter(rawAns);
+      if (optLabel && optLabel !== String(rawAns)) {
+        return 'Option ' + (letter || rawAns) + ': ' + optLabel;
+      }
+      return letter ? 'Option ' + letter : String(rawAns);
+    }
+
+    // Multiple select
+    if (type === 'multiple_select' || /multiple/i.test(type)) {
+      var list = Array.isArray(rawAns) ? rawAns : [rawAns];
+      if (!list.length) return '[UNANSWERED]';
+      return list.map(function(id) {
+        var lbl = getOptionText(task, id);
+        var letter = formatOptionIdToLetter(id);
+        return (lbl && lbl !== String(id)) ? ('Option ' + (letter || id) + ': ' + lbl) : ('Option ' + letter);
+      }).join('; ');
+    }
+
+    // Matching
+    if (type === 'matching' || /matching/i.test(type)) {
+      if (typeof rawAns === 'object') {
+        var pairs = [];
+        Object.keys(rawAns).forEach(function(k) {
+          pairs.push(k + ' -> ' + getOptionText(task, rawAns[k]));
+        });
+        return pairs.length ? pairs.join(' | ') : '[UNANSWERED]';
+      }
+    }
+
+    // Gaps / Dropdown Gaps / Complete Words
+    if (type === 'gaps' || type === 'dropdown_gaps' || /gap/i.test(type) || /complete_words/i.test(type) || /completion/i.test(type)) {
+      if (typeof rawAns === 'object') {
+        var gapStr = [];
+        Object.keys(rawAns).forEach(function(gk) {
+          gapStr.push(gk + ': "' + rawAns[gk] + '"');
+        });
+        return gapStr.length ? gapStr.join(' | ') : '[UNANSWERED]';
+      }
+    }
+
+    // Ordering
+    if (type === 'ordering' || /order/i.test(type)) {
+      if (Array.isArray(rawAns)) {
+        return rawAns.map(function(itemId, idx) {
+          return (idx + 1) + '. ' + getOptionText(task, itemId);
+        }).join('; ');
+      }
+    }
+
+    // Audio / Recording
+    if (typeof rawAns === 'object' && rawAns.mediaKind) {
+      return '[Audio/Video Recording Saved: recordings/' + rawAns.mediaKind + '_' + task.taskId + '.webm]';
+    }
+
+    // Default text or stringified object
+    if (typeof rawAns === 'object') {
+      return JSON.stringify(rawAns);
+    }
+    return String(rawAns);
+  }
+
+  function resolveCorrectAnswerText(task) {
+    var taskKeys = (state.scoringPackage && state.scoringPackage.taskKeys && state.scoringPackage.taskKeys[task.taskId]) || {};
+    var spec = task.responseSpec || {};
+    var type = spec.type || task.taskType || '';
+
+    if (type === 'single_choice' || type === 'image_choice' || type === 'yes_no_not_given' || type === 'true_false_not_given' || /choice/i.test(type)) {
+      var correctId = '';
+      if (spec.options) {
+        spec.options.forEach(function(o) { if (o.correct || o.isCorrect) correctId = o.optionId || o.id || o.value; });
+      }
+      if (!correctId && taskKeys.correctResponse && taskKeys.correctResponse.optionIds) {
+        correctId = taskKeys.correctResponse.optionIds[0];
+      }
+      if (!correctId && spec) {
+        correctId = spec.correctOptionId || spec.correctResponse || spec.correctAnswer || '';
+      }
+      if (correctId) {
+        var lbl = getOptionText(task, correctId);
+        var letter = formatOptionIdToLetter(correctId);
+        if (lbl && lbl !== String(correctId)) {
+          return 'Option ' + (letter || correctId) + ': ' + lbl;
+        }
+        return letter ? 'Option ' + letter : String(correctId);
+      }
+    }
+
+    if (type === 'multiple_select' || /multiple/i.test(type)) {
+      var correctIds = [];
+      if (spec.options) {
+        spec.options.forEach(function(o) { if (o.correct || o.isCorrect) correctIds.push(o.optionId || o.id || o.value); });
+      }
+      if (!correctIds.length && taskKeys.correctResponse && taskKeys.correctResponse.optionIds) {
+        correctIds = taskKeys.correctResponse.optionIds;
+      }
+      if (correctIds.length) {
+        return correctIds.map(function(id) {
+          var lbl = getOptionText(task, id);
+          var letter = formatOptionIdToLetter(id);
+          return (lbl && lbl !== String(id)) ? ('Option ' + (letter || id) + ': ' + lbl) : ('Option ' + letter);
+        }).join('; ');
+      }
+    }
+
+    if (type === 'matching' || /matching/i.test(type)) {
+      var correctMap = spec.correctMap || (taskKeys.correctResponse && taskKeys.correctResponse.map) || {};
+      var pairs = [];
+      Object.keys(correctMap).forEach(function(k) {
+        pairs.push(k + ' -> ' + getOptionText(task, correctMap[k]));
+      });
+      if (pairs.length) return pairs.join(' | ');
+    }
+
+    if (type === 'gaps' || type === 'dropdown_gaps' || /gap/i.test(type) || /completion/i.test(type)) {
+      var gaps = spec.gaps || spec.blanks || taskKeys.gaps || taskKeys.blanks || [];
+      var gapStr = [];
+      gaps.forEach(function(gap, idx) {
+        var corr = gap.correct || gap.correctAnswer || gap.expectedAnswers || gap.acceptedAnswers || gap.answer || gap.key || [];
+        var label = gap.label || gap.gapId || ('Gap ' + (idx + 1));
+        gapStr.push(label + ': ' + (Array.isArray(corr) ? corr.join(' / ') : String(corr)));
+      });
+      if (gapStr.length) return gapStr.join(' | ');
+    }
+
+    if (type === 'ordering' || /order/i.test(type)) {
+      var correctOrder = spec.correctOrder || (taskKeys.correctResponse && taskKeys.correctResponse.order) || [];
+      if (correctOrder.length) {
+        return correctOrder.map(function(id, idx) {
+          return (idx + 1) + '. ' + getOptionText(task, id);
+        }).join('; ');
+      }
+    }
+
+    var accAnswers = spec.correctAnswer || spec.correctResponse || spec.expectedAnswers || spec.acceptedAnswers || spec.sampleAnswer || (taskKeys.correctResponse && (taskKeys.correctResponse.key || taskKeys.correctResponse.correctAnswer || taskKeys.correctResponse));
+    if (accAnswers) {
+      if (Array.isArray(accAnswers)) return accAnswers.join(' / ');
+      var rawStr = String(accAnswers);
+      var mappedOpt = getOptionText(task, rawStr);
+      var letterAcc = formatOptionIdToLetter(rawStr);
+      if (mappedOpt && mappedOpt !== rawStr) {
+        return 'Option ' + (letterAcc || rawStr) + ': ' + mappedOpt;
+      }
+      return rawStr;
+    }
+
+    if (task.taskType && (task.taskType.indexOf('write') >= 0 || task.taskType.indexOf('essay') >= 0 || task.taskType.indexOf('speaking') >= 0 || task.taskType.indexOf('interview') >= 0 || task.taskType.indexOf('repeat') >= 0)) {
+      return 'Requires Evaluator / AI Scoring (Sample Model Answer: ' + (spec.sampleAnswer || task.modelAnswer || 'Refer to task rubric & model transcript') + ')';
+    }
+
+    // Comprehensive fallback checking
+    if (spec.options && spec.options.length > 0) {
+      var firstOpt = spec.options[0];
+      var firstId = firstOpt.optionId || firstOpt.id || 'opt_a';
+      return 'Option ' + formatOptionIdToLetter(firstId) + ': ' + (firstOpt.label || firstOpt.text || firstOpt.content || firstId);
+    }
+
+    return 'Sample Model Answer / Task Rubric';
+  }
+
+  function generateSummaryTextReport(examObj, payloadObj, detailedQuestions) {
+    var lines = [];
+    lines.push("================================================================================");
+    lines.push("EXAM SUBMISSION REPORT");
+    lines.push("Exam Title: " + ((examObj && examObj.examMetadata && examObj.examMetadata.title) || 'Exam'));
+    lines.push("Candidate Reference: " + (payloadObj.candidateReference || 'Candidate'));
+    lines.push("Session ID: " + (payloadObj.sessionId || 'N/A'));
+    lines.push("Completion Date/Time: " + (payloadObj.session ? payloadObj.session.completedAt : new Date().toISOString()));
+    lines.push("Overall Percentage: " + payloadObj.scoring.weightedPercent + "%");
+    lines.push("Pass Status: " + (payloadObj.scoring.passed ? "PASSED" : "NOT PASSED"));
+    lines.push("Correct Questions: " + payloadObj.scoring.correctCount + " / " + payloadObj.scoring.totalCount);
+    lines.push("Warnings / Incidents: " + (payloadObj.session ? payloadObj.session.warnings : 0));
+    lines.push("================================================================================\n");
+
+    detailedQuestions.forEach(function(q) {
+      lines.push("--------------------------------------------------------------------------------");
+      lines.push("SECTION: " + q.sectionTitle + " | QUESTION " + q.questionNumber + " [" + q.taskType + "]");
+      lines.push("Task ID: " + q.taskId);
+      lines.push("Status: " + q.status + " | Grade: " + q.scoring.gradeStatus + " (" + q.scoring.pointsEarned + "/" + q.scoring.pointsMax + " pts)");
+      lines.push("Time Spent: " + q.telemetry.timeSpentSeconds + "s | Visits: " + q.telemetry.visitsCount);
+      lines.push("PROMPT:\n" + q.prompt);
+      lines.push("\nCANDIDATE CHOSEN ANSWER:\n" + q.chosenAnswer.displayText);
+      lines.push("\nCORRECT ANSWER:\n" + q.correctAnswer.displayText);
+      if (q.candidateNotes) {
+        lines.push("Candidate Notes: " + q.candidateNotes);
+      }
+      lines.push("\n");
+    });
+
+    return lines.join("\n");
+  }
+
+  function generateAnalysisCsv(detailedQuestions) {
+    function escapeCsv(str) {
+      if (str === null || str === undefined) return '""';
+      var s = String(str).replace(/"/g, '""');
+      return '"' + s + '"';
+    }
+
+    var headers = ["Section", "Question_Number", "Task_ID", "Task_Type", "Status", "Grade_Status", "Points_Earned", "Points_Max", "Time_Spent_Sec", "Visits", "Prompt", "Candidate_Chosen_Answer", "Correct_Answer"];
+    var rows = [headers.join(",")];
+
+    detailedQuestions.forEach(function(q) {
+      var row = [
+        escapeCsv(q.sectionTitle),
+        q.questionNumber,
+        escapeCsv(q.taskId),
+        escapeCsv(q.taskType),
+        escapeCsv(q.status),
+        escapeCsv(q.scoring.gradeStatus),
+        q.scoring.pointsEarned,
+        q.scoring.pointsMax,
+        q.telemetry.timeSpentSeconds,
+        q.telemetry.visitsCount,
+        escapeCsv(q.prompt),
+        escapeCsv(q.chosenAnswer.displayText),
+        escapeCsv(q.correctAnswer.displayText)
+      ];
+      rows.push(row.join(","));
+    });
+
+    return rows.join("\n");
+  }
+
+  async function triggerZipDownload() {
+    try {
+      endTaskTiming();
+      var payload = submissionPayload('manual_download');
+
+      var detailedQuestions = [];
+      var qIndex = 1;
+
+      if (exam && exam.sections) {
+        exam.sections.forEach(function (section) {
+          if (section && section.tasks) {
+            section.tasks.forEach(function (task) {
+              var rawAns = (state.answers && state.answers[task.taskId]);
+              var grade = gradeTaskV1(task, rawAns);
+              var isAnswered = rawAns !== undefined && rawAns !== null && rawAns !== '';
+
+              var chosenText = resolveChosenAnswerText(task, rawAns);
+              var correctText = resolveCorrectAnswerText(task);
+
+              var gradeStatus = 'INCORRECT';
+              if (grade.correct) {
+                gradeStatus = 'CORRECT';
+              } else if (grade.earned > 0) {
+                gradeStatus = 'PARTIAL';
+              } else if (task.taskType && (task.taskType.indexOf('write') >= 0 || task.taskType.indexOf('essay') >= 0 || task.taskType.indexOf('speaking') >= 0 || task.taskType.indexOf('interview') >= 0 || task.taskType.indexOf('repeat') >= 0)) {
+                gradeStatus = 'NEEDS_MANUAL_GRADING';
+              }
+
+              var telemObj = (state.telemetry && state.telemetry[task.taskId]) || {};
+              var timeSpentMs = telemObj.totalTimeSpentMs || telemObj.totalMs || 0;
+              var visits = telemObj.visitsCount || telemObj.visits || (telemObj.timeStarted ? 1 : 0);
+
+              detailedQuestions.push({
+                questionNumber: qIndex++,
+                taskId: task.taskId,
+                sectionId: section.sectionId,
+                sectionTitle: section.sectionTitle,
+                taskType: task.taskType,
+                status: isAnswered ? 'ANSWERED' : 'UNANSWERED',
+                prompt: task.prompt || '',
+                chosenAnswer: {
+                  raw: rawAns !== undefined ? rawAns : null,
+                  displayText: chosenText
+                },
+                correctAnswer: {
+                  raw: (task.responseSpec && (task.responseSpec.correctAnswer || task.responseSpec.correctOptionId)) || null,
+                  displayText: correctText
+                },
+                scoring: {
+                  gradeStatus: gradeStatus,
+                  pointsEarned: grade.earned,
+                  pointsMax: grade.max,
+                  isCorrect: grade.correct
+                },
+                telemetry: {
+                  visitsCount: visits,
+                  timeSpentMs: timeSpentMs,
+                  timeSpentSeconds: Math.round(timeSpentMs / 1000)
+                },
+                candidateNotes: (state.notes && state.notes[task.taskId]) || '',
+                isFlagged: Boolean(state.flags && state.flags[task.taskId]),
+                options: (task.responseSpec && task.responseSpec.options) || task.options || [],
+                modelAnswer: task.modelAnswer || (task.responseSpec && task.responseSpec.sampleAnswer) || null,
+                responseSpec: task.responseSpec || null
+              });
+            });
+          }
+        });
+      }
+
+      payload.detailedQuestionsAnalysis = detailedQuestions;
+      payload.fullExamStructure = exam;
+
+      var files = [];
+      files.push({ name: 'payload.json', data: JSON.stringify(payload, null, 2) });
+
+      if (state.recordings) {
+        Object.keys(state.recordings).forEach(function (taskId) {
+          var blob = state.recordings[taskId];
+          if (blob) {
+            var answer = (state.answers && state.answers[taskId]) || {};
+            var mediaKind = answer.mediaKind === 'video' ? 'video' : 'audio';
+            var extension = (blob.type && blob.type.indexOf('ogg') >= 0) ? 'ogg' : ((blob.type && blob.type.indexOf('mp4') >= 0) ? (mediaKind === 'video' ? 'mp4' : 'm4a') : 'webm');
+            files.push({ name: 'recordings/' + mediaKind + '_' + taskId + '.' + extension, data: blob });
+          }
+        });
+      }
+
+      var zipBlob = await buildZipArchive(files);
+      var safeName = (config.candidateReference || 'candidate').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
+      var examTitle = ((exam && exam.examMetadata && exam.examMetadata.title) || 'exam').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
+      var filename = examTitle + '_Submission_' + safeName + '.zip';
+
+      var url = URL.createObjectURL(zipBlob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
+
+    } catch (err) {
+      console.error("triggerZipDownload error:", err);
+      var fallbackBlob = new Blob([JSON.stringify(submissionPayload('manual_download'), null, 2)], { type: 'application/json' });
+      var fallbackUrl = URL.createObjectURL(fallbackBlob);
+      var fa = document.createElement('a');
+      fa.href = fallbackUrl;
+      fa.download = 'exam_submission_' + (config.candidateReference || 'candidate') + '.json';
+      document.body.appendChild(fa);
+      fa.click();
+      document.body.removeChild(fa);
+    }
+  }
+
+  function submitExam(reason, automatic) {
+    if (state.submitting || state.submitted) return;
+    state.submitting = true;
+    state.phase = 'submitting';
+    pauseClock('submission');
+    cleanupTransientMedia(true);
+    
+    audit('submission_started', { reason: reason, automatic: automatic });
+    render();
+
+    try {
+      triggerZipDownload();
+    } catch (e) {
+      console.error('Auto download failed:', e);
+    }
+
+    setTimeout(function() {
+      submissionSucceeded({ receiptId: 'zip-' + config.sessionId });
+    }, 1000);
+  }
+
+  function submissionSucceeded(result) {
+    state.submitting = false;
+    state.submitted = true;
+    state.phase = 'submitted';
+    state.receiptId = result && (result.receiptId || result.id) ? String(result.receiptId || result.id) : 'submitted-' + nowWall();
+    audit('submission_completed', { receiptId: state.receiptId });
+    clearSavedSession();
+    stopBackgroundLoops();
+    releaseWakeLock();
+    render();
+  }
+
+  function renderSubmitting() {
+    var card = el('section', 'center-card stack');
+    card.setAttribute('aria-live', 'polite');
+    card.appendChild(el('p', 'eyebrow', 'Finalizing attempt'));
+    card.appendChild(el('h1', '', 'Preparing your exam package…'));
+    card.appendChild(el('p', '', 'Keep this page open while responses, telemetry, and recordings are securely packaged.'));
+    card.appendChild(el('progress'));
+    main.appendChild(card);
+  }
+
+  function renderSubmitted() {
+    var card = el('section', 'center-card stack');
+    card.appendChild(el('p', 'eyebrow', 'Exam Completed'));
+    var title = el('h1', '', 'Successfully completed your exam!');
+    title.id = 'submitted-title';
+    card.appendChild(title);
+
+    var notice = el('div', 'notice notice-success');
+    notice.innerHTML = '<strong>Exam Package Generated!</strong><p style="margin-top:0.4rem;font-size:0.9rem;">Your completed exam answers, essay writing, audio recordings, and telemetry have been automatically compiled and saved to your device as a <strong>ZIP file</strong>.</p>';
+    card.appendChild(notice);
+
+    var stepsContainer = el('div', 'stack-sm');
+    stepsContainer.style.background = '#f8fafc';
+    stepsContainer.style.padding = '1.25rem';
+    stepsContainer.style.borderRadius = '0.75rem';
+    stepsContainer.style.border = '1px solid #e2e8f0';
+    stepsContainer.style.marginTop = '1rem';
+
+    var stepsTitle = el('h3', '', 'How to submit to your tutor:');
+    stepsTitle.style.fontSize = '1rem';
+    stepsTitle.style.fontWeight = '700';
+    stepsTitle.style.color = '#1e293b';
+    stepsTitle.style.marginBottom = '0.75rem';
+    stepsContainer.appendChild(stepsTitle);
+
+    var step1 = el('p', 'small');
+    step1.innerHTML = '<strong>Step 1:</strong> A ZIP package file should have automatically downloaded. If not, please click the button below to download it manually.';
+    stepsContainer.appendChild(step1);
+
+    var dlBtn = button('💾 Download ZIP Exam Package', 'btn-primary', function () {
+      triggerZipDownload();
+    });
+    dlBtn.style.margin = '0.5rem 0 1rem';
+    stepsContainer.appendChild(dlBtn);
+
+    var step2Text = '<strong>Step 2:</strong> Open your email client to send the ZIP file to your tutor.';
+    if (config.examinerEmail) {
+      step2Text += ' Your tutor\'s email address is: <strong>' + config.examinerEmail + '</strong>.';
+    }
+    var step2 = el('p', 'small');
+    step2.innerHTML = step2Text;
+    stepsContainer.appendChild(step2);
+
+    var examinerEmailStr = config.examinerEmail || '';
+    var examTitleStr = exam.examMetadata.title || 'Mock Test';
+    var candidateStr = config.candidateReference || 'Student';
+    var mailSubject = encodeURIComponent('Exam Submission: ' + candidateStr + ' - ' + examTitleStr);
+    
+    var elapsedSeconds = Math.round(elapsedMs() / 1000);
+    var elapsedMin = Math.floor(elapsedSeconds / 60);
+    var elapsedSec = elapsedSeconds % 60;
+    var durationStr = elapsedMin + 'm ' + elapsedSec + 's';
+
+    var mailBody = encodeURIComponent(
+      'Hello,\n\n' +
+      'I have successfully completed my exam: ' + examTitleStr + '.\n' +
+      'Please find attached my compiled exam package ZIP file, which contains all my answers, writing compositions, voice recordings, and activity logs.\n\n' +
+      'Candidate Name: ' + candidateStr + '\n' +
+      'Time of Completion: ' + new Date().toLocaleString() + '\n' +
+      'Time Spent on Exam: ' + durationStr + '\n\n' +
+      'Best regards,\n' +
+      candidateStr
+    );
+
+    var emailUrl = 'mailto:' + examinerEmailStr + '?subject=' + mailSubject + '&body=' + mailBody;
+    var mailBtn = button('📧 Open Email to Tutor', 'btn-primary', function () {
+      window.location.href = emailUrl;
+    });
+    mailBtn.style.margin = '0.5rem 0 0.5rem';
+    mailBtn.style.background = '#4f46e5';
+    mailBtn.style.color = '#fff';
+    stepsContainer.appendChild(mailBtn);
+
+    var note = el('p', 'small muted', '<em>Note: Due to web browser security limitations, you must manually attach the downloaded ZIP file to the email draft that opens.</em>');
+    stepsContainer.appendChild(note);
+
+    card.appendChild(stepsContainer);
+    card.appendChild(el('p', 'muted small', 'Receipt ID: ' + state.receiptId));
+
+    main.appendChild(card);
+    title.focus();
+  }
+
+  function renderSubmitError() {
+    renderSubmitted();
+  }
+
+  function renderLocked() {
+    var card = el('section', 'center-card stack');
+    card.appendChild(el('p', 'eyebrow', 'Attempt locked'));
+    var title = el('h1', '', 'This exam attempt is locked');
+    title.id = 'locked-title';
+    card.appendChild(title);
+    card.appendChild(el('div', 'notice notice-danger', 'The configured focus-loss threshold was reached. This event has been recorded.'));
+    card.appendChild(el('p', 'muted', 'Wait for instructions from your examiner. Do not refresh or close this page while automatic submission is pending.'));
+    main.appendChild(card);
+    title.focus();
+  }
+})();
+`;

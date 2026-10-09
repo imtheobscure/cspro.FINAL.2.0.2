@@ -1,0 +1,4919 @@
+
+
+import type { LearnerProfile } from '../../types';
+import { VOICE_GROUP_RUNTIME_JS } from '../voiceGroups';
+
+export const getTestingPanelFeatures = () => {
+    const html = `
+    <!-- TESTING PANEL OVERLAY -->
+    <div id="testing-panel-overlay" style="display:none;">
+        <!-- 📱 DEDICATED MOBILE SHELL (only shown by the phone media query below) -->
+        <div class="tp-mobile-topbar" id="tp-mobile-topbar">
+            <button class="tp-mobile-icon-btn" onclick="toggleTpDrawer()" title="Menu, music & ranking" aria-label="Open Test Lab menu"><i class="fas fa-bars"></i></button>
+            <div class="tp-mobile-title"><i class="fas fa-flask"></i> TEST LAB</div>
+            <div class="tp-mobile-tabs">
+                <button class="tp-mobile-tab" data-tp-tab="editor" onclick="tpMobileTab('editor')" title="Activity Editor"><i class="fas fa-edit"></i></button>
+                <button class="tp-mobile-tab" data-tp-tab="settings" onclick="tpMobileTab('settings')" title="Lab Settings"><i class="fas fa-cog"></i></button>
+                <button class="tp-mobile-tab" data-tp-tab="game" onclick="tpMobileTab('game')" title="Game Stage"><i class="fas fa-gamepad"></i></button>
+            </div>
+            <button class="tp-mobile-icon-btn danger" onclick="closeTestPanel()" title="Back to Lobby" aria-label="Back to lobby"><i class="fas fa-home"></i></button>
+        </div>
+        <div class="tp-mobile-backdrop" id="tp-mobile-backdrop" onclick="toggleTpDrawer(false)"></div>
+
+        <!-- Close Corner Button (Navigates to Beginning / Lobby Page) -->
+        <button class="tp-close-corner-btn" onclick="closeTestPanel()" title="Back to Lobby" id="tp-main-close-btn" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.3); color: white; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; z-index: 1000; transition: all 0.2s;"><i class="fas fa-home"></i></button>
+
+        <div class="tp-sidebar">
+            <div class="tp-logo">
+                <i class="fas fa-flask"></i> TEST LAB
+            </div>
+
+            <!-- 🎵 PREMIUM MUSIC PLAYER -->
+            <div class="tp-music-player">
+                <div class="tp-panel-title"><i class="fas fa-music"></i> MUSIC PLAYER <span class="tp-panel-live" id="tp-music-live">● LIVE</span></div>
+                <div class="tp-now-playing">
+                    <div class="tp-now-eq" id="tp-now-eq"><span></span><span></span><span></span></div>
+                    <div class="tp-now-info">
+                        <div class="tp-now-label">Now Playing</div>
+                        <div class="tp-now-name" id="tp-track-name">Golden Focus</div>
+                    </div>
+                </div>
+                <div class="tp-track-list" id="tp-track-list"></div>
+                <div class="tp-music-controls">
+                    <input type="range" id="tp-volume" min="0" max="1" step="0.001" value="0.1" title="Volume">
+                    <button class="tp-icon-btn" onclick="toggleTpMusic()" title="Play/Pause"><i class="fas fa-play" id="tp-music-icon"></i></button>
+                    <button class="tp-icon-btn" onclick="nextTpTrack()" title="Next Track"><i class="fas fa-step-forward"></i></button>
+                </div>
+            </div>
+
+            <!-- 😂 MEMES & REACTIONS (two toggles, both OFF by default) -->
+            <div class="tp-meme-panel" id="tp-meme-panel">
+                <div class="tp-panel-title"><i class="fas fa-laugh-squint"></i> MEMES & REACTIONS</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div class="tp-toggle-row">
+                        <span class="tp-toggle-row-label">🎵 Meme Sounds</span>
+                        <label class="tp-switch" title="Play meme sound effects during the game (OFF by default)">
+                            <input type="checkbox" id="tp-meme-toggle" onchange="toggleTpMemes(this.checked)">
+                            <span class="tp-switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="tp-toggle-row">
+                        <span class="tp-toggle-row-label">🚫 Disable Reactions</span>
+                        <label class="tp-switch" title="Hide the meme images and captions shown after +10 / -10 points (OFF by default = they show)">
+                            <input type="checkbox" id="tp-disable-reactions" onchange="toggleTpReactions(this.checked)">
+                            <span class="tp-switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="tp-meme-hint">Both are OFF by default. Reactions appear after +10 / -10 points; switch “Disable Reactions” on to skip the meme images and captions entirely.</div>
+            </div>
+
+            <!-- 🏆 MINI LEADERBOARD -->
+            <div class="tp-sidebar-list-container">
+                <div class="tp-panel-title"><i class="fas fa-trophy"></i> LIVE RANKING</div>
+                <div id="tp-sidebar-players"></div>
+            </div>
+        </div>
+        
+        <div class="tp-content">
+            <!-- EDITOR TAB -->
+            <div id="tp-tab-editor" class="tp-view active">
+                <div class="tp-view-header">
+                    <h2><i class="fas fa-edit"></i> Activity Editor</h2>
+                    <div class="tp-controls">
+                        <button class="tp-btn primary" onclick="initTpGame()"><i class="fas fa-rocket"></i> Launch Game</button>
+                        <button class="tp-btn secondary" onclick="clearTpInput()"><i class="fas fa-trash"></i> Clear</button>
+                    </div>
+                </div>
+                
+                <textarea id="tp-json-input" placeholder='Paste JSON here...'></textarea>
+                <div id="tp-error-log"></div>
+            </div>
+            
+            <!-- SETTINGS TAB -->
+             <div id="tp-tab-settings" class="tp-view">
+                <div class="tp-view-header">
+                    <h2><i class="fas fa-cog"></i> Lab Settings</h2>
+                    <button class="tp-btn primary" onclick="saveTpSettingsAndClose()"><i class="fas fa-check"></i> OK</button>
+                </div>
+                <div class="tp-builder-container">
+                    <div class="tp-option-group">
+                         <label>Avatar Type</label>
+                         <select id="tp-avatar-type" class="tp-select" onchange="updateTpAvatars()">
+                            <option value="avataaars">Humans (Avataaars)</option>
+                            <option value="notionists">Notion Style</option>
+                            <option value="bottts">Robots</option>
+                         </select>
+                    </div>
+                    <div class="tp-option-group" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                        <div>
+                            <label style="font-size:0.85rem; font-weight:800; color:#0f172a; display:block;">Cartoon Avatars</label>
+                            <div style="font-size:0.7rem; color:#64748b; line-height:1.45; max-width:270px; font-weight:600;">OFF = players keep their real photos. ON = every player gets a random cartoon avatar, re-randomized each time you switch it on.</div>
+                        </div>
+                        <label class="tp-switch" title="Cartoon avatars (randomize)">
+                            <input type="checkbox" id="tp-cartoon-avatars-toggle" onchange="toggleTpCartoonAvatars(this.checked)">
+                            <span class="tp-switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="tp-option-group">
+                        <label>⏱️ Activity Time (× multiplier)</label>
+                        <div style="font-size:0.7rem; color:#64748b; font-weight:600; margin-bottom:10px;">Each activity type gets its own time multiplier (×1 = the original time, ×2 = double). They all default to ×2 — lower a type if learners find it too long, or raise it for harder ones.</div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                            <span style="font-size:0.72rem; font-weight:800; color:#475569;">⚡ One-tap presets:</span>
+                            <button type="button" class="tp-preset-btn" data-tp-preset="1" onclick="setTpTimerMultPreset(1, this)" title="Set every activity to its original time (×1)">🧘 Normal · ×1</button>
+                            <button type="button" class="tp-preset-btn" data-tp-preset="2" onclick="setTpTimerMultPreset(2, this)" title="Set every activity to double time (×2 — recommended balance)">✨ Recommended · ×2</button>
+                            <button type="button" class="tp-preset-btn" data-tp-preset="3" onclick="setTpTimerMultPreset(3, this)" title="Set every activity to triple time (×3 — relaxed pace)">🌴 Relaxed · ×3</button>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 14px;">
+                            <div class="tp-timer-mult-row"><span>❓ Multiple Choice</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="multiple_choice" onchange="setTpTimerMult('multiple_choice', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🔗 Matching</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="matching" onchange="setTpTimerMult('matching', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🧩 Sentence Scramble</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="scramble" onchange="setTpTimerMult('scramble', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>📖 Reading</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="reading_activity" onchange="setTpTimerMult('reading_activity', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🎧 Listening</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="listening_activity" onchange="setTpTimerMult('listening_activity', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>✍️ Cloze (Gap Fill)</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="cloze" onchange="setTpTimerMult('cloze', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>💬 Conversation Completion</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="conversation_completion" onchange="setTpTimerMult('conversation_completion', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>✅ True / False</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="true_false" onchange="setTpTimerMult('true_false', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🎙️ Discussion</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="discussion" onchange="setTpTimerMult('discussion', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🤔 Would You Rather</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="would_you_rather" onchange="setTpTimerMult('would_you_rather', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🚫 Taboo</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="taboo" onchange="setTpTimerMult('taboo', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🔥 Hot Seat</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="hot_seat" onchange="setTpTimerMult('hot_seat', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>⏱️ Just A Minute</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="jam" onchange="setTpTimerMult('jam', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                            <div class="tp-timer-mult-row"><span>🎲 Truth or Dare</span><select class="tp-select tp-timer-mult-select" data-tp-timer-key="truth_or_dare" onchange="setTpTimerMult('truth_or_dare', this.value)"><option value="1">×1</option><option value="1.5">×1.5</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+                        </div>
+                    </div>
+                     <div class="tp-option-group">
+                         <label>Read Aloud Voice</label>
+                         <select id="tp-voice-select" onchange="updateTpVoice()" class="tp-select">
+                            <option value="">Auto (Ava/Natural)</option>
+                         </select>
+                    </div>
+                    <div class="tp-option-group">
+                        <label>Current Roster</label>
+                        <div id="tp-settings-roster" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GAME STAGE MODE -->
+            <div id="tp-tab-game" class="tp-view game-mode">
+                
+                <!-- 1. LOBBY SCREEN -->
+                <div id="tp-lobby-screen" class="tp-fullscreen-layer">
+                    <h1 class="tp-3d-title wiggle">TEST LAB <span style="color:#fbbf24">LIVE</span></h1>
+                    <div class="tp-lobby-card">
+                        <h3><i class="fas fa-users"></i> Lobby</h3>
+                        <div id="tp-lobby-list"></div>
+                        <div style="display:flex; gap:8px; justify-content:center; width:100%; flex-wrap:wrap;">
+                            <input type="text" id="tp-lobby-name" class="tp-input" placeholder="Player name" style="width:165px;">
+                            <button class="tp-btn secondary" onclick="addLobbyPlayer()">＋ Add</button>
+                            <button class="tp-btn secondary" onclick="addTutorPlayer()" title="Adds the tutor (name + avatar) as a player" style="display:inline-flex; align-items:center; gap:5px;"><i class="fas fa-user-tie"></i> Add Tutor</button>
+                        </div>
+                        <button class="tp-3d-btn large start-btn" onclick="startTpGameSession()">🚀 LAUNCH GAME</button>
+                    </div>
+                </div>
+
+                <!-- 2. GAME STAGE (GRID & QUESTION) -->
+                <div id="tp-game-stage" class="tp-fullscreen-layer" style="display:none;">
+                    <!-- Top Info (Stage Counter & Exit, Elapsed Session Timer Removed) -->
+                    <div class="tp-top-bar">
+                        <div class="tp-stage-counter">
+                             <button class="tp-nav-arrow home-btn" onclick="returnToGrid()" title="Back to Grid"><i class="fas fa-th"></i></button>
+                             <button class="tp-nav-arrow" id="tp-laser-btn" onclick="toggleTpLaser()" title="Laser Pointer"><i class="fas fa-bullseye"></i></button>
+                        </div>
+                        <button class="tp-quit-btn" onclick="exitTpGame()" title="Exit Game"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <!-- GRID VIEW -->
+                    <div id="tp-grid-view" class="tp-grid-container">
+                        <!-- Grid items injected here by JS -->
+                    </div>
+
+                    <!-- QUESTION VIEW -->
+                    <div id="tp-question-area" class="tp-question-container" style="display:none;">
+                        <!-- Questions injected here -->
+                    </div>
+                </div>
+
+                <!-- 3. INTERSTITIAL LEADERBOARD -->
+                <div id="tp-leaderboard-screen" class="tp-fullscreen-layer" style="display:none;">
+                    <div class="tp-lb-shell">
+                        <h2 class="tp-3d-title">LEADERBOARD</h2>
+                        <!-- Premium SVG Podium (Top 3) -->
+                        <div id="tp-lb-podium" class="tp-lb-podium"></div>
+                        <!-- Animated Ranking Rows -->
+                        <div id="tp-live-scores" class="tp-lb-list"></div>
+                        <div id="tp-leaderboard-players-click" class="tp-lb-click-row"></div>
+                        <button class="tp-btn secondary" style="margin-top:20px;" onclick="document.getElementById('tp-leaderboard-screen').style.display='none'; returnToGrid();">Back to Grid</button>
+                    </div>
+                </div>
+
+                <!-- 4. RESULT OVERLAY (Detailed Feedback) -->
+                <div id="tp-result-overlay" style="display:none;">
+                    <div class="tp-result-card">
+                        <div class="tp-result-header">
+                            <div id="tp-result-icon"></div>
+                            <h2 id="tp-result-title"></h2>
+                        </div>
+                        
+                        <div class="tp-lesson-content">
+                            <!-- 1. MINI LESSON (color-coded, premium, scrollable — no title bar) -->
+                            <div class="tp-ml-section tp-ml-rule-card">
+                                <button class="tp-section-speak-btn tp-ml-speak-fab" onclick="speakReviewSection('explanation')" title="Listen"><i class="fas fa-volume-up"></i></button>
+                                <div id="tp-ml-focus-banner" class="tp-ml-focus-banner" style="display:none;"></div>
+                                <div id="tp-ml-keywords" class="tp-ml-keywords" style="display:none;"></div>
+                                <div class="tp-lesson-box">
+                                    <div id="tp-lesson-text"></div>
+                                </div>
+                                <div id="tp-ml-why-correct" class="tp-ml-why-correct" style="display:none;"></div>
+                                <div id="tp-ml-why-wrong" class="tp-ml-why-wrong" style="display:none;"></div>
+                            </div>
+
+                            <!-- 2. Examples use + highlight the new language (no title bar) -->
+                            <div class="tp-ml-section tp-examples-block">
+                                <button class="tp-section-speak-btn tp-ml-speak-fab" onclick="speakReviewSection('examples')" title="Listen"><i class="fas fa-volume-up"></i></button>
+                                <ul id="tp-lesson-examples" class="tp-stylish-list"></ul>
+                            </div>
+
+                            <!-- 3. Speaking challenges (no title bar) -->
+                            <div class="tp-ml-section tp-ccq-block">
+                                <button class="tp-section-speak-btn tp-ml-speak-fab" onclick="speakReviewSection('ccq')" title="Listen"><i class="fas fa-volume-up"></i></button>
+                                <div class="tp-ccq-quote-box">
+                                    <p id="tp-lesson-ccq"></p>
+                                </div>
+                                <div id="tp-ml-followups" class="tp-ml-followups" style="display:none;"></div>
+                            </div>
+                        </div>
+
+                        <div class="tp-result-actions" style="display:flex; justify-content:center; gap:25px; margin-top:15px;">
+                            <button class="tp-big-btn neg" onclick="resolveTpScore(-10)"><i class="fas fa-minus-circle" style="margin-right:8px;"></i> -10 Pts</button>
+                            <button class="tp-big-btn pos" onclick="resolveTpScore(10)"><i class="fas fa-plus-circle" style="margin-right:8px;"></i> +10 Pts</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <!-- 🎉 CELEBRATION OVERLAY (+10 confetti / -10 red shake + meme image, auto-leaderboard after 5s) -->
+        <div id="tp-celebration-overlay" style="display:none;">
+            <div id="tp-confetti-layer"></div>
+            <div class="tp-celebration-card" id="tp-celebration-card">
+                <div class="tp-celebration-badge win" id="tp-celebration-badge">✅ +10 PTS</div>
+                <img id="tp-celebration-img" src="" alt="meme">
+                <div class="tp-celebration-caption" id="tp-celebration-caption"></div>
+                <div class="tp-celebration-timerbar"><div id="tp-celebration-timerbar-fill"></div></div>
+                <button class="tp-celebration-skip" onclick="skipTpCelebration()">Skip → Leaderboard</button>
+            </div>
+        </div>
+        
+        <!-- PHONE CALL LIFELINE MODAL -->
+        <div id="tp-phone-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:10050; align-items:center; justify-content:center;">
+            <div class="tp-phone-card" style="background:#1e293b; border:3px solid #38bdf8; border-radius:24px; padding:30px; width:90%; max-width:550px; text-align:center; color:white; box-shadow:0 20px 50px rgba(0,0,0,0.6); animation:popIn 0.3s;">
+                <div style="font-size:3rem; margin-bottom:10px; animation:tpPhoneRing 0.8s infinite ease-in-out;">📞</div>
+                <div style="font-size:1.1rem; color:#38bdf8; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin-bottom:5px;">LIFELINE: PHONE A FRIEND</div>
+                <h3 id="tp-phone-name" style="margin:0 0 5px 0; font-size:1.8rem; color:#f8fafc;">Connecting to Uncle Bob...</h3>
+                <div id="tp-phone-voice-tag" style="font-size:0.95rem; color:#94a3b8; margin-bottom:15px; font-weight:600;">Voice: Natural Neural</div>
+                <div id="tp-phone-clue-box" style="background:rgba(255,255,255,0.08); border:2px dashed #38bdf8; border-radius:16px; padding:20px; font-size:1.35rem; line-height:1.6; color:#e2e8f0; margin-bottom:20px; text-align:left; font-style:italic;">
+                    <span id="tp-phone-clue-text">"Hold on, let me think..."</span>
+                </div>
+                <div class="tp-modal-actions" style="display:flex; justify-content:center; gap:15px;">
+                    <button class="tp-big-btn neutral" id="tp-phone-speak-btn" onclick="replayPhoneClue()"><i class="fas fa-volume-up"></i> Read Clue Aloud</button>
+                    <button class="tp-big-btn pos" onclick="closePhoneModal()"><i class="fas fa-check"></i> Got It, Thanks!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASK TEACHER LIFELINE MODAL -->
+        <div id="tp-teacher-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:10050; align-items:center; justify-content:center;">
+            <div class="tp-phone-card" style="background:#1e293b; border:3px solid #eab308; border-radius:24px; padding:30px; width:90%; max-width:550px; text-align:center; color:white; box-shadow:0 20px 50px rgba(0,0,0,0.6); animation:popIn 0.3s;">
+                <div style="font-size:3.5rem; margin-bottom:10px;">👨‍🏫</div>
+                <div style="font-size:1.1rem; color:#fde047; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin-bottom:5px;">LIFELINE: ASK THE TEACHER</div>
+                <h3 style="margin:0 0 15px 0; font-size:1.8rem; color:#f8fafc;">Teacher Guidance Activated</h3>
+                <div style="background:rgba(255,255,255,0.08); border:2px dashed #facc15; border-radius:16px; padding:20px; font-size:1.35rem; line-height:1.6; color:#e2e8f0; margin-bottom:20px; text-align:left;">
+                    <i class="fas fa-lightbulb text-amber-400"></i> The teacher is ready to give you live verbal hints, point out grammatical clues, or discuss options in class! Ask your teacher now.
+                </div>
+                <div class="tp-modal-actions" style="display:flex; justify-content:center;">
+                    <button class="tp-big-btn pos" onclick="closeTeacherModal()"><i class="fas fa-check"></i> Return to Question</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Laser Dot -->
+        <div id="tp-laser-dot" class="tp-laser-dot"></div>
+    </div>
+    
+    <!-- Hidden Audio -->
+    <audio id="tp-bg-music" loop></audio>
+    <audio id="tp-sfx"></audio>
+    `;
+
+    const css = `
+        /* --- CORE VARIABLES & RESET --- */
+        #testing-panel-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #0f172a; z-index: 10000; display: flex;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #334155; overflow: hidden;
+        }
+
+        /* LASER POINTER STYLES */
+        .tp-laser-mode { cursor: none !important; }
+        .tp-laser-dot {
+            position: fixed; width: 15px; height: 15px; background: red;
+            border-radius: 50%; pointer-events: none; z-index: 100000;
+            box-shadow: 0 0 10px red, 0 0 20px red;
+            display: none; transform: translate(-50%, -50%);
+        }
+        
+        /* TIMER ANIMATED/WARNING PULSE */
+        .tp-timer-warning-animate {
+            animation: tpTimerWarningPulse 0.5s infinite alternate !important;
+        }
+        @keyframes tpTimerWarningPulse {
+            0% { transform: scale(1.4); filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.4)); }
+            100% { transform: scale(1.6); filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); }
+        }
+        .tp-laser-trail {
+            position: fixed; width: 10px; height: 10px; background: rgba(255, 0, 0, 0.5);
+            border-radius: 50%; pointer-events: none; z-index: 99999;
+            animation: tpLaserFade 0.5s ease-out forwards;
+        }
+        @keyframes tpLaserFade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.1); }
+        }
+
+        /* FORCE WHITE BG FOR INPUTS */
+        #testing-panel-overlay input, 
+        #testing-panel-overlay textarea, 
+        #testing-panel-overlay select {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #cbd5e1;
+        }
+
+        /* --- SIDEBAR (Premium: OCR-style floating cards) --- */
+        .tp-sidebar {
+            width: 288px; background: linear-gradient(180deg, #020617 0%, #0f172a 100%); color: white;
+            display: flex; flex-direction: column; padding: 18px 16px;
+            border-right: 1px solid rgba(56,189,248,0.15); z-index: 20;
+            box-shadow: 6px 0 30px rgba(0,0,0,0.35);
+        }
+        .tp-logo { font-size: 1.35rem; font-weight: 900; color: #38bdf8; margin-bottom: 16px; letter-spacing: 1px; display:flex; align-items:center; gap:8px; text-shadow: 0 0 20px rgba(56,189,248,0.4); }
+        
+        .tp-panel-title { display:flex; align-items:center; gap:8px; font-size: 0.8rem; font-weight: 900; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .tp-panel-title i { color: #38bdf8; }
+        .tp-panel-live { margin-left: auto; font-size: 0.62rem; color: #22c55e; animation: tpLiveBlink 1.6s infinite; }
+        @keyframes tpLiveBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+        
+        /* 🎵 Premium Music Player */
+        .tp-music-player { background: linear-gradient(145deg, rgba(30,41,59,0.95), rgba(15,23,42,0.9)); padding: 14px; border-radius: 16px; margin-bottom: 14px; border: 1px solid rgba(56,189,248,0.22); box-shadow: 0 10px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
+        .tp-now-playing { display: flex; align-items: center; gap: 12px; background: rgba(8,145,178,0.12); border: 1px solid rgba(56,189,248,0.3); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+        .tp-now-eq { display: flex; align-items: flex-end; gap: 3px; height: 22px; width: 26px; }
+        .tp-now-eq span { width: 4px; border-radius: 3px; background: linear-gradient(180deg, #38bdf8, #818cf8); animation: tpEq 0.9s ease-in-out infinite; }
+        .tp-now-eq span:nth-child(1) { height: 40%; animation-delay: 0s; }
+        .tp-now-eq span:nth-child(2) { height: 90%; animation-delay: 0.2s; }
+        .tp-now-eq span:nth-child(3) { height: 60%; animation-delay: 0.4s; }
+        .tp-now-eq.paused span { animation-play-state: paused; height: 15%; }
+        @keyframes tpEq { 0%,100% { transform: scaleY(0.5); } 50% { transform: scaleY(1); } }
+        .tp-now-label { font-size: 0.6rem; font-weight: 800; color: #7dd3fc; text-transform: uppercase; letter-spacing: 1px; }
+        .tp-now-name { font-size: 0.95rem; font-weight: 800; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .tp-track-list { display: flex; flex-direction: column; gap: 4px; max-height: 118px; overflow-y: auto; margin-bottom: 10px; padding-right: 2px; scrollbar-width: thin; }
+        .tp-track-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 9px; cursor: pointer; font-size: 0.82rem; color: #cbd5e1; border: 1px solid transparent; transition: all 0.15s; }
+        .tp-track-item:hover { background: rgba(56,189,248,0.12); color: white; }
+        .tp-track-item.active { background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.4); color: #e0f2fe; font-weight: 700; }
+        .tp-track-item.active::after { content: "♪"; margin-left: auto; color: #38bdf8; animation: tpLiveBlink 1s infinite; }
+        .tp-track-item .tp-track-num { font-size: 0.68rem; color: #64748b; font-weight: 800; width: 16px; }
+        .tp-track-item.active .tp-track-num { color: #38bdf8; }
+        #tp-volume { width: 100%; height: 4px; accent-color: #38bdf8; cursor: pointer; margin-right: 8px; }
+        .tp-music-controls { display: flex; align-items: center; gap: 8px; justify-content: center; }
+        
+        .tp-icon-btn { background: #1e293b; border: 1px solid rgba(56,189,248,0.25); color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .tp-icon-btn:hover { background: #38bdf8; transform: scale(1.1); box-shadow: 0 0 18px rgba(56,189,248,0.5); }
+
+        .tp-nav-section { display: flex; flex-direction: column; gap: 8px; }
+        .tp-nav-btn {
+            background: transparent; border: none; color: #94a3b8; text-align: left;
+            padding: 12px; font-size: 1rem; cursor: pointer; border-radius: 8px;
+            transition: all 0.2s; font-weight: 600; display: flex; align-items: center; gap: 10px;
+        }
+        .tp-nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .tp-nav-btn.active { background: #38bdf8; color: #020617; box-shadow: 0 0 15px rgba(56,189,248,0.4); }
+        .tp-nav-btn.close { margin-top: auto; color: #ef4444; border: 1px solid #7f1d1d; }
+        .tp-nav-btn.close:hover { background: #7f1d1d; color: white; }
+
+        /* 😂 Meme Sound Packs */
+        .tp-meme-panel { background: linear-gradient(145deg, rgba(30,41,59,0.95), rgba(15,23,42,0.9)); padding: 14px; border-radius: 16px; margin-bottom: 14px; border: 1px solid rgba(244,114,182,0.2); box-shadow: 0 10px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
+        .tp-meme-panel .tp-panel-title i { color: #f472b6; }
+        .tp-meme-panel .tp-panel-title { margin-bottom: 10px; }
+        .tp-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(244,114,182,0.18); }
+        .tp-toggle-row:hover { background: rgba(244,114,182,0.12); }
+        .tp-toggle-row-label { font-size: 0.78rem; font-weight: 800; color: #e2e8f0; display: flex; align-items: center; gap: 6px; }
+        .tp-meme-hint { font-size: 0.64rem; line-height: 1.5; color: #94a3b8; margin-top: 10px; font-weight: 600; }
+        .tp-meme-packs { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tp-meme-chip { font-size: 0.72rem; font-weight: 800; padding: 5px 10px; border-radius: 20px; cursor: pointer; color: #e2e8f0; background: rgba(244,114,182,0.12); border: 1px solid rgba(244,114,182,0.3); transition: all 0.15s; user-select: none; }
+        .tp-meme-chip:hover { background: rgba(244,114,182,0.28); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(244,114,182,0.25); }
+        .tp-meme-chip:active { transform: scale(0.94); }
+        .tp-meme-chip.disabled { opacity: 0.4; filter: grayscale(1); }
+        /* Toggle switch */
+        .tp-switch { position: relative; display: inline-block; width: 40px; height: 20px; margin-left: auto; cursor: pointer; }
+        .tp-switch input { opacity: 0; width: 0; height: 0; }
+        .tp-switch-slider { position: absolute; inset: 0; background: #334155; border-radius: 20px; transition: 0.25s; }
+        .tp-switch-slider::before { content: ""; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.25s; }
+        .tp-switch input:checked + .tp-switch-slider { background: #ec4899; box-shadow: 0 0 12px rgba(236,72,153,0.6); }
+        .tp-switch input:checked + .tp-switch-slider::before { transform: translateX(20px); }
+
+        /* 🏆 Mini Leaderboard in sidebar */
+        .tp-sidebar-list-container { flex:1; overflow-y:auto; margin-top: 6px; border-top: 1px solid rgba(56,189,248,0.12); padding-top: 12px; scrollbar-width: thin; }
+        .tp-mini-player { display:flex; align-items:center; gap:10px; padding:9px 8px; border-radius:12px; cursor:pointer; transition:all 0.2s; color:white; border: 1px solid transparent; margin-bottom: 6px; }
+        .tp-mini-player:hover { background:rgba(255,255,255,0.06); }
+        .tp-mini-player.active { background: linear-gradient(90deg, rgba(56,189,248,0.22), rgba(99,102,241,0.14)); border-color: rgba(56,189,248,0.45); box-shadow: 0 0 16px rgba(56,189,248,0.22); }
+        .tp-mini-player img { width:38px; height:38px; border-radius:50%; border:2px solid rgba(255,255,255,0.6); object-fit: cover; }
+        .tp-mini-player.active img { border-color: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,0.6); }
+        .tp-rank-icon { font-size: 1.05rem; width: 26px; text-align: center; }
+        .tp-mlb-name { font-size: 0.85rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tp-mlb-score { font-size: 0.72rem; color: #fbbf24; font-weight: 800; }
+        .tp-mlb-bar { height: 5px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 3px 0; }
+        .tp-mlb-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); border-radius: 10px; transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1); }
+        .tp-mini-player.active .tp-mlb-fill { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+        .tp-mini-player .tp-mlb-active-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+        .tp-mini-player.active .tp-mlb-active-dot { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+
+        .tp-settings-area { margin-top: auto; padding-top: 20px; }
+        .tp-select { width: 100%; padding: 8px; border-radius: 6px; margin-bottom: 10px; }
+        .tp-input { width: 100%; padding: 10px; border-radius: 6px; }
+
+        /* --- MAIN CONTENT AREA --- */
+        .tp-content { flex: 1; position: relative; background: #f1f5f9; }
+        
+        .tp-view { display: none; height: 100%; padding: 30px; box-sizing: border-box; overflow-y: auto; flex-direction:column; }
+        .tp-view.active { display: flex; }
+        
+        #tp-json-input { flex:1; border-radius:8px; padding:15px; font-family:monospace; resize:none; margin-bottom:10px; font-size:14px; }
+        .tp-btn { padding:10px 20px; border-radius:8px; border:none; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:transform 0.1s; }
+        .tp-btn:active { transform:translateY(2px); }
+        .tp-btn.primary { background:#0ea5e9; color:white; box-shadow:0 4px 0 #0284c7; }
+        .tp-btn.secondary { background:#e2e8f0; color:#475569; box-shadow:0 4px 0 #cbd5e1; }
+        .tp-btn.full-width { width:100%; justify-content:center; }
+        .tp-view-header { display:flex; justify-content:space-between; margin-bottom:20px; align-items:center; }
+        .tp-controls { display:flex; gap:10px; }
+        .tp-builder-container { max-width:800px; margin:0 auto; background:white; padding:30px; border-radius:12px; border:1px solid #cbd5e1; }
+        .tp-option-group { margin-bottom:20px; }
+        /* Per-activity time multiplier rows */
+        .tp-timer-mult-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+        .tp-timer-mult-row span { font-size: 0.78rem; font-weight: 700; color: #334155; }
+        .tp-timer-mult-select { width: 72px !important; margin-bottom: 0 !important; padding: 5px 8px !important; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-weight: 800; color: #0f172a; cursor: pointer; }
+        /* One-tap preset chips — set every activity type at once */
+        .tp-preset-btn { border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 0.72rem; font-weight: 900; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: all .18s ease; font-family: inherit; }
+        .tp-preset-btn:hover { transform: translateY(-1px); border-color: #818cf8; color: #4f46e5; box-shadow: 0 4px 12px rgba(79,70,229,0.18); }
+        .tp-preset-btn[data-tp-preset="1"].active { background: linear-gradient(135deg,#0ea5e9,#6366f1); border-color: transparent; color: #fff; box-shadow: 0 6px 14px rgba(56,189,248,0.35); }
+        .tp-preset-btn[data-tp-preset="2"].active { background: linear-gradient(135deg,#4f46e5,#a855f7); border-color: transparent; color: #fff; box-shadow: 0 6px 14px rgba(168,85,247,0.35); }
+        .tp-preset-btn[data-tp-preset="3"].active { background: linear-gradient(135deg,#059669,#0d9488); border-color: transparent; color: #fff; box-shadow: 0 6px 14px rgba(16,185,129,0.35); }
+        .tp-preset-toast { margin-top: 8px; display: inline-block; font-size: 0.75rem; font-weight: 800; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 6px 10px; border-radius: 8px; }
+        .tp-option-group label { display:block; font-weight:bold; margin-bottom:5px; color:#475569; }
+
+        /* --- GAME MODE (3D UI) --- */
+        .tp-view.game-mode { 
+            padding: 0; 
+            background: radial-gradient(circle at center, #4c1d95 0%, #1e1b4b 100%); 
+            perspective: 1000px;
+            overflow: hidden;
+        }
+
+        .tp-fullscreen-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10;
+        }
+
+        /* 3D TITLE */
+        .tp-3d-title {
+            font-size: 5rem; font-weight: 900; color: white;
+            text-shadow: 0 10px 0 #000, 0 20px 20px rgba(0,0,0,0.4);
+            transform: rotateX(10deg); margin-bottom: 40px;
+            font-family: 'Verdana', sans-serif; letter-spacing: -2px;
+        }
+        .wiggle { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotateX(10deg); } 50% { transform: translateY(-15px) rotateX(10deg); } }
+
+        /* LOBBY CARD */
+        .tp-lobby-card {
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.2);
+            width: 500px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; gap: 20px; align-items: center;
+        }
+        .tp-lobby-card h3 { color: #38bdf8; margin: 0; font-size: 1.5rem; text-transform: uppercase; }
+        #tp-lobby-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height:100px; width:100%; }
+        .tp-player-chip { background: white; color: #020617; padding: 8px 15px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 0 #ccc; display: flex; align-items: center; gap: 8px; animation: popIn 0.3s; }
+        .tp-player-chip img { width:48px; height:48px; border-radius:50%; border:2px solid #38bdf8; animation: tpAvatarBounce 3s ease-in-out infinite; object-fit: cover; }
+        .tp-mini-player img { width:44px; height:44px; border-radius:50%; border:2px solid white; animation: tpAvatarBounce 3.5s ease-in-out infinite; object-fit: cover; }
+        .tp-mini-player.active img { animation: tpAvatarGlow 1.5s infinite alternate; }
+        .click-player-card img { width:64px; height:64px; border-radius:50%; border:3px solid #38bdf8; animation: tpAvatarBounce 2.5s ease-in-out infinite; }
+
+        @keyframes tpAvatarBounce { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.06); } }
+        @keyframes tpAvatarGlow { 0% { box-shadow: 0 0 5px #38bdf8; transform: scale(1); } 100% { box-shadow: 0 0 20px #38bdf8, 0 0 30px #0284c7; transform: scale(1.08); } }
+
+        /* CLOZE BUTTONS UX */
+        .tp-cloze-gap-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 120px; padding: 6px 16px; margin: 4px 8px; background: #e0f2fe; color: #0369a1; font-weight: 800; font-size: 1.3rem; border: 2px solid #38bdf8; border-radius: 14px; cursor: pointer; box-shadow: 0 4px 0 #0284c7; transition: all 0.15s ease; vertical-align: baseline; line-height: 1.2; }
+        .tp-cloze-gap-btn:hover { background: #bae6fd; transform: translateY(-2px); }
+        .tp-cloze-gap-btn.active { background: #fef08a; color: #854d0e; border-color: #eab308; box-shadow: 0 4px 0 #ca8a04; transform: scale(1.08); outline: 3px solid #fef3c7; }
+        .tp-cloze-gap-btn.filled { background: #ede9fe; color: #5b21b6; border-color: #8b5cf6; box-shadow: 0 4px 0 #6d28d9; }
+        .tp-cloze-gap-btn.correct-gap { background: #dcfce7 !important; color: #15803d !important; border-color: #22c55e !important; box-shadow: 0 4px 0 #15803d !important; }
+        .tp-cloze-gap-btn.wrong-gap { background: #fee2e2 !important; color: #991b1b !important; border-color: #ef4444 !important; box-shadow: 0 4px 0 #b91c1c !important; animation: shake 0.4s; }
+        
+        .tp-cloze-opt-btn { padding: 12px 24px; font-size: 1.3rem; font-weight: 800; border-radius: 14px; border: none; cursor: pointer; color: white; box-shadow: 0 6px 0 rgba(0,0,0,0.2); transition: all 0.1s ease; }
+        .tp-cloze-opt-btn:nth-child(5n+1) { background: #ec4899; box-shadow: 0 6px 0 #be185d; }
+        .tp-cloze-opt-btn:nth-child(5n+2) { background: #3b82f6; box-shadow: 0 6px 0 #1d4ed8; }
+        .tp-cloze-opt-btn:nth-child(5n+3) { background: #f59e0b; box-shadow: 0 6px 0 #b45309; }
+        .tp-cloze-opt-btn:nth-child(5n+4) { background: #10b981; box-shadow: 0 6px 0 #047857; }
+        .tp-cloze-opt-btn:nth-child(5n+5) { background: #8b5cf6; box-shadow: 0 6px 0 #6d28d9; }
+        .tp-cloze-opt-btn:active { transform: translateY(4px); box-shadow: none; }
+        .tp-cloze-opt-btn.selected { transform: scale(1.06); outline: 4px solid #facc15; box-shadow: 0 0 16px rgba(250, 204, 21, 0.8), 0 6px 0 #ca8a04 !important; }
+
+        /* DRAMATIC TIMER & ADRENALINE PULSE */
+        .tp-dramatic-timer {
+            font-size: 2.3rem;
+            font-weight: 900;
+            color: #0f172a;
+            background: #ffffff;
+            border: 3px solid #cbd5e1;
+            padding: 8px 28px;
+            border-radius: 35px;
+            box-shadow: 0 6px 0 #94a3b8;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            font-family: 'Verdana', monospace;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .tp-timer-warning-animate {
+            animation: adrenalinePulse 0.45s infinite alternate !important;
+            background: #fef2f2 !important;
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.9), 0 6px 0 #b91c1c !important;
+            color: #dc2626 !important;
+        }
+        @keyframes adrenalinePulse {
+            0% { transform: scale(1.1) rotate(-1.5deg); }
+            100% { transform: scale(1.22) rotate(1.5deg); }
+        }
+        @keyframes tpPhoneRing {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            20% { transform: rotate(-15deg) scale(1.15); }
+            40% { transform: rotate(15deg) scale(1.15); }
+            60% { transform: rotate(-15deg) scale(1.15); }
+            80% { transform: rotate(15deg) scale(1.15); }
+        }
+
+        /* LIFELINES BAR */
+        .tp-lifelines-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0 20px 0;
+            flex-wrap: wrap;
+        }
+        .tp-lifeline-btn {
+            background: white;
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+            border-radius: 14px;
+            padding: 8px 18px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #94a3b8;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+        .tp-lifeline-btn:hover:not(:disabled) {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            transform: translateY(-2px);
+        }
+        .tp-lifeline-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        .tp-lifeline-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+            filter: grayscale(80%);
+            background: #f1f5f9;
+            color: #94a3b8;
+            border-color: #e2e8f0;
+        }
+
+        /* WOULD YOU RATHER GAME */
+        .wyr-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        .wyr-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+        .wyr-card {
+            background: #ffffff;
+            border: 3px solid #cbd5e1;
+            border-radius: 20px;
+            padding: 25px 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 8px 0 #94a3b8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+            text-align: center;
+        }
+        .wyr-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: #ec4899;
+            box-shadow: 0 12px 20px rgba(236, 72, 153, 0.25), 0 8px 0 #be185d;
+        }
+        .wyr-card:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        .wyr-card.card-a {
+            border-color: #8b5cf6;
+            box-shadow: 0 8px 0 #6d28d9;
+        }
+        .wyr-card.card-b {
+            border-color: #ec4899;
+            box-shadow: 0 8px 0 #be185d;
+        }
+        .wyr-story-scroll {
+            background: #fdf6e2;
+            border: 2px solid #e2d9b6;
+            border-radius: 16px;
+            padding: 18px 24px;
+            font-family: Georgia, serif;
+            font-size: 1.3rem;
+            line-height: 1.7;
+            color: #451a03;
+            text-align: left;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        /* CONVERSATION COMPLETION REGISTER & POLITENESS LAB */
+        .tp-conv-header-card {
+            background: #ffffff;
+            border: 3px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex: 1;
+            min-width: 200px;
+        }
+        .tp-conv-header-card.active-speaker {
+            border-color: #8b5cf6;
+            background: #fdf4ff;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+            transform: translateY(-2px);
+        }
+        .tp-conv-header-card.reacting {
+            animation: convCardReact 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-color: #8b5cf6 !important;
+            box-shadow: 0 0 16px rgba(139, 92, 246, 0.4) !important;
+        }
+        @keyframes convCardReact {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+        .tp-conv-emoji-avatar {
+            font-size: 2.8rem;
+            line-height: 1;
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15));
+        }
+        .tp-conv-emoji-avatar.bounce {
+            animation: convEmojiBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes convEmojiBounce {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.5) translateY(-12px); }
+            60% { transform: scale(0.9) translateY(3px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+        .tp-conv-opt-card {
+            background: #ffffff;
+            border: 3px solid #cbd5e1;
+            border-radius: 18px;
+            padding: 18px 22px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            box-shadow: 0 5px 0 #94a3b8;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .tp-conv-opt-card:hover:not(.locked) {
+            border-color: #8b5cf6;
+            background: #faf5ff;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #7c3aed;
+        }
+        .tp-conv-opt-card.selected-optimal {
+            background: #f0fdf4 !important;
+            border-color: #22c55e !important;
+            box-shadow: 0 6px 0 #16a34a !important;
+        }
+        .tp-conv-opt-card.selected-acceptable {
+            background: #f0f9ff !important;
+            border-color: #0284c7 !important;
+            box-shadow: 0 6px 0 #0369a1 !important;
+        }
+        .tp-conv-opt-card.selected-poor {
+            background: #fffbeb !important;
+            border-color: #f59e0b !important;
+            box-shadow: 0 6px 0 #d97706 !important;
+        }
+        .tp-conv-opt-card.selected-unacceptable {
+            background: #fef2f2 !important;
+            border-color: #ef4444 !important;
+            box-shadow: 0 6px 0 #dc2626 !important;
+            animation: shake 0.4s;
+        }
+        .tp-register-chip {
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+        }
+
+        /* HOT SEAT PREMIUM STYLING */
+        .hs-container { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; max-width: 800px; margin: 0 auto; }
+        .hs-header-badge { background: linear-gradient(135deg, #f97316, #ef4444); color: white; padding: 6px 20px; border-radius: 30px; font-size: 1.1rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(249,115,22,0.4); margin-bottom: 5px; }
+        .hs-question-card { background: white; border-radius: 20px; padding: 25px; width: 100%; border: 3px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.08); font-size: 2.2rem; font-weight: 800; color: #0f172a; text-align: center; line-height: 1.4; font-family: system-ui, sans-serif; }
+        .hs-checklist-box { width: 100%; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 16px; padding: 20px; margin-top: 10px; text-align: left; }
+        .hs-checklist-title { font-size: 1.1rem; font-weight: 900; text-transform: uppercase; color: #475569; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .hs-checklist-item { display: flex; align-items: center; gap: 12px; background: white; padding: 12px 18px; border-radius: 12px; border: 2px solid #e2e8f0; cursor: pointer; transition: all 0.2s; font-size: 1.25rem; font-weight: 600; color: #334155; margin-bottom: 8px; }
+        .hs-checklist-item:hover { border-color: #3b82f6; background: #eff6ff; }
+        .hs-checklist-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: #22c55e; cursor: pointer; }
+
+        /* 3D BUTTONS */
+        .tp-3d-btn {
+            background: #eab308; color: #422006; border: none;
+            font-size: 1.5rem; font-weight: 900; padding: 15px 40px;
+            border-radius: 16px; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 8px 0 #a16207, 0 15px 20px rgba(0,0,0,0.4);
+            transition: all 0.1s; position: relative; top: 0;
+        }
+        .tp-3d-btn:active { top: 8px; box-shadow: 0 0 0 #a16207, 0 0 0 rgba(0,0,0,0); }
+        .tp-3d-btn.small { padding: 10px 20px; font-size: 1rem; }
+        .tp-3d-btn.start-btn { background: #22c55e; color: white; box-shadow: 0 8px 0 #15803d; width: 100%; }
+
+        /* GAME STAGE */
+        .tp-top-bar {
+            position: absolute; top: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 50;
+        }
+        .tp-stage-counter { background: rgba(0,0,0,0.5); color: white; padding: 5px 10px; border-radius: 30px; font-weight: 900; font-size: 1.2rem; display:flex; align-items:center; gap:10px; }
+        .tp-nav-arrow { background:white; color:#333; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; font-weight:bold; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; }
+        .tp-nav-arrow:hover { background: #38bdf8; color: white; }
+        .tp-nav-arrow.active { background: #ef4444; color: white; border-color: #b91c1c; }
+        
+        .tp-timer-pill { background: #3b82f6; color: white; padding: 10px 20px; border-radius: 30px; font-weight: 900; font-size: 1.5rem; box-shadow: 0 4px 0 #1d4ed8; transition: background 0.3s; }
+        .tp-timer-pill.urgent { background: #ef4444; box-shadow: 0 4px 0 #b91c1c; animation: pulse 0.5s infinite; }
+        .tp-quit-btn { background: #ef4444; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 0 #b91c1c; }
+
+        /* GRID VIEW */
+        .tp-grid-container {
+            width: 100%; height: 100%; padding: 80px 40px 100px 40px;
+            display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(4, 1fr);
+            gap: 15px; box-sizing: border-box; overflow-y: auto;
+        }
+        .tp-grid-item {
+            background: white; border-radius: 12px; border: 4px solid #cbd5e1;
+            box-shadow: 0 6px 0 #94a3b8; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; cursor: pointer;
+            transition: all 0.1s; position: relative; top: 0;
+            color: #334155; font-family: 'Verdana', sans-serif;
+            min-height: 80px;
+        }
+        .tp-grid-item:hover { transform: translateY(-4px); border-color: #38bdf8; color: #0284c7; }
+        .tp-grid-item:active { transform: translateY(4px); box-shadow: none; border-bottom-width: 4px; }
+        .tp-grid-item.taken { background: #e2e8f0; color: #94a3b8; border-color: #cbd5e1; box-shadow: none; cursor: default; transform: none; }
+        .tp-grid-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+        .tp-grid-icon { font-size: 1.5rem; margin-top: 5px; opacity: 0.7; }
+
+        .tp-question-container {
+            width: 90%; max-width: 900px;
+            display: flex; flex-direction: column; align-items: center; gap: 30px;
+            margin-top:100px;
+            animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding-bottom: 100px; /* Prevent cut-off */
+        }
+        @keyframes slideUp { from { transform: translateY(100vh); } to { transform: translateY(0); } }
+
+        .tp-q-card {
+            background: white; color: #1e293b; padding: 40px; border-radius: 20px;
+            width: 100%; text-align: center; font-size: 2rem; font-weight: 800;
+            box-shadow: 0 10px 0 #cbd5e1, 0 30px 50px rgba(0,0,0,0.3);
+            position: relative;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .tp-q-context { font-size: 1.5rem; font-weight: normal; color: #334155; background: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: left; border-left:6px solid #3b82f6; overflow-y:auto; max-height:200px; line-height: 1.6; }
+
+        .tp-opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; margin-top:20px; }
+        .tp-opt-btn {
+            background: #ffffff; color: #1e293b; border: 2px solid #cbd5e1; padding: 18px 20px;
+            border-radius: 16px; font-size: 1.35rem; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 0 #94a3b8; transition: all 0.15s ease;
+            text-align: left; position: relative; top: 0; display: flex; align-items: center; gap: 14px;
+            justify-content: flex-start;
+        }
+        .tp-opt-btn:hover:not(.tp-opt-locked) {
+            border-color: #6366f1; background: #f8faff; transform: translateY(-2px); box-shadow: 0 6px 0 #c7d2fe;
+        }
+        .tp-opt-btn:active:not(.tp-opt-locked) { top: 4px; box-shadow: 0 0 0 #94a3b8; }
+        
+        .tp-opt-letter {
+            width: 38px; height: 38px; border-radius: 10px; background: #e0e7ff; color: #4338ca;
+            display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.15rem;
+            flex-shrink: 0; border: 1px solid #c7d2fe;
+        }
+        .tp-opt-text { flex: 1; line-height: 1.4; text-align: left; }
+        .tp-opt-status-badge { font-size: 0.9rem; font-weight: 800; text-transform: uppercase; margin-left: auto; flex-shrink: 0; }
+
+        .tp-opt-btn.tp-opt-correct {
+            background: #ecfdf5 !important; border-color: #10b981 !important; color: #065f46 !important;
+            box-shadow: 0 4px 0 #059669 !important; transform: scale(1.02);
+        }
+        .tp-opt-btn.tp-opt-correct .tp-opt-letter {
+            background: #10b981 !important; color: white !important; border-color: #059669 !important;
+        }
+        .tp-opt-btn.tp-opt-correct .tp-opt-status-badge { color: #059669; }
+
+        .tp-opt-btn.tp-opt-wrong {
+            background: #fef2f2 !important; border-color: #ef4444 !important; color: #991b1b !important;
+            box-shadow: 0 4px 0 #dc2626 !important; animation: shake 0.4s;
+        }
+        .tp-opt-btn.tp-opt-wrong .tp-opt-letter {
+            background: #ef4444 !important; color: white !important; border-color: #dc2626 !important;
+        }
+        .tp-opt-btn.tp-opt-wrong .tp-opt-status-badge { color: #dc2626; }
+
+        .tp-opt-btn.tp-opt-reveal-correct {
+            background: #f0fdf4 !important; border-color: #22c55e !important; color: #166534 !important;
+            box-shadow: 0 4px 0 #16a34a !important; border-style: dashed !important;
+        }
+        .tp-opt-btn.tp-opt-reveal-correct .tp-opt-letter {
+            background: #22c55e !important; color: white !important;
+        }
+        .tp-opt-btn.tp-opt-reveal-correct .tp-opt-status-badge { color: #16a34a; }
+        
+        /* NEW BUTTON STYLES FOR CONSISTENCY */
+        .tp-big-btn {
+            padding: 15px 30px; font-weight: 900; font-size: 1.5rem; 
+            border-radius: 16px; border: none; cursor: pointer; 
+            color: white; transition: transform 0.1s;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            min-width: 150px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .tp-big-btn:active { transform: translateY(4px); box-shadow: none; }
+        .tp-big-btn.pos { background: #22c55e; box-shadow: 0 6px 0 #15803d; } /* Green */
+        .tp-big-btn.neg { background: #ef4444; box-shadow: 0 6px 0 #b91c1c; } /* Red */
+        .tp-big-btn.neutral { background: #3b82f6; box-shadow: 0 6px 0 #1d4ed8; } /* Blue */
+        .tp-big-btn.secondary { background: #94a3b8; box-shadow: 0 6px 0 #64748b; color: white; } /* Gray */
+        
+        /* UPDATED SCORE BTN (Alias to big-btn) */
+        .tp-score-btn { padding:15px 30px; font-weight:900; font-size: 1.5rem; border-radius: 16px; border:none; cursor:pointer; color:white; transition: transform 0.1s; }
+        .tp-score-btn:active { transform: translateY(4px); box-shadow: none; }
+        .tp-score-btn.neg { background:#ef4444; box-shadow:0 6px 0 #b91c1c; }
+        .tp-score-btn.pos { background:#22c55e; box-shadow:0 6px 0 #15803d; }
+
+        /* INTERACTIVE GAMES */
+        .tp-match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .tp-match-col { display: flex; flex-direction: column; gap: 10px; }
+        .tp-match-card { background: #f1f5f9; border: 2px solid #cbd5e1; padding: 20px; text-align: center; font-size: 1.4rem; cursor: pointer; border-radius: 12px; font-weight: bold; transition: all 0.2s; box-shadow: 0 4px 0 #cbd5e1; }
+        .tp-match-card:active { transform: translateY(4px); box-shadow: none; }
+        .tp-match-card.selected { background: #e0f2fe; border-color: #3b82f6; transform: scale(0.98); }
+        .tp-match-card.correct { background: #dcfce7; border-color: #22c55e; color: #15803d; opacity: 0.6; pointer-events: none; box-shadow: none; }
+        .tp-match-card.wrong { background: #fee2e2; border-color: #ef4444; animation: shake 0.4s; }
+
+        .tp-scramble-zone { min-height: 90px; background: #f8fafc; border: 3px dashed #94a3b8; border-radius: 18px; padding: 18px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; }
+        .tp-scramble-bank { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; min-height: 70px; }
+        .tp-scramble-chip { background: white; padding: 12px 22px; border-radius: 24px; border: 2px solid #cbd5e1; font-weight: 800; cursor: pointer; font-size: 1.3rem; box-shadow: 0 4px 0 #cbd5e1; transition: all 0.15s ease; color: #1e293b; user-select: none; }
+        .tp-scramble-chip:hover { transform: translateY(-2px); border-color: #38bdf8; }
+        .tp-scramble-chip:active { transform: translateY(2px); box-shadow: none; }
+        .tp-scramble-chip.in-zone { background: #dcfce7; border-color: #22c55e; color: #15803d; box-shadow: 0 4px 0 #16a34a; cursor: pointer; }
+        .tp-scramble-chip.wrong-chunk { background: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c !important; box-shadow: 0 4px 0 #dc2626 !important; animation: shake 0.4s; }
+        
+        .tp-section-speak-btn {
+            background: #3b82f6; color: white; border: none; padding: 6px 14px;
+            border-radius: 10px; font-weight: 800; font-size: 1rem; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            box-shadow: 0 3px 0 #1d4ed8; transition: all 0.15s ease;
+        }
+        .tp-section-speak-btn:hover { background: #2563eb; transform: translateY(-2px); }
+        .tp-section-speak-btn:active { transform: translateY(2px); box-shadow: none; }
+        .tp-section-speak-btn.speaking { background: #ef4444; box-shadow: 0 3px 0 #b91c1c; }
+        
+        .jam-circle-timer { width: 180px; height: 180px; border-radius: 50%; border: 12px solid #0ea5e9; color: #0ea5e9; font-size: 4rem; display: flex; justify-content: center; align-items: center; margin: 20px auto; font-weight: 900; background: white; }
+        
+        /* TABOO CARD FIXED */
+        .taboo-card { perspective: 1000px; width: 100%; height: 400px; position: relative; cursor: pointer; margin: 0 auto; max-width: 600px; z-index: 10; margin-bottom: 40px; }
+        .taboo-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+        .taboo-card.flipped .taboo-inner { transform: rotateY(180deg); }
+        .taboo-front, .taboo-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .taboo-front { background: #ce82ff; color: white; font-size: 3rem; font-weight: 900; border: 4px solid white; }
+        .taboo-back { background: white; color: #333; transform: rotateY(180deg); flex-direction: column; padding: 30px; border: 6px solid #ce82ff; overflow-y: auto; }
+        
+        #tp-taboo-ui .tp-action-row { position: relative; z-index: 20; margin-top: 20px; }
+
+        /* TRUTH DARE IMPROVED STYLING */
+        .td-card-display {
+            background: #fff; border: 4px solid #333; border-radius: 20px; padding: 40px; min-height: 300px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.1); margin: 20px 0; transform: rotate(-1deg);
+            transition: transform 0.3s;
+        }
+        .td-card-display:hover { transform: rotate(0deg) scale(1.02); }
+        .td-text { font-size: 2.5rem; font-weight: 800; text-align: center; font-family: 'Comic Sans MS', cursive; color: #333; line-height: 1.4; }
+
+        .tp-scroll-box {
+            max-height: 300px; overflow-y: auto; background: #f8fafc; border: 2px solid #e2e8f0; 
+            border-radius: 12px; padding: 20px; text-align: left; width: 100%; 
+            font-size: 1.2rem; line-height: 1.6; font-weight: normal;
+        }
+
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
+
+        /* LEADERBOARD SCREEN — PREMIUM SVG PODIUM + DYNAMIC RANKS */
+        #tp-leaderboard-screen { background: radial-gradient(circle at 50% 0%, #312e81 0%, #0f172a 62%); z-index: 50; }
+        .tp-lb-shell { width: min(1000px, 94vw); display: flex; flex-direction: column; align-items: center; gap: 10px; max-height: 100%; overflow-y: auto; padding: 26px 12px; box-sizing: border-box; scrollbar-width: thin; }
+        #tp-leaderboard-screen .tp-3d-title { font-size: 3.4rem; margin-bottom: 6px; }
+        .tp-lb-podium { display: flex; align-items: flex-end; justify-content: center; gap: 16px; margin: 8px 0 22px 0; }
+        .tp-podium-card { width: 185px; border-radius: 20px 20px 14px 14px; text-align: center; color: white; position: relative; padding: 14px 10px 10px 10px; display: flex; flex-direction: column; align-items: center; animation: podiumPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .tp-podium-card:nth-child(2) { animation-delay: 0.1s; }
+        .tp-podium-card:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes podiumPop { from { transform: translateY(46px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .tp-podium-1 { height: 210px; background: linear-gradient(180deg, #fbbf24 0%, #b45309 100%); box-shadow: 0 0 48px rgba(251,191,36,0.4), inset 0 -22px 34px rgba(0,0,0,0.3); border: 2px solid #fde68a; }
+        .tp-podium-2 { height: 155px; background: linear-gradient(180deg, #cbd5e1 0%, #64748b 100%); box-shadow: 0 0 30px rgba(203,213,225,0.28), inset 0 -22px 34px rgba(0,0,0,0.3); border: 2px solid #e2e8f0; }
+        .tp-podium-3 { height: 118px; background: linear-gradient(180deg, #f59e0b 0%, #92400e 100%); box-shadow: 0 0 30px rgba(245,158,11,0.32), inset 0 -22px 34px rgba(0,0,0,0.3); border: 2px solid #fcd34d; }
+        .tp-podium-card .tp-podium-avatar { width: 92px; height: 92px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.92); box-shadow: 0 12px 26px rgba(0,0,0,0.45); margin-top: -56px; background: #1e293b; object-fit: cover; }
+        .tp-podium-card .tp-podium-name { font-weight: 900; font-size: 1.12rem; margin-top: 9px; text-shadow: 0 2px 6px rgba(0,0,0,0.4); max-width: 165px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tp-podium-card .tp-podium-score { font-size: 1.45rem; font-weight: 900; letter-spacing: 0.5px; text-shadow: 0 2px 8px rgba(0,0,0,0.45); }
+        .tp-podium-card .tp-podium-rank { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 2rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45)); }
+        .tp-lb-trophy { width: 58px; height: 58px; filter: drop-shadow(0 6px 14px rgba(251,191,36,0.65)); animation: trophyFloat 2.4s ease-in-out infinite; }
+        @keyframes trophyFloat { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-7px) rotate(3deg); } }
+        .tp-lb-topline { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 4px; }
+        .tp-lb-list { width: 100%; display: flex; flex-direction: column; gap: 11px; }
+        .tp-score-bar-container { display: flex; align-items: center; gap: 14px; width: 100%; background: rgba(255,255,255,0.055); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 11px 16px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); animation: rowIn 0.5s ease-out both; }
+        .tp-score-bar-container:nth-child(2) { animation-delay: 0.06s; }
+        .tp-score-bar-container:nth-child(3) { animation-delay: 0.12s; }
+        .tp-score-bar-container:nth-child(4) { animation-delay: 0.18s; }
+        .tp-score-bar-container:nth-child(5) { animation-delay: 0.24s; }
+        .tp-score-bar-container:nth-child(6) { animation-delay: 0.3s; }
+        .tp-score-bar-container:nth-child(7) { animation-delay: 0.36s; }
+        .tp-score-bar-container:nth-child(8) { animation-delay: 0.42s; }
+        .tp-score-bar-container:nth-child(9) { animation-delay: 0.48s; }
+        .tp-score-bar-container:nth-child(10) { animation-delay: 0.54s; }
+        @keyframes rowIn { from { transform: translateX(-32px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .tp-score-label { width: 218px; text-align: right; color: white; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
+        .tp-score-label img { width: 42px; height: 42px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+        .tp-score-label .tp-lb-rank-badge { min-width: 28px; height: 28px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9rem; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); }
+        .tp-score-track { flex: 1; height: 18px; background: rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; position: relative; min-width: 60px; }
+        .tp-score-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc); width: 0%; transition: width 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 20px; position: relative; overflow: hidden; }
+        .tp-score-fill.rank-0 { background: linear-gradient(90deg, #f59e0b, #fbbf24, #fde68a); }
+        .tp-score-fill.rank-1 { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #f1f5f9); }
+        .tp-score-fill.rank-2 { background: linear-gradient(90deg, #b45309, #f59e0b, #fcd34d); }
+        .tp-score-fill::after { content: ""; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; background: linear-gradient(105deg, transparent, rgba(255,255,255,0.55), transparent); animation: lbShine 2.2s linear infinite; }
+        @keyframes lbShine { 0% { left: -60%; } 60%, 100% { left: 130%; } }
+        .tp-score-val { color: #fbbf24; font-weight: 900; font-size: 1.55rem; width: 86px; text-align: center; text-shadow: 0 2px 10px rgba(251,191,36,0.35); }
+        .tp-lb-delta { font-weight: 900; font-size: 0.95rem; padding: 3px 9px; border-radius: 10px; animation: deltaPop 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .tp-lb-delta.up { color: #4ade80; background: rgba(34,197,94,0.18); border: 1px solid rgba(34,197,94,0.5); }
+        .tp-lb-delta.down { color: #f87171; background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.5); }
+        @keyframes deltaPop { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.3); } 100% { transform: scale(1); opacity: 1; } }
+        .tp-lb-click-row { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        
+        .click-player-card { background: white; padding: 15px 30px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 1.2rem; transition: transform 0.2s; border: 4px solid transparent; box-shadow: 0 4px 0 #ccc; }
+        .click-player-card:hover { transform: scale(1.1); border-color: #38bdf8; }
+        .click-player-card:active { transform: translateY(4px); box-shadow: none; }
+        .click-player-card img { width: 50px; height: 50px; border-radius: 50%; }
+
+        /* RESULT POPUP (Scrollable Feedback) */
+        #tp-result-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .tp-result-card {
+            background: #ffffff; padding: 32px; border-radius: 28px; text-align: left;
+            animation: popIn 0.3s; width:92%; max-width:920px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4);
+            border: 3px solid #e2e8f0; display:flex; flex-direction:column; gap:18px;
+            max-height: 90vh; /* Limit height */
+            overflow: hidden; /* No scroll on card itself */
+        }
+        .tp-result-header { display:flex; align-items:center; gap:18px; justify-content:center; border-bottom:2px solid #e2e8f0; padding-bottom:16px; flex-shrink: 0; }
+        #tp-result-icon { font-size: 3.5rem; }
+        #tp-result-title { font-size: 2.4rem; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .tp-lesson-content { 
+            background: #f8fafc; padding: 22px; border-radius: 20px; border: 1px solid #e2e8f0; 
+            flex:1; /* Take remaining space */
+            overflow-y:auto; /* Scroll internally */
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .tp-lesson-card-header {
+            display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tp-lesson-badge {
+            background: #e0e7ff; color: #4338ca; font-size: 0.85rem; font-weight: 800;
+            padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+            border: 1px solid #c7d2fe;
+        }
+        .tp-lesson-box {
+            background: #ffffff; border: 1px solid #cbd5e1; border-radius: 16px; padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        #tp-lesson-text {
+            font-size: 1.35rem; line-height: 1.7; color: #1e293b; white-space: pre-wrap; font-weight: 500;
+        }
+        #tp-lesson-text b, #tp-lesson-text mark {
+            color: #312e81; font-weight: 800; background: #e0e7ff; padding: 2px 8px; border-radius: 6px;
+            box-decoration-break: clone; border: 1px solid #c7d2fe;
+        }
+        #tp-lesson-text i { color: #0d9488; font-style: italic; font-weight: 600; }
+        
+        .tp-lesson-block {
+            padding: 18px 20px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .tp-examples-block { border-left: 5px solid #f59e0b; }
+        .tp-ccq-block { border-left: 5px solid #3b82f6; }
+        
+        .tp-stylish-list { list-style: none; padding: 0; margin: 8px 0 0 0; display: flex; flex-direction: column; gap: 8px; }
+        .tp-stylish-list li {
+            font-size: 1.25rem; line-height: 1.5; color: #334155; background: #fefce8;
+            padding: 10px 16px; border-radius: 10px; border: 1px solid #fef08a; font-weight: 500;
+        }
+        .tp-ccq-quote-box {
+            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px 18px; margin-top: 6px;
+        }
+        #tp-lesson-ccq {
+            font-style: italic; color: #1e40af; margin: 0; font-size: 1.3rem; font-weight: 600; line-height: 1.5;
+        }
+
+        /* 🎓 REVIEW PAGE — COLOR-CODED MINI LESSON (premium, scrollable, NO title bars) */
+        .tp-ml-section { background: #ffffff; border-radius: 18px; border: 1px solid #e2e8f0; box-shadow: 0 6px 20px rgba(15,23,42,0.06); overflow: hidden; position: relative; flex: 0 0 auto; min-width: 0; }
+        .tp-ml-rule-card { border-top: 6px solid #6366f1; }
+        .tp-examples-block { border-left: 6px solid #f59e0b; }
+        .tp-ccq-block { border-left: 6px solid #3b82f6; }
+        .tp-ml-speak-fab {
+            position: absolute; top: 12px; right: 14px; width: 42px; height: 42px;
+            border-radius: 50%; padding: 0; z-index: 5;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; font-size: 1.05rem;
+            box-shadow: 0 6px 16px rgba(59,130,246,0.4); border: none; cursor: pointer;
+        }
+        .tp-ml-speak-fab:hover { transform: translateY(-2px) scale(1.06); background: linear-gradient(135deg, #2563eb, #4f46e5); }
+        .tp-ml-speak-fab:active { transform: translateY(1px) scale(0.98); }
+        .tp-ml-speak-fab.speaking { background: #ef4444; box-shadow: 0 6px 16px rgba(239,68,68,0.45); }
+        .tp-ml-focus-banner { margin: 14px 72px 0 14px; padding: 9px 14px; border-radius: 12px; background: linear-gradient(90deg, #6366f1, #8b5cf6); color: white; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 16px rgba(99,102,241,0.35); }
+        .tp-ml-keywords { display: flex; flex-direction: column; gap: 10px; padding: 14px 70px 0 14px; }
+        .tp-ml-keyword { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border-radius: 16px; font-size: 0.9rem; font-weight: 700; border: 1.5px solid; line-height: 1.5; text-align: left; }
+        .tp-ml-keyword.vocab { background: #fffbeb; color: #78350f; border-color: #fcd34d; }
+        .tp-ml-keyword.grammar { background: #e0f2fe; color: #0c4a6e; border-color: #7dd3fc; }
+        .tp-ml-keyword.other { background: #f5f3ff; color: #4c1d95; border-color: #c4b5fd; }
+        .tp-ml-k-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .tp-ml-k-term { font-weight: 900; font-size: 1.02rem; }
+        .tp-ml-keyword .tp-ml-k-type { font-size: 0.6rem; font-weight: 900; text-transform: uppercase; background: rgba(0,0,0,0.09); padding: 2px 8px; border-radius: 10px; letter-spacing: 0.03em; }
+        .tp-ml-keyword .tp-ml-k-row { display: flex; align-items: baseline; gap: 8px; font-size: 0.86rem; font-weight: 600; color: inherit; }
+        .tp-ml-keyword .tp-ml-k-row strong { flex-shrink: 0; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; padding: 2px 7px; border-radius: 8px; background: rgba(0,0,0,0.07); }
+        .tp-ml-keyword.vocab .tp-ml-k-row strong { color: #92400e; }
+        .tp-ml-keyword.grammar .tp-ml-k-row strong { color: #075985; }
+        .tp-ml-keyword.other .tp-ml-k-row strong { color: #5b21b6; }
+        /* Color-coded point boxes inside the mini-lesson body */
+        .tp-lesson-box .tp-ml-point { display: block; border-radius: 13px; padding: 10px 14px; margin: 10px 0 0 0; font-size: 1.04rem; line-height: 1.65; font-weight: 600; border: 1.5px solid; text-align: left; }
+        .tp-ml-point .tp-ml-point-tag { display: inline-block; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 9px; border-radius: 9px; margin-right: 9px; color: #fff; vertical-align: 2px; }
+        .tp-pt-meaning { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; } .tp-pt-meaning .tp-ml-point-tag { background: #2563eb; }
+        .tp-pt-form { background: #f5f3ff; border-color: #ddd6fe; color: #4c1d95; } .tp-pt-form .tp-ml-point-tag { background: #7c3aed; }
+        .tp-pt-use { background: #f0fdfa; border-color: #99f6e4; color: #134e4a; } .tp-pt-use .tp-ml-point-tag { background: #0d9488; }
+        .tp-pt-pron { background: #fff1f2; border-color: #fecdd3; color: #881337; } .tp-pt-pron .tp-ml-point-tag { background: #e11d48; }
+        .tp-pt-grammar { background: #eef2ff; border-color: #c7d2fe; color: #312e81; } .tp-pt-grammar .tp-ml-point-tag { background: #4f46e5; }
+        .tp-pt-vocab { background: #fffbeb; border-color: #fde68a; color: #78350f; } .tp-pt-vocab .tp-ml-point-tag { background: #d97706; }
+        .tp-pt-example { background: #fff7ed; border-color: #fed7aa; color: #7c2d12; } .tp-pt-example .tp-ml-point-tag { background: #ea580c; }
+        .tp-pt-tip { background: #f8fafc; border-color: #e2e8f0; color: #334155; } .tp-pt-tip .tp-ml-point-tag { background: #475569; }
+        .tp-pt-warn { background: #fef2f2; border-color: #fecaca; color: #7f1d1d; } .tp-pt-warn .tp-ml-point-tag { background: #dc2626; }
+        .tp-pt-plain { background: #ffffff; border-color: #e2e8f0; color: #1e293b; }
+        .tp-pt-plain:first-child { margin-top: 0; }
+        .tp-ml-why-card { margin: 12px 14px 0 14px; border-radius: 14px; padding: 13px 16px; font-size: 1.02rem; line-height: 1.55; }
+        .tp-ml-why-card strong { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+        .tp-ml-why-correct-card { background: #f0fdf4; border: 1.5px solid #86efac; color: #14532d; }
+        .tp-ml-why-correct-card strong { color: #15803d; }
+        .tp-ml-why-wrong-card { background: #fef2f2; border: 1.5px solid #fecaca; color: #7f1d1d; margin-bottom: 8px; }
+        .tp-ml-why-wrong-card strong { color: #b91c1c; }
+        .tp-ml-ww-option { font-weight: 900; color: #b91c1c; background: rgba(239,68,68,0.08); padding: 2px 8px; border-radius: 8px; }
+        .tp-ml-section .tp-lesson-box { margin: 14px; }
+        .tp-ml-followups { display: flex; flex-direction: column; gap: 9px; padding: 14px; }
+        .tp-ml-followup { display: flex; gap: 11px; align-items: flex-start; background: linear-gradient(145deg, #eff6ff, #f8fafc); border: 1px solid #bfdbfe; border-radius: 13px; padding: 11px 14px; font-size: 1.05rem; line-height: 1.5; color: #1e3a8a; font-weight: 600; box-shadow: 0 3px 10px rgba(59,130,246,0.08); }
+        .tp-ml-followup .tp-ml-fu-ico { font-size: 1.4rem; flex-shrink: 0; animation: tpFuWave 2.2s ease-in-out infinite; }
+        @keyframes tpFuWave { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(12deg); } 75% { transform: rotate(-8deg); } }
+        .tp-ccq-block .tp-ccq-quote-box { margin: 14px 66px 14px 14px; }
+        .tp-examples-block .tp-stylish-list { padding-right: 52px; }
+        /* NEW LANGUAGE highlight inside examples: different color + bold + stylized */
+        .tp-examples-block .tp-stylish-list li { background: linear-gradient(145deg, #fffbeb, #fff7ed); border-color: #fde68a; box-shadow: 0 3px 10px rgba(245,158,11,0.1); }
+        .tp-examples-block mark { background: linear-gradient(120deg, #ede9fe, #e0e7ff); color: #4338ca; font-weight: 900; padding: 2px 9px; border-radius: 7px; border: 1px solid #a5b4fc; border-bottom: 3px solid #6366f1; box-decoration-break: clone; font-style: italic; }
+        .tp-ml-rule-card .tp-lesson-box mark { background: #e0e7ff; color: #312e81; font-weight: 800; padding: 2px 8px; border-radius: 6px; border: 1px solid #c7d2fe; box-decoration-break: clone; }
+        
+        /* 🎉 CELEBRATION OVERLAY (confetti + meme image, red shake for fail) */
+        #tp-celebration-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.88); backdrop-filter: blur(10px);
+            z-index: 120; display: flex; align-items: center; justify-content: center;
+        }
+        #tp-confetti-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .tp-confetti-piece { position: absolute; top: -24px; width: 10px; height: 13px; border-radius: 2px; animation: tpConfettiFall 2.2s ease-in forwards; opacity: 0.95; }
+        @keyframes tpConfettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(108vh) rotate(720deg); opacity: 0.15; } }
+        .tp-celebration-card {
+            background: #ffffff; border-radius: 26px; padding: 26px 28px 20px 28px;
+            width: 92%; max-width: 640px; text-align: center; position: relative;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 4px rgba(34,197,94,0.9), 0 0 60px rgba(34,197,94,0.35);
+            animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 92vh; overflow-y: auto;
+        }
+        .tp-celebration-card.tp-celebration-lose {
+            box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 4px rgba(239,68,68,0.9), 0 0 60px rgba(239,68,68,0.35);
+            animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), tpRedShake 0.55s 0.15s;
+        }
+        @keyframes tpRedShake { 0%,100% { transform: translateX(0); } 15% { transform: translateX(-14px) rotate(-1deg); } 30% { transform: translateX(12px) rotate(1deg); } 45% { transform: translateX(-10px); } 60% { transform: translateX(8px); } 75% { transform: translateX(-5px); } 90% { transform: translateX(3px); } }
+        .tp-celebration-badge { display: inline-block; font-weight: 900; font-size: 1.35rem; letter-spacing: 1px; padding: 8px 26px; border-radius: 40px; margin-bottom: 16px; color: white; }
+        .tp-celebration-badge.win { background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 6px 20px rgba(34,197,94,0.45); }
+        .tp-celebration-badge.lose { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 6px 20px rgba(239,68,68,0.45); }
+        #tp-celebration-img { width: 100%; max-height: 40vh; object-fit: contain; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .tp-celebration-caption { font-size: 1.45rem; font-weight: 900; color: #0f172a; margin: 16px 0 12px 0; line-height: 1.35; }
+        .tp-celebration-timerbar { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+        #tp-celebration-timerbar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); border-radius: 10px; }
+        .tp-celebration-skip { background: #1e293b; color: white; border: none; padding: 10px 22px; border-radius: 14px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.15s; }
+        .tp-celebration-skip:hover { background: #38bdf8; color: #020617; transform: translateY(-2px); }
+
+        .tp-result-actions { display:flex; gap:15px; margin-top:10px; flex-shrink:0; }
+        .tp-play-btn { background:#3b82f6; color:white; border:none; border-radius:12px; padding:0 25px; font-weight:bold; cursor:pointer; font-size: 1.2rem; }
+
+        /* ===== MOBILE / TABLET (Test Lab must be usable on phones) ===== */
+        @media (max-width: 860px) {
+            #testing-panel-overlay { flex-direction: column; overflow-y: auto; }
+            .tp-sidebar {
+                width: 100%; max-height: 34vh; flex-direction: row; flex-wrap: wrap;
+                align-items: flex-start; padding: 10px 12px; gap: 8px;
+                border-right: none; border-bottom: 1px solid rgba(56,189,248,0.2);
+                overflow-y: auto; flex-shrink: 0;
+            }
+            .tp-logo { margin-bottom: 6px; font-size: 1.05rem; width: 100%; }
+            .tp-music-player { padding: 10px; margin-bottom: 6px; max-width: 100%; }
+            .tp-track-list { max-height: 70px; overflow-y: auto; }
+            .tp-meme-panel { max-width: 100%; }
+            .tp-sidebar-list-container { max-height: 96px; width: 100%; }
+            .tp-content { min-height: 0; }
+            .tp-view { padding: 14px; }
+            .tp-view.game-mode { padding: 0; }
+            .tp-view-header { flex-wrap: wrap; gap: 8px; padding: 8px 6px; }
+            .tp-view-header h2 { font-size: 1.05rem; width: 100%; }
+            .tp-controls { display: flex; gap: 8px; width: 100%; }
+            .tp-controls .tp-btn { flex: 1; font-size: 0.85rem; padding: 10px 8px; }
+            #tp-json-input { font-size: 13px; padding: 12px; min-height: 120px; }
+            .tp-builder-container { padding: 18px; }
+            .tp-stage-counter { font-size: 0.95rem; padding: 4px 9px; }
+            .tp-result-actions { flex-wrap: wrap; }
+            .tp-result-actions .tp-play-btn { flex: 1; min-width: 120px; padding: 12px 10px; font-size: 1rem; }
+            .tp-close-corner-btn { width: 38px !important; height: 38px !important; font-size: 1.05rem !important; top: 10px !important; right: 10px !important; }
+            .tp-now-name { max-width: 110px; }
+            .tp-opt-text { font-size: 0.92rem; }
+            .tp-celebration-card { padding: 18px 14px; }
+            .tp-celebration-caption { font-size: 1.15rem; }
+
+            /* ── Game screens: lobby / title ── */
+            .tp-fullscreen-layer { padding: 12px; }
+            .tp-3d-title { font-size: 2.6rem !important; margin-bottom: 18px; }
+            #tp-leaderboard-screen .tp-3d-title { font-size: 2.2rem !important; }
+            .tp-lobby-card { width: 100%; max-width: 460px; padding: 22px 14px; gap: 14px; }
+            .tp-lobby-card h3 { font-size: 1.15rem; }
+            .tp-player-chip { padding: 6px 10px; }
+            .tp-player-chip img { width: 36px; height: 36px; }
+            .tp-top-bar { top: 10px; left: 10px; right: 10px; }
+
+            /* ── Grid board ── */
+            .tp-grid-container { padding: 66px 12px 80px 12px; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+            .tp-grid-num { font-size: 1.7rem; }
+            .tp-grid-item { min-height: 64px; border-width: 3px; box-shadow: 0 4px 0 #94a3b8; }
+
+            /* ── Question stage ── */
+            .tp-question-container { width: 97%; margin-top: 60px; gap: 16px; padding-bottom: 70px; }
+            .tp-q-card { padding: 14px !important; }
+            .tp-q-card h2 { font-size: 1.25rem !important; }
+            .tp-opt-grid { grid-template-columns: 1fr; gap: 10px; }
+            .tp-opt-btn { font-size: 1rem; padding: 12px 14px; }
+            .tp-dramatic-timer { font-size: 1.35rem; padding: 5px 14px; gap: 6px; letter-spacing: 1px; }
+            .tp-lifelines-bar { gap: 8px; }
+            .tp-lifeline-btn { padding: 7px 12px; font-size: 0.95rem; }
+
+            /* ── Matching ── */
+            .tp-match-grid { grid-template-columns: 1fr; gap: 10px; }
+            .tp-match-card { padding: 14px; font-size: 1.1rem; }
+
+            /* ── Scramble ── */
+            .tp-scramble-chip { padding: 9px 14px; font-size: 1.05rem; }
+            .tp-scramble-zone { padding: 12px; gap: 8px; }
+            .tp-scramble-bank { gap: 8px; }
+
+            /* ── Cloze ── */
+            .tp-cloze-gap-btn { min-width: 84px; padding: 5px 10px; font-size: 1rem; margin: 3px 5px; }
+            .tp-cloze-opt-btn { padding: 10px 14px; font-size: 1.05rem; }
+            #tp-cloze-passage { font-size: 1.05rem !important; line-height: 2 !important; padding: 14px !important; }
+
+            /* ── Would You Rather ── */
+            .wyr-options-grid { grid-template-columns: 1fr; gap: 12px; }
+            .wyr-card { min-height: 120px; padding: 16px 12px; }
+            .wyr-story-scroll { padding: 14px; font-size: 1.05rem; max-height: 150px; }
+
+            /* ── Conversation / discussion ── */
+            .tp-conv-header-card { min-width: 130px; padding: 8px 10px; gap: 8px; }
+            .tp-conv-emoji-avatar { font-size: 2rem; }
+            .tp-conv-opt-card { padding: 12px 14px; gap: 8px; }
+
+            /* ── Hot seat / taboo / jam ── */
+            .hs-question-card { font-size: 1.4rem; padding: 16px; }
+            .hs-checklist-item { padding: 10px 14px; font-size: 1rem; }
+            .hs-header-badge { font-size: 0.9rem; padding: 5px 14px; letter-spacing: 1px; }
+            .taboo-card { height: 300px; margin-bottom: 24px; }
+            .jam-circle-timer { width: 130px; height: 130px; font-size: 3rem; border-width: 8px; }
+
+            /* ── Leaderboard / scores ── */
+            .tp-score-label { width: auto; flex: 1; min-width: 0; font-size: 0.9rem; }
+            .tp-score-label img { width: 32px; height: 32px; }
+            .tp-score-val { width: auto; min-width: 44px; font-size: 1.15rem; }
+            .tp-podium-card { width: 128px; padding: 10px 6px 8px 6px; }
+            .tp-podium-card .tp-podium-avatar { width: 60px; height: 60px; border-width: 3px; margin-top: -42px; }
+            .tp-podium-card .tp-podium-name { font-size: 0.9rem; max-width: 118px; }
+            .tp-lb-trophy { width: 42px; height: 42px; }
+            .tp-mlb-name { font-size: 0.75rem; }
+        }
+        @media (max-width: 560px) {
+            #testing-panel-overlay { overflow-y: auto; }
+            .tp-sidebar { max-height: 30vh; }
+            .tp-track-list { display: none; }
+            .tp-music-controls { flex-wrap: wrap; }
+            .tp-sidebar-list-container { max-height: 84px; }
+            .tp-now-playing { padding: 8px; }
+            .tp-logo { font-size: 0.95rem; }
+            .tp-lobby-card { padding: 18px 12px; }
+            .tp-3d-title { font-size: 2rem !important; }
+            .tp-grid-container { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 62px 8px 70px 8px; }
+            .tp-grid-num { font-size: 1.35rem; }
+            .tp-grid-item { min-height: 56px; }
+            .tp-q-card h2 { font-size: 1.1rem !important; }
+            .tp-opt-btn { padding: 11px 12px; font-size: 0.95rem; }
+            .tp-dramatic-timer { font-size: 1.15rem; padding: 4px 10px; }
+            .tp-stage-counter { font-size: 0.8rem; padding: 3px 7px; }
+            .tp-nav-arrow, .tp-quit-btn { width: 34px; height: 34px; font-size: 1rem; }
+            .tp-conv-header-card { min-width: 100%; }
+            #tp-conv-characters-roster { flex-direction: column; }
+            .tp-cloze-gap-btn { min-width: 64px; font-size: 0.9rem; padding: 4px 8px; }
+            .tp-cloze-opt-btn { width: 100%; font-size: 0.95rem; padding: 9px 10px; }
+            .taboo-card { height: 260px; }
+            .hs-question-card { font-size: 1.15rem; }
+            .tp-podium-card { width: 104px; }
+            .tp-podium-card .tp-podium-avatar { width: 50px; height: 50px; margin-top: -34px; }
+            .tp-podium-card .tp-podium-name { font-size: 0.78rem; max-width: 96px; }
+            .tp-3d-btn { font-size: 1.15rem; padding: 12px 22px; }
+            .tp-big-btn { font-size: 0.95rem; padding: 10px 16px; }
+            .tp-question-container { margin-top: 48px; }
+            .tp-top-bar { top: 6px; left: 6px; right: 6px; }
+            .tp-timer-pill { font-size: 1.15rem; padding: 7px 12px; }
+        }
+
+        /* ==================================================================
+           📱 DEDICATED MOBILE LAYOUT
+           Phones & small tablets get a real mobile UX instead of a squeezed
+           desktop: a compact top bar (menu + Editor/Settings/Game tabs), the
+           sidebar as an off-canvas drawer, full-width cards, a bottom action
+           bar for the game controls and full-screen sheets for every dialog.
+           Desktop is untouched — everything below is inside the phone query.
+           ================================================================== */
+        #testing-panel-overlay .tp-mobile-topbar { display: none; }
+        #testing-panel-overlay .tp-mobile-backdrop { display: none; }
+        .tp-mobile-icon-btn { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 13px; background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35); color: #e0f2fe; font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .tp-mobile-icon-btn:active { background: #38bdf8; color: #020617; }
+        .tp-mobile-icon-btn.danger { background: rgba(239,68,68,0.16); border-color: rgba(239,68,68,0.45); color: #fecaca; }
+        .tp-mobile-title { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 0.92rem; letter-spacing: 0.5px; color: #38bdf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tp-mobile-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 999px; background: rgba(148,163,184,0.16); flex: 0 0 auto; }
+        .tp-mobile-tab { width: 42px; height: 38px; border: none; border-radius: 999px; background: transparent; color: #cbd5e1; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+        .tp-mobile-tab.active { background: #38bdf8; color: #020617; box-shadow: 0 0 14px rgba(56,189,248,0.45); }
+
+        @media (max-width: 820px), (max-width: 1024px) and (pointer: coarse) {
+            /* Every mobile rule below sizes boxes with 100% width + padding, so the
+               panel switches to border-box on phones (the desktop rules assume
+               content-box and must stay untouched). */
+            #testing-panel-overlay, #testing-panel-overlay *, #testing-panel-overlay *::before, #testing-panel-overlay *::after { box-sizing: border-box; }
+            /* --- shell: top bar + content, real viewport units --- */
+            #testing-panel-overlay { flex-direction: column; height: 100dvh; max-height: 100dvh; }
+            #testing-panel-overlay .tp-mobile-topbar {
+                display: flex; align-items: center; gap: 7px; flex: 0 0 auto; z-index: 150;
+                padding: calc(8px + env(safe-area-inset-top)) 10px 8px 10px;
+                background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+                border-bottom: 1px solid rgba(56,189,248,0.22); box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            }
+            #testing-panel-overlay .tp-mobile-backdrop {
+                display: block; position: fixed; inset: 0; z-index: 190;
+                background: rgba(2,6,23,0.62); opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+            }
+            #testing-panel-overlay.tp-drawer-open .tp-mobile-backdrop { opacity: 1; pointer-events: auto; }
+            #testing-panel-overlay .tp-content { flex: 1 1 auto; min-height: 0; }
+
+            /* --- sidebar = off-canvas drawer (music, memes, live ranking) --- */
+            #testing-panel-overlay .tp-sidebar {
+                position: fixed; top: 0; left: 0; bottom: 0; width: 86vw; max-width: 340px; max-height: none;
+                flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 10px;
+                padding: calc(14px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom));
+                border-right: 1px solid rgba(56,189,248,0.25); border-bottom: none; border-radius: 0 20px 20px 0;
+                overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 200;
+                transform: translateX(-104%); transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 0 60px rgba(0,0,0,0.7);
+            }
+            #testing-panel-overlay.tp-drawer-open .tp-sidebar { transform: translateX(0); }
+            #testing-panel-overlay .tp-logo { width: auto; margin-bottom: 4px; font-size: 1.1rem; }
+            #testing-panel-overlay .tp-track-list { display: flex; max-height: 150px; }
+            #testing-panel-overlay .tp-sidebar-list-container { width: 100%; max-height: none; flex: 1 1 auto; }
+            /* the floating home corner button is replaced by the top bar */
+            #testing-panel-overlay .tp-close-corner-btn { display: none !important; }
+
+            /* --- editor + settings tabs --- */
+            #testing-panel-overlay .tp-view { padding: 12px 12px calc(16px + env(safe-area-inset-bottom)) 12px; }
+            #testing-panel-overlay .tp-view.game-mode { padding: 0; }
+            #testing-panel-overlay .tp-view-header { flex-wrap: wrap; gap: 8px; padding: 6px 2px; }
+            #testing-panel-overlay .tp-view-header h2 { width: 100%; font-size: 1.05rem; }
+            #testing-panel-overlay .tp-controls { width: 100%; }
+            #testing-panel-overlay .tp-controls .tp-btn { flex: 1 1 0; justify-content: center; min-height: 46px; }
+            #testing-panel-overlay #tp-json-input { min-height: 150px; padding: 12px; font-size: 16px; }
+            #testing-panel-overlay .tp-builder-container { padding: 14px; border-radius: 14px; }
+            #testing-panel-overlay .tp-timer-mult-row { font-size: 0.9rem; }
+            /* 16px stops iOS from zooming the page when a field is focused */
+            #testing-panel-overlay input, #testing-panel-overlay textarea, #testing-panel-overlay select { font-size: 16px; }
+            #testing-panel-overlay button, #testing-panel-overlay .tp-btn, #testing-panel-overlay .tp-big-btn,
+            #testing-panel-overlay .tp-3d-btn, #testing-panel-overlay .tp-preset-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+            #testing-panel-overlay .tp-btn, #testing-panel-overlay .tp-big-btn, #testing-panel-overlay .tp-preset-btn { min-height: 46px; }
+
+            /* --- lobby --- */
+            #testing-panel-overlay .tp-fullscreen-layer { padding: 10px; }
+            #testing-panel-overlay #tp-lobby-screen { justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px calc(20px + env(safe-area-inset-bottom)) 12px; }
+            #testing-panel-overlay .tp-3d-title { font-size: 2.1rem !important; margin-bottom: 14px; letter-spacing: -1px; }
+            #testing-panel-overlay .tp-lobby-card { width: 100%; max-width: none; margin: auto 0; padding: 16px 12px; gap: 12px; border-radius: 18px; }
+            #testing-panel-overlay .tp-lobby-card h3 { font-size: 1.1rem; }
+            #testing-panel-overlay #tp-lobby-list { min-height: 0; max-height: 34vh; overflow-y: auto; }
+            #testing-panel-overlay #tp-lobby-name { width: 100% !important; }
+            #testing-panel-overlay .tp-3d-btn.large { font-size: 1.15rem; padding: 14px 18px; }
+            #testing-panel-overlay .tp-player-chip img { width: 40px; height: 40px; }
+
+            /* --- bottom action bar (was the top-right cluster) --- */
+            #testing-panel-overlay .tp-top-bar {
+                top: auto; bottom: calc(10px + env(safe-area-inset-bottom)); left: 10px; right: 10px;
+                padding: 7px 9px; border-radius: 999px; gap: 8px;
+                background: rgba(2,6,23,0.72); backdrop-filter: blur(10px); border: 1px solid rgba(56,189,248,0.25);
+            }
+            #testing-panel-overlay .tp-nav-arrow, #testing-panel-overlay .tp-quit-btn { width: 48px; height: 48px; font-size: 1.2rem; }
+            #testing-panel-overlay .tp-stage-counter { background: transparent; padding: 0; gap: 8px; }
+            /* a laser pointer needs a mouse — pointless on a phone */
+            #testing-panel-overlay #tp-laser-btn { display: none; }
+
+            /* --- grid board --- */
+            #testing-panel-overlay .tp-grid-container { padding: 10px 10px calc(112px + env(safe-area-inset-bottom)) 10px; grid-template-columns: repeat(3, 1fr); grid-template-rows: none; grid-auto-rows: minmax(62px, auto); gap: 10px; }
+            #testing-panel-overlay .tp-grid-item { min-height: 62px; border-width: 3px; box-shadow: 0 4px 0 #94a3b8; padding: 4px; }
+            #testing-panel-overlay .tp-grid-num { font-size: 1.6rem; }
+            #testing-panel-overlay .tp-grid-icon { font-size: 1.1rem; }
+
+            /* --- question stage --- */
+            #testing-panel-overlay #tp-question-area {
+                width: 100%; max-height: 100%; margin-top: 0;
+                padding: 6px 10px calc(116px + env(safe-area-inset-bottom)) 10px; gap: 12px;
+                overflow-y: auto; -webkit-overflow-scrolling: touch;
+            }
+            #testing-panel-overlay .tp-q-card { width: 100%; padding: 16px; border-radius: 18px; font-size: 1.15rem; max-height: none; overflow: visible; }
+            #testing-panel-overlay .tp-q-card h2 { font-size: 1.15rem !important; }
+            #testing-panel-overlay .tp-q-context { font-size: 1rem; padding: 12px; max-height: none; line-height: 1.55; }
+            #testing-panel-overlay .tp-opt-grid { grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+            #testing-panel-overlay .tp-opt-btn { font-size: 1rem; padding: 14px 12px; min-height: 56px; }
+            #testing-panel-overlay .tp-dramatic-timer { font-size: 1.2rem; padding: 5px 14px; }
+            #testing-panel-overlay .tp-match-grid { grid-template-columns: 1fr; gap: 10px; }
+            #testing-panel-overlay .taboo-card { height: 300px; margin-bottom: 20px; }
+            #testing-panel-overlay #tp-conv-characters-roster { flex-direction: column; }
+            #testing-panel-overlay .tp-conv-header-card { min-width: 100%; }
+            #testing-panel-overlay .hs-question-card { font-size: 1.2rem; }
+            #testing-panel-overlay .tp-cloze-gap-btn { min-width: 70px; min-height: 40px; font-size: 1rem; padding: 5px 10px; }
+            #testing-panel-overlay .tp-cloze-opt-btn { width: 100%; font-size: 1rem; padding: 12px; }
+            #testing-panel-overlay .tp-lifeline-btn { min-height: 46px; }
+            #testing-panel-overlay .wyr-card { min-height: 110px; }
+
+            /* --- leaderboard --- */
+            #testing-panel-overlay #tp-leaderboard-screen { justify-content: flex-start; }
+            #testing-panel-overlay .tp-lb-shell { width: 100%; padding: 10px 8px calc(22px + env(safe-area-inset-bottom)) 8px; gap: 8px; }
+            #testing-panel-overlay .tp-lb-podium { gap: 8px; margin: 6px 0 14px 0; }
+            #testing-panel-overlay .tp-podium-card { width: 110px; padding: 10px 6px 8px 6px; }
+            #testing-panel-overlay .tp-podium-card .tp-podium-avatar { width: 54px; height: 54px; margin-top: -36px; }
+            #testing-panel-overlay .tp-lb-list { gap: 8px; }
+            #testing-panel-overlay .tp-score-label { width: auto; flex: 1 1 auto; min-width: 0; font-size: 0.88rem; }
+            #testing-panel-overlay .tp-score-val { width: auto; min-width: 42px; font-size: 1.1rem; }
+
+            /* --- result feedback, celebration & lifelines = full-screen sheets --- */
+            #testing-panel-overlay #tp-result-overlay { align-items: stretch; padding: 0; }
+            #testing-panel-overlay .tp-result-card {
+                width: 100%; max-width: none; height: 100%; max-height: none; border-width: 0; border-radius: 0;
+                padding: 14px 12px calc(14px + env(safe-area-inset-bottom)) 12px; gap: 12px;
+            }
+            #testing-panel-overlay .tp-result-header { gap: 10px; padding-bottom: 10px; }
+            #testing-panel-overlay #tp-result-icon { font-size: 2.2rem; }
+            #testing-panel-overlay #tp-result-title { font-size: 1.35rem; }
+            #testing-panel-overlay .tp-lesson-content { padding: 12px; border-radius: 14px; gap: 12px; }
+            #testing-panel-overlay #tp-lesson-text { font-size: 1.05rem; line-height: 1.65; }
+            #testing-panel-overlay .tp-stylish-list li { font-size: 1rem; padding: 9px 12px; }
+            #testing-panel-overlay .tp-result-actions { gap: 10px !important; margin-top: 8px !important; }
+            #testing-panel-overlay .tp-result-actions .tp-big-btn { flex: 1 1 0; padding: 14px 8px; font-size: 1rem; justify-content: center; }
+
+            #testing-panel-overlay #tp-celebration-overlay { align-items: stretch; padding: 0; }
+            #testing-panel-overlay .tp-celebration-card {
+                width: 100%; max-width: none; height: 100%; max-height: none; border-radius: 0;
+                padding: calc(18px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)) 16px;
+                display: flex; flex-direction: column; justify-content: center;
+            }
+            #testing-panel-overlay #tp-celebration-img { max-height: 46vh; }
+            #testing-panel-overlay .tp-celebration-caption { font-size: 1.15rem; margin: 12px 0 10px 0; }
+            #testing-panel-overlay .tp-celebration-skip { width: 100%; min-height: 48px; }
+
+            #testing-panel-overlay #tp-phone-modal, #testing-panel-overlay #tp-teacher-modal {
+                align-items: stretch !important; justify-content: center !important;
+                height: 100dvh !important; padding: 0 !important;
+            }
+            /* the cards carry desktop inline styles, so the phone layout needs !important */
+            #testing-panel-overlay .tp-phone-card {
+                width: 100% !important; max-width: none !important; height: 100% !important; max-height: 100% !important;
+                border-radius: 0 !important; border-width: 2px 0 !important; border-left: none; border-right: none;
+                padding: calc(20px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom)) 16px !important;
+                overflow-y: auto; -webkit-overflow-scrolling: touch;
+                display: flex; flex-direction: column; justify-content: center;
+            }
+            #testing-panel-overlay .tp-phone-card h3 { font-size: 1.4rem !important; }
+            #testing-panel-overlay #tp-phone-clue-box { font-size: 1.15rem !important; padding: 16px !important; }
+            #testing-panel-overlay .tp-modal-actions { flex-direction: column; gap: 10px !important; }
+            #testing-panel-overlay .tp-modal-actions .tp-big-btn { width: 100%; justify-content: center; min-height: 48px; }
+            /* question cards generated by the activity renderers keep inline padding/width */
+            #testing-panel-overlay .tp-q-card { padding: 16px !important; width: 100% !important; max-width: none !important; }
+
+            /* --- touch ergonomics: kill sticky :hover states --- */
+            #testing-panel-overlay .tp-grid-item:hover { transform: none; border-color: #cbd5e1; color: #334155; box-shadow: 0 4px 0 #94a3b8; }
+            #testing-panel-overlay .tp-opt-btn:hover:not(.tp-opt-locked) { transform: none; background: #ffffff; border-color: #cbd5e1; box-shadow: 0 4px 0 #94a3b8; }
+            #testing-panel-overlay .tp-3d-btn:hover { transform: none; }
+            #testing-panel-overlay .tp-nav-arrow:hover { background: #ffffff; color: #333333; }
+            #testing-panel-overlay .tp-nav-arrow.active:hover { background: #ef4444; color: #ffffff; }
+            #testing-panel-overlay .tp-cloze-gap-btn:hover { transform: none; background: #e0f2fe; }
+            #testing-panel-overlay .tp-meme-chip:hover, #testing-panel-overlay .tp-preset-btn:hover { transform: none; }
+        }
+
+        /* landscape phones: keep the desktop-style 6×4 board and give screens vertical room */
+        @media (max-height: 520px) and (max-width: 1024px) {
+            #testing-panel-overlay .tp-mobile-topbar { padding-top: calc(5px + env(safe-area-inset-top)); padding-bottom: 5px; }
+            #testing-panel-overlay .tp-3d-title { font-size: 1.6rem !important; margin-bottom: 8px; }
+            #testing-panel-overlay .tp-lobby-card { padding: 12px; gap: 8px; }
+            #testing-panel-overlay #tp-lobby-list { max-height: 26vh; }
+            #testing-panel-overlay .tp-grid-container { grid-template-columns: repeat(6, 1fr); grid-auto-rows: minmax(48px, auto); padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+            #testing-panel-overlay .tp-grid-item { min-height: 48px; }
+            #testing-panel-overlay #tp-question-area { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+            #testing-panel-overlay .tp-opt-btn { min-height: 48px; padding: 10px 12px; }
+        }
+    `;
+
+    const js = `${VOICE_GROUP_RUNTIME_JS}
+        var DEFAULT_TP_CONTENT = window.DEFAULT_TP_CONTENT || {
+            content: [
+                {
+                    type: "multiple_choice",
+                    timer_seconds: 90,
+                    questions: [
+                        {
+                            question: "Read this sentence: 'The latency on the hotel network was so high that I couldn't join the stand-up meeting.' What does 'latency' mean in this context?",
+                            options: ["The cost of the internet", "The delay in data transfer", "The brightness of the screen", "The password security"],
+                            answer: "The delay in data transfer",
+                            phone_clue: "Oh that's simple! Latency is the delay in data transfer. Go with that!",
+                            caller_name: "Tech Wizard",
+                            caller_voice: "en-US-GuyNeural"
+                        },
+                        {
+                            question: "Which word is a synonym for 'intermittent' connection?",
+                            options: ["Sporadic", "Constant", "High-speed", "Wired"],
+                            answer: "Sporadic",
+                            phone_clue: "Sporadic means happening at irregular intervals, exactly like intermittent!",
+                            caller_name: "Professor Spark",
+                            caller_voice: "en-US-JennyNeural"
+                        },
+                        {
+                            question: "What is the primary function of a VPN when traveling?",
+                            options: ["Encrypt internet traffic", "Speed up download rates", "Charge device batteries", "Store raw photographs"],
+                            answer: "Encrypt internet traffic",
+                            phone_clue: "A VPN definitely encrypts your internet traffic on public cafe networks!",
+                            caller_name: "Sherlock",
+                            caller_voice: "en-GB-RyanNeural"
+                        },
+                        {
+                            question: "If your battery is completely drained, you need to find a:",
+                            options: ["Power outlet", "Subway station", "Luggage scale", "Tourist map"],
+                            answer: "Power outlet",
+                            phone_clue: "Haha, look for a power outlet before your laptop shuts down!",
+                            caller_name: "Aunt Lucy",
+                            caller_voice: "en-US-AriaNeural"
+                        },
+                        {
+                            question: "Which tense is used in: 'I had already deployed the fix before the server crashed'?",
+                            options: ["Past Perfect", "Present Continuous", "Future Simple", "Past Continuous"],
+                            answer: "Past Perfect",
+                            phone_clue: "'Had deployed' is textbook Past Perfect tense for an action before another past event!",
+                            caller_name: "Grammar Guru",
+                            caller_voice: "en-US-GuyNeural"
+                        }
+                    ],
+                    rich_feedback: {
+                        explanation: "Latency is a technical noun referring to the delay before a transfer of data begins following an instruction. In a travel context, high latency means your video calls will freeze or lag.",
+                        personalized_examples: [
+                            "1. As a remote developer, high latency makes video calls impossible.",
+                            "2. I monitored the network latency before launching the deployment.",
+                            "3. Cloud servers with low latency deliver snappy responses."
+                        ],
+                        speaking_ccq: "How do you explain 'latency' to a non-technical coworker?"
+                    }
+                },
+                {
+                    type: "would_you_rather",
+                    timer_seconds: 90,
+                    questions: [
+                        {
+                            scenario: "When arriving in a new city as a remote worker, which would you do first?",
+                            option_a: "Test the café Wi-Fi speed and setup your workspace",
+                            option_b: "Drop your bags and explore the local historic center",
+                            story_a: "prioritized finding an ultra-fast café with stable Wi-Fi to set up their remote workstation",
+                            story_b: "dropped their bags immediately and wandered into the historic city center"
+                        },
+                        {
+                            scenario: "How would you handle a critical project deadline while abroad?",
+                            option_a: "Pull an all-nighter in a 24-hour coworking lounge",
+                            option_b: "Wake up at 5:00 AM on a quiet sunrise balcony",
+                            story_a: "powered through an intense all-nighter fueled by espresso in the coworking lounge",
+                            story_b: "woke up at dawn to finish the deliverables on a peaceful sunrise terrace"
+                        },
+                        {
+                            scenario: "What kind of travel companion would you prefer for a month-long trip?",
+                            option_a: "A fellow tech specialist who loves deep discussions",
+                            option_b: "A spontaneous explorer who knows all hidden street food gems",
+                            story_a: "partnered with an analytical tech peer for deep architecture debates",
+                            story_b: "teamed up with an adventurous local foodie to discover culinary treasures"
+                        },
+                        {
+                            scenario: "Where would you establish your next dream remote office?",
+                            option_a: "A high-tech mountain chalet with panoramic snow views",
+                            option_b: "A breezy seaside villa overlooking turquoise waters",
+                            story_a: "set up a sleek command center in an alpine chalet with snowy peak views",
+                            story_b: "built an open-air office on a breezy seaside deck overlooking turquoise waters"
+                        },
+                        {
+                            scenario: "What superpower would make your travels easiest?",
+                            option_a: "Instantly speak and negotiate in any native language",
+                            option_b: "Never experience jet lag or fatigue regardless of timezones",
+                            story_a: "mastered every native dialect instantly, negotiating like a local everywhere",
+                            story_b: "conquered global timezones with boundless energy and zero jet lag"
+                        }
+                    ],
+                    rich_feedback: {
+                        explanation: "Would You Rather encourages rapid spontaneous decision-making and creative conditional sentence formulation.",
+                        personalized_examples: [
+                            "1. I'd rather work from a quiet library than a noisy coffee shop.",
+                            "2. Would you rather travel light or pack backup hardware?",
+                            "3. She'd rather schedule meetings in the morning to keep afternoons free."
+                        ],
+                        speaking_ccq: "Which choice was the most difficult dilemma for you today?"
+                    }
+                },
+                {
+                    type: "cloze",
+                    text_with_gaps: "When I finally ___ in Santorini, the view was breathtaking. However, I immediately had a problem. My ___ was completely dead because I forgot to charge it. As a ___ nomad, being disconnected is scary. I ordered a cold ___ coffee and found a shop that sold a ___ bank.",
+                    gaps: [
+                        { answer: "arrived", options: ["arrived", "left", "flew"] },
+                        { answer: "phone", options: ["phone", "passport", "ticket"] },
+                        { answer: "digital", options: ["digital", "tourist", "lazy"] },
+                        { answer: "iced", options: ["iced", "hot", "dry"] },
+                        { answer: "power", options: ["power", "money", "food"] }
+                    ],
+                    timer_seconds: 90,
+                    rich_feedback: {
+                        explanation: "This narrative uses past tense storytelling with travel context vocabulary.",
+                        personalized_examples: [
+                            "1. We arrived at the conference right on time.",
+                            "2. My phone battery lasts all day with battery saver on.",
+                            "3. Digital nomads rely heavily on portable power banks."
+                        ],
+                        speaking_ccq: "What is your emergency plan when your electronics run out of battery?"
+                    }
+                },
+                {
+                    type: "hot_seat",
+                    timer_seconds: 300,
+                    questions: [
+                        {
+                            question: "Explain a time you had to fix a technical issue under time pressure.",
+                            checklist: [
+                                "Used Past Simple correctly",
+                                "Used technical vocabulary clearly",
+                                "Explained the resolution"
+                            ]
+                        },
+                        {
+                            question: "What are the biggest challenges of coordinating meetings across multiple timezones?",
+                            checklist: [
+                                "Mentioned at least 2 distinct challenges",
+                                "Used transition words (e.g. Furthermore, Consequently)",
+                                "Spoke with steady rhythm"
+                            ]
+                        }
+                    ],
+                    rich_feedback: {
+                        explanation: "Hot seat challenges test rapid spontaneous retrieval under timer pressure.",
+                        personalized_examples: ["N/A"],
+                        speaking_ccq: "How did you manage speaking continuously for this topic?"
+                    }
+                },
+                {
+                    type: "taboo",
+                    cards: [
+                        { target_word: "Drone", forbidden_words: ["Fly", "Camera", "Sky", "Propeller", "Remote"] },
+                        { target_word: "Passport", forbidden_words: ["Travel", "Country", "Document", "Identity", "Border"] },
+                        { target_word: "Luggage", forbidden_words: ["Bag", "Suitcase", "Pack", "Clothes", "Carry"] },
+                        { target_word: "Hotel", forbidden_words: ["Stay", "Room", "Sleep", "Reception", "Book"] },
+                        { target_word: "Beach", forbidden_words: ["Sand", "Sea", "Ocean", "Sun", "Swim"] }
+                    ],
+                    timer_seconds: 300,
+                    rich_feedback: {
+                        explanation: "Taboo forces circumlocution and spontaneous synonym usage.",
+                        personalized_examples: ["N/A"],
+                        speaking_ccq: "Which taboo card required the most creative description?"
+                    }
+                },
+                {
+                    type: "truth_dare",
+                    truths: [
+                        "Have you ever missed a critical deadline because of technical issues?",
+                        "What is the funniest misunderstanding you've experienced in another language?",
+                        "Have you ever pretended your internet dropped to leave an awkward meeting?",
+                        "What is your biggest fear when deploying new updates?",
+                        "Have you ever worked from bed while pretending to be at your desk?"
+                    ],
+                    dares: [
+                        "Explain your current project in 30 seconds using only simple vocabulary.",
+                        "Describe your dream vacation destination using only adjectives.",
+                        "Give a 1-minute motivational speech to an exhausted software team.",
+                        "Pretend you are an AI assistant who takes everything literally.",
+                        "Pitch an absurd startup idea in 45 seconds."
+                    ],
+                    timer_seconds: 0,
+                    rich_feedback: {
+                        explanation: "Truth or Dare exercises build comfort with spontaneous speaking and humor.",
+                        personalized_examples: ["N/A"],
+                        speaking_ccq: "Did you lean toward Truth or Dare?"
+                    }
+                },
+                {
+                    type: "matching",
+                    pairs: [
+                        { left: "Golden Hour", right: "Best time for photography lighting" },
+                        { left: "Bandwidth", right: "Data transfer rate and capacity" },
+                        { left: "Carry-on", right: "Luggage kept with you on an airplane" },
+                        { left: "Itinerary", right: "Planned route and schedule of a trip" }
+                    ],
+                    timer_seconds: 60,
+                    rich_feedback: {
+                        explanation: "Collocations and specialized terminology matching.",
+                        personalized_examples: [
+                            "1. Golden hour lighting creates beautiful contrast.",
+                            "2. Video streaming requires high bandwidth.",
+                            "3. Always check the airline carry-on dimensions."
+                        ],
+                        speaking_ccq: "Which of these terms do you use most frequently?"
+                    }
+                },
+                {
+                    type: "scramble",
+                    chunks: [
+                        "The internet connection",
+                        "went down",
+                        "while we were",
+                        "deploying the updates"
+                    ],
+                    correct_sentence: "The internet connection went down while we were deploying the updates",
+                    timer_seconds: 45,
+                    rich_feedback: {
+                        explanation: "Past continuous action interrupted by past simple.",
+                        personalized_examples: [
+                            "1. The battery died while I was writing the report.",
+                            "2. The doorbell rang while we were in the middle of the call.",
+                            "3. It started raining while they were walking to the office."
+                        ],
+                        speaking_ccq: "Can you create an example of an interruption using 'while'?"
+                    }
+                },
+                {
+                    type: "conversation_completion",
+                    title: "Project Scope & Deadline Negotiation",
+                    situation: "A high-stakes cross-functional meeting between Product Lead David, Senior Client Sarah, and Lead Engineer Elena regarding an unexpected scope increase.",
+                    level: "C1",
+                    timer_seconds: 240,
+                    characters: [
+                        { name: "Sarah", role: "VP & Enterprise Client", emoji: "👩‍💼", voice: "Microsoft Ava Multilingual Online (Natural)", style: "demanding, highly analytical" },
+                        { name: "David", role: "Project Delivery Director", emoji: "👨‍💼", voice: "en-US-GuyNeural", style: "diplomatic, solution-focused" },
+                        { name: "Elena", role: "Principal Architect", emoji: "👩‍💻", voice: "en-US-JennyNeural", style: "technical, data-driven" }
+                    ],
+                    turns: [
+                        {
+                            speaker: "Sarah",
+                            text: "We just reviewed the demo. While the core features look promising, our executive board needs the custom analytics module live by next Friday without postponing the release date.",
+                            ccq: "What is Sarah's implicit constraint and pressure level?"
+                        },
+                        {
+                            speaker: "Elena",
+                            text: "From an engineering standpoint, integrating that module requires 120 dev hours. Shipping next Friday with custom analytics would risk database integrity and uptime.",
+                            ccq: "How does Elena frame the technical reality?"
+                        },
+                        {
+                            speaker: "David",
+                            missing: true,
+                            prompt: "How should David respond to Sarah and Elena to protect the team while sustaining the client relationship?",
+                            options: [
+                                {
+                                    text: "I completely understand the board's urgency, Sarah. What if we deploy the validated core platform next Friday as scheduled, and launch the custom analytics module as Phase 2 seven business days later with full testing?",
+                                    register: "Diplomatic & Solution-Focused",
+                                    politeness: "High (Collaborative)",
+                                    directness: "Tactful Compromise",
+                                    perspective: "Win-Win / Value Creation",
+                                    reactions: { "Sarah": "😊", "David": "🤝", "Elena": "👏" },
+                                    appropriateness: "optimal",
+                                    score: 25,
+                                    feedback: "Exemplary executive diplomacy. Acknowledges emotional priority, preserves system stability, and offers a concrete phased rollout with zero antagonism."
+                                },
+                                {
+                                    text: "Sarah, Elena just told you that's mathematically impossible. If you insist on this, your launch will crash on day one and that's on you.",
+                                    register: "Confrontational & Blunt",
+                                    politeness: "Low (Abrasive)",
+                                    directness: "Aggressive",
+                                    perspective: "Defensive Blame-Shifting",
+                                    reactions: { "Sarah": "😠", "David": "😬", "Elena": "🤦‍♀️" },
+                                    appropriateness: "poor",
+                                    score: 3,
+                                    feedback: "Technically truthful but commercially disastrous. Attacks the client, destroys rapport, and shifts liability rather than proposing viable options."
+                                },
+                                {
+                                    text: "Well, women in client relations always seem to think code writes itself overnight. Maybe if you understood engineering fundamentals you wouldn't ask for miracles.",
+                                    register: "Grossly Inappropriate & Sexist",
+                                    politeness: "Offensive / Harassment",
+                                    directness: "Hostile",
+                                    perspective: "Sexist Stereotype",
+                                    reactions: { "Sarah": "🤬", "David": "💀", "Elena": "🚨" },
+                                    appropriateness: "unacceptable",
+                                    score: -15,
+                                    feedback: "Completely unacceptable. Introduces gender bias and insulting personal stereotypes that violate professional and ethical conduct standards."
+                                },
+                                {
+                                    text: "We hear your request, Sarah. We could pull off next Friday, but we would need to scale back the automated export reports temporarily to keep QA thorough. Would that trade-off work for the board?",
+                                    register: "Pragmatic Trade-off",
+                                    politeness: "Polite & Professional",
+                                    directness: "Direct",
+                                    perspective: "Negotiated Compromise",
+                                    reactions: { "Sarah": "🤔", "David": "👍", "Elena": "✅" },
+                                    appropriateness: "acceptable",
+                                    score: 15,
+                                    feedback: "Strong pragmatic trade-off proposal. Clearly sets boundaries and asks for mutual agreement without breaking interpersonal goodwill."
+                                }
+                            ]
+                        },
+                        {
+                            speaker: "Sarah",
+                            text: "That tiered schedule makes strategic sense. Let's present the phased delivery plan to our stakeholders tomorrow morning so everyone is aligned.",
+                            ccq: "What outcome was achieved through diplomatic framing?"
+                        }
+                    ],
+                    rich_feedback: {
+                        explanation: "Executive communication hinges on pragmatic register selection: acknowledging constraints without aggressive friction or toxic personal attacks.",
+                        personalized_examples: [
+                            "1. 'I hear your priority; here is the phased path to get there safely.'",
+                            "2. 'To maintain zero downtime, let's decouple this release into two stages.'",
+                            "3. 'What specific metrics does the board need on day one versus week two?'"
+                        ],
+                        speaking_ccq: "How would you de-escalate a demanding client without compromising code quality?"
+                    }
+                }
+            ]
+        };
+
+        // 🎵 Keep ALL existing background tracks (same URLs), just presented beautifully in the sidebar
+        const TP_PLAYLIST = [
+            'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
+            'https://cdn.pixabay.com/download/audio/2026/01/13/audio_9bfdf7a71a.mp3',
+            'https://cdn.pixabay.com/download/audio/2025/05/01/audio_2cb48d8323.mp3',
+            'https://cdn.pixabay.com/download/audio/2026/01/31/audio_b9540cbcf0.mp3',
+            'https://cdn.pixabay.com/download/audio/2025/07/30/audio_1e5d067d6f.mp3',
+            'https://cdn.pixabay.com/download/audio/2024/07/17/audio_9d89260eb7.mp3'
+        ];
+        const TP_PLAYLIST_NAMES = ['Golden Focus', 'Midnight Chill', 'Sunrise Lo-Fi', 'Deep Studio', 'Slow Coast', 'Night Window'];
+        
+        const TP_SFX = {
+            correct: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3',
+            wrong: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3',
+            fail: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_c6ccf3232f.mp3',
+            applause: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3',
+            sad: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3',
+            timer10: 'https://www.myinstants.com/media/sounds/tick-tock.mp3',
+            bonus: 'https://www.myinstants.com/media/sounds/mario-coin.mp3'
+        };
+        
+        const TP_ICONS = {
+            'multiple_choice': 'fa-list-ul',
+            'would_you_rather': 'fa-scale-balanced',
+            'wyr': 'fa-scale-balanced',
+            'true_false': 'fa-bolt',
+            'conversation': 'fa-comments-dollar',
+            'conversation_completion': 'fa-comments',
+            'discussion': 'fa-comment-dots',
+            'matching': 'fa-puzzle-piece',
+            'scramble': 'fa-random',
+            'cloze': 'fa-pen-alt',
+            'listening_activity': 'fa-headphones',
+            'reading_activity': 'fa-book-open',
+            'jam': 'fa-microphone',
+            'truth_dare': 'fa-dice',
+            'hot_seat': 'fa-fire',
+            'taboo': 'fa-ban',
+            'dictation': 'fa-keyboard',
+            'pronunciation': 'fa-microphone-alt'
+        };
+
+        const TP_STATE = {
+            players: [],
+            queue: [],
+            currentIndex: 0,
+            timer: 0,
+            sessionTime: 0,
+            bgAudio: null,
+            sfxAudio: null,
+            currentTrackIdx: 0,
+            preferredVoice: 'Microsoft Ava Multilingual Online (Natural)',
+            timerInterval: null,
+            sessionTimerInterval: null,
+            activePlayerId: null,
+            avatarType: 'avataaars',
+            matchingState: { selected: null, correctCount: 0, total: 0 },
+            hotSeatIndex: 0,
+            tabooRevealed: false,
+            laserActive: false,
+            // LIFELINES STATE
+            lifelines: { fiftyFifty: false, phoneCall: false, askTeacher: false },
+            // MULTIPLE CHOICE MULTI-QUESTION (5 Qs per game)
+            mcState: { questions: [], currentIndex: 0, correctCount: 0, total: 5 },
+            // WOULD YOU RATHER STATE
+            wyrState: { questions: [], currentIndex: 0, story: [], total: 5 },
+            // NEW STATES
+            tabooCards: [],
+            tabooIndex: 0,
+            tdState: { truths: [], dares: [], current: null },
+            convScore: 0,
+            convTurns: [],
+            convChars: [],
+            convAnsweredTurns: {},
+            wasPlaying: false,
+            lastScores: {},
+            memesEnabled: false,
+            // 🚫 Disable Reactions — when ON, the meme images/captions after +10 / -10 points are skipped.
+            disableReactions: false,
+            // Cartoon Avatars — when ON every player gets a random cartoon avatar (re-randomized on each switch-on).
+            cartoonMode: false,
+            // ⏱️ Per-activity time multipliers (default ×2 for every kind — tune them in Lab Settings)
+            timerMult: { multiple_choice: 2, matching: 2, scramble: 2, reading_activity: 2, listening_activity: 2, cloze: 2, conversation_completion: 2, true_false: 2, discussion: 2, would_you_rather: 2, taboo: 2, hot_seat: 2, jam: 2, truth_or_dare: 2 },
+            celebrationTimer: null,
+            learnerAvatar: '',
+            tutor: null
+        };
+        window.TP_STATE = TP_STATE;
+
+        // Real photo (learner/tutor avatar) shows unless "Cartoon Avatars" is switched on —
+        // in cartoon mode every player gets a random cartoon avatar generated for them.
+        function tpAvatar(p, size) {
+            var photo = (p && p.avatar && !TP_STATE.cartoonMode) ? p.avatar : '';
+            var src = photo ? photo : 'https://api.dicebear.com/9.x/' + TP_STATE.avatarType + '/svg?seed=' + (p ? p.seed : Math.random());
+            if (size) {
+                return '<img src="' + src + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;" alt="">';
+            }
+            return src;
+        }
+
+        window.openTestPanel = () => {
+            document.getElementById('testing-panel-overlay').style.display = 'flex';
+            TP_STATE.bgAudio = document.getElementById('tp-bg-music');
+            TP_STATE.sfxAudio = document.getElementById('tp-sfx');
+            document.getElementById('tp-json-input').value = "";
+            TP_STATE.bgAudio.addEventListener('ended', window.nextTpTrack);
+            populateTpVoices();
+            renderTpSettingsRoster();
+            syncTpTimerMultUI();
+        };
+        
+        window.closeTestPanel = () => {
+            clearInterval(TP_STATE.timerInterval);
+            clearInterval(TP_STATE.sessionTimerInterval);
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            if (TP_STATE.bgAudio) TP_STATE.bgAudio.pause();
+            
+            const resultOverlay = document.getElementById('tp-result-overlay');
+            const lbScreen = document.getElementById('tp-leaderboard-screen');
+            const gameStage = document.getElementById('tp-game-stage');
+            const lobbyScreen = document.getElementById('tp-lobby-screen');
+            
+            if (resultOverlay) resultOverlay.style.display = 'none';
+            if (lbScreen) lbScreen.style.display = 'none';
+            if (gameStage) gameStage.style.display = 'none';
+            if (lobbyScreen) lobbyScreen.style.display = 'flex';
+            
+            switchTpTab('game');
+        };
+
+        window.switchTpTab = (tab) => {
+            document.querySelectorAll('.tp-nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tp-view').forEach(v => v.classList.remove('active'));
+            document.getElementById('tp-tab-' + tab).classList.add('active');
+            const btn = document.querySelector(\`button[onclick="switchTpTab('\${tab}')"]\`);
+            if(btn) btn.classList.add('active');
+            if (window.syncTpMobileTabs) window.syncTpMobileTabs(tab);
+        };
+
+        window.saveTpSettingsAndClose = () => {
+             if(document.getElementById('tp-game-stage').style.display === 'flex' || document.getElementById('tp-lobby-screen').style.display === 'flex') {
+                 switchTpTab('game');
+             } else {
+                 alert("Settings Saved.");
+             }
+        };
+        
+        window.clearTpInput = () => {
+            document.getElementById('tp-json-input').value = '';
+        };
+
+        function updateTpMusicUI() {
+            const nameEl = document.getElementById('tp-track-name');
+            if (nameEl) nameEl.innerText = TP_PLAYLIST_NAMES[TP_STATE.currentTrackIdx] || ('Track ' + (TP_STATE.currentTrackIdx + 1));
+            const eq = document.getElementById('tp-now-eq');
+            if (eq) eq.classList.toggle('paused', !TP_STATE.bgAudio || TP_STATE.bgAudio.paused);
+            document.querySelectorAll('.tp-track-item').forEach((el, i) => {
+                el.classList.toggle('active', i === TP_STATE.currentTrackIdx && !!(TP_STATE.bgAudio && !TP_STATE.bgAudio.paused));
+            });
+        }
+
+        function renderTpTrackList() {
+            const list = document.getElementById('tp-track-list');
+            if (!list) return;
+            list.innerHTML = TP_PLAYLIST.map((url, i) => {
+                const name = TP_PLAYLIST_NAMES[i] || ('Track ' + (i + 1));
+                return '<div class="tp-track-item" onclick="selectTpTrack(' + i + ')" title="' + name + '"><span class="tp-track-num">' + (i + 1) + '</span><span>' + name + '</span></div>';
+            }).join('');
+            updateTpMusicUI();
+        }
+
+        window.selectTpTrack = (idx) => {
+            if (!TP_STATE.bgAudio) TP_STATE.bgAudio = document.getElementById('tp-bg-music');
+            if (!TP_STATE.bgAudio) return;
+            TP_STATE.currentTrackIdx = idx % TP_PLAYLIST.length;
+            TP_STATE.bgAudio.src = TP_PLAYLIST[TP_STATE.currentTrackIdx];
+            TP_STATE.bgAudio.volume = (document.getElementById('tp-volume') || {}).value || 0.1;
+            TP_STATE.bgAudio.play().catch(() => {});
+            document.getElementById('tp-music-icon').className = 'fas fa-pause';
+            updateTpMusicUI();
+        };
+
+        window.toggleTpMusic = () => {
+            if (!TP_STATE.bgAudio) return;
+            if (!TP_STATE.bgAudio.src) window.nextTpTrack();
+            if (TP_STATE.bgAudio.paused) {
+                TP_STATE.bgAudio.volume = document.getElementById('tp-volume').value;
+                TP_STATE.bgAudio.play();
+                document.getElementById('tp-music-icon').className = "fas fa-pause";
+            } else {
+                TP_STATE.bgAudio.pause();
+                document.getElementById('tp-music-icon').className = "fas fa-play";
+            }
+            updateTpMusicUI();
+        };
+
+        window.nextTpTrack = () => {
+             if (!TP_STATE.bgAudio) return;
+            TP_STATE.currentTrackIdx = (TP_STATE.currentTrackIdx + 1) % TP_PLAYLIST.length;
+            TP_STATE.bgAudio.src = TP_PLAYLIST[TP_STATE.currentTrackIdx];
+            TP_STATE.bgAudio.play();
+            updateTpMusicUI();
+        };
+        
+        document.getElementById('tp-volume').addEventListener('input', (e) => {
+            if (TP_STATE.bgAudio) TP_STATE.bgAudio.volume = e.target.value;
+        });
+
+        // 😂 MEME SOUNDS — every URL below was verified reachable (HTTP 200/206, audio/mpeg), SFW only.
+        const TP_MEMES = {
+            correct: [
+                'https://www.myinstants.com/media/sounds/tada.mp3',
+                'https://www.myinstants.com/media/sounds/victory-sound-effect.mp3',
+                'https://www.myinstants.com/media/sounds/yaaaay.mp3',
+                'https://www.myinstants.com/media/sounds/crowd-cheer.mp3',
+                'https://www.myinstants.com/media/sounds/mario-coin.mp3',
+                'https://www.myinstants.com/media/sounds/fanfare.mp3',
+                'https://www.myinstants.com/media/sounds/that-was-easy.mp3',
+                'https://www.myinstants.com/media/sounds/anime-wow.mp3'
+            ],
+            wrong: [
+                'https://www.myinstants.com/media/sounds/roblox-death-sound_1.mp3',
+                'https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3',
+                'https://www.myinstants.com/media/sounds/emotional-damage.mp3',
+                'https://www.myinstants.com/media/sounds/vine-boom.mp3',
+                'https://www.myinstants.com/media/sounds/bruh.mp3',
+                'https://www.myinstants.com/media/sounds/dun-dun-dun.mp3',
+                'https://www.myinstants.com/media/sounds/metal-pipe-falling.mp3'
+            ],
+            sad: [
+                'https://www.myinstants.com/media/sounds/sadtrombone.mp3',
+                'https://www.myinstants.com/media/sounds/sad-violin.mp3',
+                'https://www.myinstants.com/media/sounds/gta-v-wasted-death-sound.mp3',
+                'https://www.myinstants.com/media/sounds/doh.mp3'
+            ],
+            timeout: [
+                'https://www.myinstants.com/media/sounds/bruh.mp3',
+                'https://www.myinstants.com/media/sounds/sadtrombone.mp3',
+                'https://www.myinstants.com/media/sounds/suspense.mp3',
+                'https://www.myinstants.com/media/sounds/among-us-emergency-meeting.mp3'
+            ],
+            timer10: [
+                'https://www.myinstants.com/media/sounds/tick-tock.mp3',
+                'https://www.myinstants.com/media/sounds/suspense.mp3'
+            ]
+        };
+
+        // 🖼️ MEME IMAGES shown on the Review page after +10 / -10 Pts.
+        // Every URL was verified reachable (HTTP 200/206, image/*), all SFW, mixed text memes + animated GIFs.
+        const TP_MEME_IMAGES = {
+            success: [
+                { url: 'https://media.makeameme.org/created/stonks.jpg', caption: 'STONKS ↗️ Excellent work!' },
+                { url: 'https://media.makeameme.org/created/doge-meme.jpg', caption: 'Such English. Very correct. Wow! 🐕' },
+                { url: 'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif', caption: 'You absolutely nailed it! 👍' },
+                { url: 'https://media.giphy.com/media/vMnuZGHJfFSTe/giphy.gif', caption: 'Excellent … like Wayne! 🤘' },
+                { url: 'https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif', caption: 'The whole class celebrates you! 🎉' }
+            ],
+            fail: [
+                { url: 'https://media.makeameme.org/created/this-is-fine.jpg', caption: 'This is fine… almost! 🔥' },
+                { url: 'https://media.makeameme.org/created/picard-facepalm.jpg', caption: 'Facepalm. So close though! 🖐️' },
+                { url: 'https://media.makeameme.org/created/waiting-skeleton.jpg', caption: 'Still waiting for the right answer… ⏳' },
+                { url: 'https://media.makeameme.org/created/roll-safe.jpg', caption: 'You can\\'t fail if you don\\'t try… oh wait 😅' },
+                { url: 'https://media.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif', caption: 'Wait… what?! 😳' }
+            ]
+        };
+
+        function renderMemePacks() {
+            const container = document.getElementById('tp-meme-packs');
+            if (!container) return;
+            const labels = { correct: '🎉 Correct', wrong: '❌ Wrong', sad: '😢 Sad', timeout: '⏰ Timeout', timer10: '⏱️ Timer' };
+            container.innerHTML = Object.keys(TP_MEMES).map(k => {
+                const n = (TP_MEMES[k] || []).length;
+                return '<span class="tp-meme-chip" title="Preview a random ' + (labels[k] || k) + ' sound" onclick="playMemePreview(\\'' + k + '\\')">' + (labels[k] || k) + ' (' + n + ')</span>';
+            }).join('');
+        }
+
+        window.playMemePreview = (pack) => {
+            const arr = TP_MEMES[pack];
+            if (!arr || !arr.length) return;
+            if (!TP_STATE.sfxAudio) TP_STATE.sfxAudio = document.getElementById('tp-sfx');
+            if (!TP_STATE.sfxAudio) return;
+            const url = arr[Math.floor(Math.random() * arr.length)];
+            TP_STATE.sfxAudio.volume = 0.2;
+            TP_STATE.sfxAudio.src = url;
+            TP_STATE.sfxAudio.play().catch(() => {});
+        };
+
+        window.toggleTpMemes = (enabled) => {
+            TP_STATE.memesEnabled = enabled;
+        };
+
+        // 🚫 Disable Reactions — skip the meme image + caption celebration after +10 / -10 points.
+        window.toggleTpReactions = (enabled) => {
+            TP_STATE.disableReactions = enabled;
+        };
+
+        // ⏱️ Per-activity time multiplier — persist the tutor's choice for next sessions.
+        window.setTpTimerMult = (typeKey, value) => {
+            if (!TP_STATE.timerMult) TP_STATE.timerMult = {};
+            TP_STATE.timerMult[typeKey] = Number(value) > 0 ? Number(value) : 2;
+            try { localStorage.setItem('tp_timer_mult', JSON.stringify(TP_STATE.timerMult)); } catch (e) {}
+            refreshTpPresetUI();
+        };
+
+        // ⚡ One-tap presets: set EVERY activity type to the same multiplier at once.
+        window.setTpTimerMultPreset = (mult, btnEl) => {
+            mult = Number(mult) > 0 ? Number(mult) : 2;
+            if (!TP_STATE.timerMult) TP_STATE.timerMult = {};
+            Object.keys(TP_STATE.timerMult).forEach(function (k) { TP_STATE.timerMult[k] = mult; });
+            try { localStorage.setItem('tp_timer_mult', JSON.stringify(TP_STATE.timerMult)); } catch (e) {}
+            // Reflect the new value in every select + highlight the active preset chip.
+            document.querySelectorAll('[data-tp-timer-key]').forEach(function (sel) {
+                var key = sel.getAttribute('data-tp-timer-key');
+                if (key && TP_STATE.timerMult[key]) sel.value = String(TP_STATE.timerMult[key]);
+            });
+            refreshTpPresetUI();
+            if (typeof window.tpSaveHook === 'function') window.tpSaveHook();
+            var toast = btnEl && btnEl.closest ? btnEl.closest('.tp-option-group') : null;
+            if (toast) {
+                var existing = toast.querySelector('.tp-preset-toast');
+                if (existing) existing.remove();
+                var note = document.createElement('div');
+                note.className = 'tp-preset-toast';
+                note.textContent = '✓ All 14 activity types set to ×' + mult;
+                toast.appendChild(note);
+                setTimeout(function () { if (note && note.parentNode) note.parentNode.removeChild(note); }, 2200);
+            }
+        };
+
+        // Highlights the preset chip when every type shares the same multiplier (clears otherwise).
+        function refreshTpPresetUI() {
+            var map = TP_STATE.timerMult || {};
+            var vals = {};
+            Object.keys(map).forEach(function (k) { vals[String(map[k])] = true; });
+            var uniform = Object.keys(vals).length === 1 ? String(map[Object.keys(map)[0]]) : '';
+            document.querySelectorAll('.tp-preset-btn').forEach(function (btn) {
+                var v = btn.getAttribute('data-tp-preset');
+                btn.classList.toggle('active', uniform !== '' && String(uniform) === String(v));
+            });
+        }
+
+        function syncTpTimerMultUI() {
+            try {
+                var saved = localStorage.getItem('tp_timer_mult');
+                if (saved) {
+                    var m = JSON.parse(saved) || {};
+                    if (!TP_STATE.timerMult) TP_STATE.timerMult = {};
+                    Object.keys(m).forEach(function (k) { if (m[k]) TP_STATE.timerMult[k] = Number(m[k]); });
+                }
+            } catch (e) {}
+            document.querySelectorAll('[data-tp-timer-key]').forEach(function (sel) {
+                var key = sel.getAttribute('data-tp-timer-key');
+                if (key && TP_STATE.timerMult && TP_STATE.timerMult[key]) sel.value = String(TP_STATE.timerMult[key]);
+            });
+            refreshTpPresetUI();
+        }
+
+        // Cartoon Avatars — randomize a cartoon for every player each time it is switched ON.
+        window.toggleTpCartoonAvatars = (enabled) => {
+            TP_STATE.cartoonMode = enabled;
+            if (enabled) {
+                (TP_STATE.players || []).forEach(p => { p.seed = Math.random(); });
+            }
+            if (typeof renderLobby === 'function') renderLobby();
+            if (typeof renderTpSettingsRoster === 'function') renderTpSettingsRoster();
+        };
+
+        renderTpTrackList();
+        renderMemePacks();
+
+        window.playSfx = (type) => {
+            if (!TP_STATE.sfxAudio) return;
+            
+            let url = "";
+            const isMemeEnabled = TP_STATE.memesEnabled;
+            
+            if (isMemeEnabled && TP_MEMES[type]) {
+                const arr = TP_MEMES[type];
+                const randIdx = Math.floor(Math.random() * arr.length);
+                url = arr[randIdx];
+                TP_STATE.sfxAudio.volume = 0.15; // Memes are loud, play at 15% volume as requested
+            } else {
+                if (type === 'timer10') {
+                    url = 'https://www.myinstants.com/media/sounds/tick-tock.mp3';
+                } else if (type === 'timeout') {
+                    url = 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_c6ccf3232f.mp3'; // Fallback wrong sound
+                } else {
+                    url = TP_SFX[type];
+                }
+                TP_STATE.sfxAudio.volume = 0.5; // Normal volume
+            }
+            
+            if (url) {
+                TP_STATE.sfxAudio.src = url;
+                TP_STATE.sfxAudio.play().catch(e => console.log("SFX play prevented:", e));
+            }
+        };
+        
+        window.playEncodedTTS = (encodedText) => {
+            try {
+                const text = decodeURIComponent(encodedText);
+                window.playTTS(text);
+            } catch(e) { console.error("Decoding error", e); }
+        };
+
+        const TP_VOICE_PRESETS = {
+            'male1': ['ryan', 'thomas', 'guy', 'liam', 'brian', 'male'],
+            'male2': ['thomas', 'guy', 'brian', 'male'],
+            'male3': ['liam', 'andrew', 'male'],
+            'male4': ['brian', 'christopher', 'male'],
+            'female1': ['clara', 'jenny', 'female'],
+            'female2': ['libby', 'aria', 'female'],
+            'female3': ['emma', 'sonia', 'female'],
+            'female4': ['natasha', 'jenny', 'female'],
+            'maya_lin': ['jenny', 'clara', 'female'],
+            'leo_drake': ['ryan', 'thomas', 'male'],
+            'dr_sterling': ['guy', 'thomas', 'male'],
+            'chloe_vance': ['aria', 'libby', 'female'],
+            'kenji_sato': ['liam', 'andrew', 'guy', 'male'],
+            'elena_rostova': ['emma', 'sonia', 'female'],
+            'tariq_mansour': ['brian', 'christopher', 'male'],
+            'zara_chen': ['natasha', 'jenny', 'female'],
+            'ava': ['ava', 'multilingual'],
+            'ryan': ['ryan'],
+            'emma': ['emma'],
+            'jenny': ['jenny'],
+            'guy': ['guy'],
+            'aria': ['aria'],
+            'clara': ['clara'],
+            'libby': ['libby']
+        };
+
+        function resolveTpVoice(requestedVoice, voices) {
+            if (!voices || !voices.length) return null;
+            const req = (requestedVoice || TP_STATE.preferredVoice || '').trim();
+
+            const findAva = (vl) => {
+                return vl.find(v => {
+                    const n = v.name.toLowerCase();
+                    return n.includes('ava') && (n.includes('multilingual') || n.includes('natural') || n.includes('online'));
+                }) || vl.find(v => v.name.toLowerCase().includes('ava'));
+            };
+
+            // If no voice requested, or 'auto' / 'default', prioritize Microsoft Ava Multilingual immediately
+            if (!req || req.toLowerCase() === 'auto' || req.toLowerCase() === 'default') {
+                const ava = findAva(voices);
+                if (ava) return ava;
+                return voices.find(v => (v.name.includes('Emma') || v.name.includes('Ryan') || v.name.includes('Jenny') || v.name.includes('Aria') || v.name.includes('Natural') || v.name.includes('Online')) && !v.name.includes('David') && !v.name.includes('Zira')) ||
+                       voices.find(v => v.lang.startsWith('en') && !v.name.includes('David') && !v.name.includes('Zira')) ||
+                       voices[0];
+            }
+
+            const reqLower = req.toLowerCase();
+
+            // 1. Direct match on voiceURI or name
+            let matched = voices.find(v => v.voiceURI.toLowerCase() === reqLower || v.name.toLowerCase() === reqLower);
+            if (matched) return matched;
+
+            // 2. Preset code match (e.g. male1 -> ryan, female1 -> clara, etc.)
+            if (TP_VOICE_PRESETS[reqLower]) {
+                for (const candidate of TP_VOICE_PRESETS[reqLower]) {
+                    matched = voices.find(v => !v.name.includes('David') && !v.name.includes('Zira') && (v.voiceURI.toLowerCase().includes(candidate) || v.name.toLowerCase().includes(candidate)));
+                    if (matched) return matched;
+                }
+            }
+
+            // 3. Substring match on name or voiceURI
+            matched = voices.find(v => !v.name.includes('David') && !v.name.includes('Zira') && (v.name.toLowerCase().includes(reqLower) || v.voiceURI.toLowerCase().includes(reqLower)));
+            if (matched) return matched;
+
+            // 4. Character clean name match
+            const clean = reqLower.replace(/[^a-z0-9]/g, '');
+            if (clean) {
+                matched = voices.find(v => !v.name.includes('David') && !v.name.includes('Zira') && v.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(clean));
+                if (matched) return matched;
+            }
+
+            // 5. Default to Ava if available
+            const ava = findAva(voices);
+            if (ava) return ava;
+
+            // 6. Fallback natural English voice
+            return voices.find(v => (v.name.includes('Emma') || v.name.includes('Ryan') || v.name.includes('Jenny') || v.name.includes('Aria') || v.name.includes('Natural') || v.name.includes('Online')) && !v.name.includes('David') && !v.name.includes('Zira')) ||
+                   voices.find(v => v.lang.startsWith('en') && !v.name.includes('David') && !v.name.includes('Zira')) ||
+                   voices[0];
+        }
+
+        window.playTTS = (text, specificVoice) => {
+             if (!('speechSynthesis' in window)) return;
+             window.speechSynthesis.cancel();
+             const clean = (text || '').replace(/[\*#_]/g, '');
+             if (!clean.trim()) return;
+             const u = new SpeechSynthesisUtterance(clean);
+             const voices = window.speechSynthesis.getVoices();
+             const targetVoice = resolveTpVoice(specificVoice || TP_STATE.preferredVoice, voices);
+             if (targetVoice) u.voice = targetVoice;
+             window.speechSynthesis.speak(u);
+        };
+
+        window.playEncodedTTS = (encoded, specificVoice) => {
+             try {
+                 window.playTTS(decodeURIComponent(encoded), specificVoice);
+             } catch(e) {
+                 window.playTTS(encoded, specificVoice);
+             }
+        };
+
+        window.addNewTpPlayer = () => {
+            const name = document.getElementById('tp-new-player-name').value.trim();
+            if(name) {
+                const seed = Math.random();
+                TP_STATE.players.push({ id: Date.now(), name: name, score: 0, seed: seed });
+                document.getElementById('tp-new-player-name').value = '';
+                renderTpSettingsRoster();
+                if(window.tpSaveHook) window.tpSaveHook();
+            }
+        };
+        
+        window.addLobbyPlayer = () => {
+             const name = document.getElementById('tp-lobby-name').value.trim();
+             if(name) {
+                const seed = Math.random();
+                TP_STATE.players.push({ id: Date.now(), name: name, score: 0, seed: seed });
+                document.getElementById('tp-lobby-name').value = '';
+                renderLobby();
+                renderTpSettingsRoster();
+                if(window.tpSaveHook) window.tpSaveHook();
+            }
+        };
+
+        // 👨‍🏫 Add Tutor — adds the tutor (name + avatar injected by the lesson) as a player.
+        window.addTutorPlayer = () => {
+            const nameInput = document.getElementById('tp-lobby-name');
+            const typed = (nameInput && nameInput.value) ? nameInput.value.trim() : '';
+            const t = TP_STATE.tutor || {};
+            const name = typed || t.name || 'Tutor';
+            const player = { id: Date.now(), name: name, score: 0, seed: Math.random(), isTutor: true };
+            if (t.avatar) player.avatar = t.avatar; // tutor real photo/avatar
+            TP_STATE.players.push(player);
+            if (nameInput) nameInput.value = '';
+            if (typeof renderLobby === 'function') renderLobby();
+            if (typeof renderTpSettingsRoster === 'function') renderTpSettingsRoster();
+            if (window.tpSaveHook) window.tpSaveHook();
+        };
+        
+        function renderLobby() {
+            const lobby = document.getElementById('tp-lobby-list');
+            lobby.innerHTML = TP_STATE.players.map(p => \`<div class="tp-player-chip"><img src="\${tpAvatar(p)}">\${p.name}</div>\`).join('');
+        }
+        
+        window.removeTpPlayer = (id) => {
+            TP_STATE.players = TP_STATE.players.filter(p => p.id != id);
+            renderTpSettingsRoster();
+            if(window.tpSaveHook) window.tpSaveHook();
+        };
+        
+        window.updateTpAvatars = () => {
+            TP_STATE.avatarType = document.getElementById('tp-avatar-type').value;
+            renderTpSettingsRoster();
+        };
+
+        function renderTpSettingsRoster() {
+            const container = document.getElementById('tp-settings-roster');
+            container.innerHTML = TP_STATE.players.map(p => \`
+                <div class="tp-mini-player">
+                    <img src="\${tpAvatar(p)}">
+                    \${p.name}
+                    <i class="fas fa-times" onclick="removeTpPlayer(\${p.id})" style="color:red; margin-left:5px;"></i>
+                </div>
+            \`).join('');
+            
+            const sidebarList = document.getElementById('tp-sidebar-players');
+            const sorted = [...TP_STATE.players].sort((a,b) => (b.score || 0) - (a.score || 0));
+            const maxScore = Math.max(100, (sorted[0] && sorted[0].score) || 100);
+            sidebarList.innerHTML = sorted.map((p, i) => {
+                let rankIcon = '';
+                if(i===0) rankIcon = '👑';
+                else if(i===1) rankIcon = '🥈';
+                else if(i===2) rankIcon = '🥉';
+                else rankIcon = String(i + 1);
+                const pct = Math.max(4, Math.min(100, ((p.score || 0) / maxScore) * 100));
+                return '<div class="tp-mini-player ' + (TP_STATE.activePlayerId == p.id ? 'active' : '') + '" onclick="setTpActivePlayer(' + p.id + ')">' +
+                     '<span class="tp-rank-icon">' + rankIcon + '</span>' +
+                     tpAvatar(p, 38) +
+                     '<div style="flex:1; min-width:0;">' +
+                        '<div class="tp-mlb-name">' + p.name + '</div>' +
+                        '<div class="tp-mlb-bar"><div class="tp-mlb-fill" style="width:' + pct + '%;"></div></div>' +
+                        '<div class="tp-mlb-score">' + (p.score || 0) + ' pts</div>' +
+                     '</div>' +
+                     '<div class="tp-mlb-active-dot"></div>' +
+                '</div>';
+            }).join('');
+        }
+        
+        window.setTpActivePlayer = (id) => {
+            TP_STATE.activePlayerId = id;
+            renderTpSettingsRoster();
+        };
+        
+        // Randomize Helper
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        window.initTpGame = () => {
+            const raw = document.getElementById('tp-json-input').value;
+            if (!TP_STATE.bgAudio) {
+                TP_STATE.bgAudio = document.getElementById('tp-bg-music');
+                TP_STATE.sfxAudio = document.getElementById('tp-sfx');
+            }
+            try {
+                let data = raw.trim() ? JSON.parse(raw) : DEFAULT_TP_CONTENT;
+                if (data.settings?.readAloudVoice || data.settings?.voice) {
+                    TP_STATE.preferredVoice = data.settings.readAloudVoice || data.settings.voice;
+                    if (typeof populateTpVoices === 'function') populateTpVoices();
+                }
+                let content = data.content || (Array.isArray(data) ? data : [data]);
+                content = content.filter(q => q);
+                if (content.length === 0) throw new Error("No valid activities found.");
+                
+                TP_STATE.queue = [];
+                while(TP_STATE.queue.length < 24) { TP_STATE.queue = TP_STATE.queue.concat(content); }
+                TP_STATE.queue = TP_STATE.queue.slice(0, 24);
+                TP_STATE.queue.forEach((q, i) => { q._id = i; q._taken = false; });
+                
+                switchTpTab('game');
+                document.getElementById('tp-lobby-screen').style.display = 'flex';
+                document.getElementById('tp-game-stage').style.display = 'none';
+                document.getElementById('tp-leaderboard-screen').style.display = 'none';
+                renderLobby();
+                renderTpSettingsRoster();
+                if (TP_STATE.bgAudio && TP_STATE.bgAudio.paused) window.toggleTpMusic();
+                if(window.tpSaveHook) window.tpSaveHook();
+            } catch (e) {
+                document.getElementById('tp-error-log').innerText = "JSON Error: " + e.message;
+                switchTpTab('editor');
+            }
+        };
+
+        window.startTpGameSession = () => {
+            TP_STATE.players.forEach(p => p.score = 0);
+            TP_STATE.sessionTime = 0;
+            if(TP_STATE.sessionTimerInterval) clearInterval(TP_STATE.sessionTimerInterval);
+            TP_STATE.sessionTimerInterval = setInterval(() => {
+                TP_STATE.sessionTime++;
+                const m = Math.floor(TP_STATE.sessionTime / 60).toString().padStart(2, '0');
+                const s = (TP_STATE.sessionTime % 60).toString().padStart(2, '0');
+                const sessTimerEl = document.getElementById('tp-session-timer');
+                if (sessTimerEl) sessTimerEl.innerText = m + ':' + s;
+            }, 1000);
+            if (TP_STATE.players.length === 0) TP_STATE.players.push({id:1, name: "Learner", score: 0, seed: Math.random()});
+            document.getElementById('tp-lobby-screen').style.display = 'none';
+            document.getElementById('tp-game-stage').style.display = 'flex';
+            if(TP_STATE.players.length > 0) setTpActivePlayer(TP_STATE.players[0].id);
+            renderTpGrid();
+            if(window.tpSaveHook) window.tpSaveHook();
+        };
+        
+        window.exitTpGame = () => {
+            clearInterval(TP_STATE.timerInterval);
+            clearInterval(TP_STATE.sessionTimerInterval);
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            
+            const resultOverlay = document.getElementById('tp-result-overlay');
+            const lbScreen = document.getElementById('tp-leaderboard-screen');
+            if (resultOverlay) resultOverlay.style.display = 'none';
+            if (lbScreen) lbScreen.style.display = 'none';
+            
+            document.getElementById('tp-game-stage').style.display = 'none';
+            document.getElementById('tp-lobby-screen').style.display = 'flex';
+        };
+        
+        function renderTpGrid() {
+            document.getElementById('tp-grid-view').style.display = 'grid';
+            document.getElementById('tp-question-area').style.display = 'none';
+            const container = document.getElementById('tp-grid-view');
+            container.innerHTML = TP_STATE.queue.map((q, i) => {
+                const icon = TP_ICONS[q.type] || 'fa-star';
+                const isTaken = q._taken;
+                return \`<div class="tp-grid-item \${isTaken ? 'taken' : ''}" onclick="openTpQuestionFromGrid(\${i})">\${isTaken ? '' : \`<div class="tp-grid-num">\${i + 1}</div><div class="tp-grid-icon"><i class="fas \${icon}"></i></div>\`}</div>\`;
+            }).join('');
+        }
+        
+        window.returnToGrid = () => {
+             document.getElementById('tp-result-overlay').style.display = 'none';
+             renderTpGrid();
+        };
+        
+        window.openTpQuestionFromGrid = (index) => {
+            const q = TP_STATE.queue[index];
+            if(q._taken) return;
+            TP_STATE.currentIndex = index;
+            q._taken = true;
+            document.getElementById('tp-grid-view').style.display = 'none';
+            document.getElementById('tp-question-area').style.display = 'flex';
+            loadTpQuestion();
+            if(window.tpSaveHook) window.tpSaveHook();
+        };
+
+        // ⏱️ Per-activity time multiplier (set in Lab Settings; defaults to ×2 for every kind).
+        function getTpTimeMult(typeKey) {
+            var map = TP_STATE.timerMult || {};
+            var m = Number(map[typeKey]);
+            return (m > 0) ? m : 2;
+        }
+
+        window.startActivityTimer = (seconds, elementId, typeKey) => {
+            clearInterval(TP_STATE.timerInterval);
+            TP_STATE.timer = Math.round((Number(seconds) || 0) * getTpTimeMult(typeKey));
+            TP_STATE.timerPaused = false;
+            
+            const updateDisplay = () => {
+                const m = Math.floor(TP_STATE.timer / 60).toString().padStart(2, '0');
+                const s = (TP_STATE.timer % 60).toString().padStart(2, '0');
+                const el = document.getElementById(elementId);
+                if(el) {
+                    el.innerText = m + ':' + s;
+                }
+            };
+            
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.style.cursor = 'pointer';
+                el.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                el.title = "Click to Pause / Resume";
+                
+                // Clicking the timer pauses or resumes it
+                el.onclick = () => {
+                    TP_STATE.timerPaused = !TP_STATE.timerPaused;
+                    if (TP_STATE.timerPaused) {
+                        el.style.opacity = '0.5';
+                        el.style.letterSpacing = '2px';
+                    } else {
+                        el.style.opacity = '1';
+                        el.style.letterSpacing = 'normal';
+                    }
+                };
+            }
+            
+            updateDisplay();
+            
+            TP_STATE.timerInterval = setInterval(() => {
+                if (TP_STATE.timerPaused) return;
+                
+                TP_STATE.timer--;
+                updateDisplay();
+                
+                // Visual & sound effects when timer reaches 10 seconds or below
+                if (TP_STATE.timer <= 10 && TP_STATE.timer > 0) {
+                    const elWarning = document.getElementById(elementId);
+                    if (elWarning) {
+                        elWarning.style.transform = 'scale(1.4)';
+                        elWarning.style.color = '#ef4444';
+                        elWarning.style.fontWeight = '900';
+                        // Add an animated warning pulse class
+                        elWarning.classList.add('tp-timer-warning-animate');
+                    }
+                    window.playSfx('timer10');
+                }
+                
+                if (TP_STATE.timer <= 0) {
+                    clearInterval(TP_STATE.timerInterval);
+                    // Treat running out of time as an incorrect timeout state
+                    window.handleTpAnswer('timeout_expired', 'correct_answer');
+                }
+            }, 1000);
+        };
+        
+        function formatRichText(text) {
+             if(!text) return "";
+             return text.replace(/\\*\\*(.*?)\\*\\*/g, '<mark>$1</mark>').replace(/\\n/g, '<br>');
+        }
+
+        function loadTpQuestion() {
+            document.getElementById('tp-result-overlay').style.display = 'none';
+            document.getElementById('tp-leaderboard-screen').style.display = 'none';
+            clearInterval(TP_STATE.timerInterval); 
+            
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            const area = document.getElementById('tp-question-area');
+            
+            let type = (q.type || 'multiple_choice').toLowerCase();
+            let html = '';
+
+            if (type === 'matching') {
+                 const pairs = q.pairs || [];
+                 html = \`<div class="tp-q-card"><h2 style="font-size:1.5rem; margin-bottom:20px;">Match the Pairs</h2><div id="tp-match-timer" style="font-size:1.5rem; font-weight:bold; margin-bottom:10px;">01:00</div><div class="tp-match-grid" id="tp-match-grid"></div></div>\`;
+                 setTimeout(() => { initTpMatching(pairs); window.startActivityTimer(q.timer_seconds || 60, 'tp-match-timer', 'matching'); }, 50);
+            }
+            else if (type === 'scramble') {
+                let sentences = [];
+                if (Array.isArray(q.sentences) && q.sentences.length > 0) {
+                    sentences = q.sentences;
+                } else if (Array.isArray(q.items) && q.items.length > 0) {
+                    sentences = q.items;
+                } else if (q.chunks && q.correct_sentence) {
+                    sentences = [{ chunks: q.chunks, correct_sentence: q.correct_sentence }];
+                }
+
+                // ⛔ NO GENERIC FALLBACK SENTENCES — every scrambled sentence MUST come from the
+                // lesson content (the prompt requires exactly 10). We never invent mock sentences.
+                const noScrambleData = sentences.length === 0;
+
+                TP_STATE.scrambleState = {
+                    sentences: sentences,
+                    sentenceIndex: 0,
+                    completedCount: 0,
+                    currentPlacedChunks: [],
+                    targetChunks: [],
+                    placedIndices: [],
+                    totalSentences: sentences.length
+                };
+
+                if (noScrambleData) {
+                    html = '<div class="tp-q-card"><div style="text-align:center; padding:24px;"><div style="font-size:3rem; margin-bottom:10px;">🧩</div><h2 style="margin:0 0 8px 0; color:#0f172a;">No scrambled sentences available</h2><p style="color:#64748b; margin:0 0 16px 0;">This activity needs a "sentences" array built from the lesson content.</p><button class="tp-big-btn pos" style="font-size:1.2rem; padding:12px 28px;" onclick="handleTpAnswer(\\'manual\\', \\'manual\\')">Finish Activity</button></div></div>';
+                }
+
+                html = \`<div class="tp-q-card" style="max-width:900px; width:100%; position:relative;">
+                    <div id="scramble-bonus-badge" style="display:none; position:absolute; top:-20px; right:20px; background:#22c55e; color:white; font-size:1.3rem; font-weight:900; padding:8px 22px; border-radius:30px; box-shadow:0 6px 15px rgba(34,197,94,0.5); z-index:50;">⏱️ +10 SECONDS BONUS!</div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:12px; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="background:linear-gradient(135deg, #f59e0b, #ef4444); color:white; font-size:1.1rem; font-weight:900; padding:6px 16px; border-radius:20px; text-transform:uppercase; letter-spacing:1px; box-shadow:0 4px 10px rgba(245,158,11,0.3);"><i class="fas fa-bolt"></i> 60s TIME RACE</span>
+                            <span id="scramble-progress-pill" style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:1.1rem; padding:6px 14px; border-radius:20px;">Sentence 1 of \${sentences.length}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span style="font-weight:900; font-size:1.2rem; color:#15803d; background:#dcfce7; padding:6px 14px; border-radius:20px;">🏆 Solved: <span id="scramble-score-num">0</span></span>
+                            <div id="tp-scramble-timer" style="font-size:1.7rem; font-weight:900; color:#ef4444; background:#fee2e2; padding:4px 16px; border-radius:20px; border:2px solid #fca5a5;">01:00</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:1.2rem; font-weight:700; color:#64748b; margin-bottom:12px; text-align:left;">
+                        Build the correct sentence in sequence:
+                    </div>
+
+                    <div class="tp-scramble-zone" id="tp-scramble-zone">
+                        <span id="scramble-zone-placeholder" style="color:#94a3b8; font-weight:bold; font-size:1.2rem;">(Click the words/phrases below in the correct sequence)</span>
+                    </div>
+
+                    <div class="tp-scramble-bank" id="tp-scramble-bank">
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <button class="tp-big-btn secondary" style="font-size:1.1rem; padding:10px 20px;" onclick="resetCurrentScramble()"><i class="fas fa-undo"></i> Reset Sentence</button>
+                        <button class="tp-big-btn pos" style="font-size:1.1rem; padding:10px 25px;" onclick="skipScrambleSentence()"><i class="fas fa-forward"></i> Skip Sentence</button>
+                    </div>
+                </div>\`;
+
+                if (!noScrambleData) {
+                    setTimeout(() => {
+                        window.loadCurrentScrambleSentence();
+                        window.startActivityTimer(60, 'tp-scramble-timer', 'scramble');
+                    }, 50);
+                }
+            }
+            else if (type === 'truth_dare' || type === 'truth_or_dare') {
+                 const truths = q.truths || (q.truth_prompt ? [q.truth_prompt] : []);
+                 const dares = q.dares || (q.dare_prompt ? [q.dare_prompt] : []);
+                 TP_STATE.tdState = { truths, dares, current: null };
+                 html = window.renderTpTD();
+            }
+            else if (type === 'reading_activity') {
+                 // Randomize options for reading activity — auto-labeled a./b./c./d.
+                 const opts = q.options ? shuffleArray([...q.options]) : [];
+                 const safeAnswer = (q.answer || '').replace(/'/g, "\\\\'");
+                 html = \`<div class="tp-q-card"><div id="tp-reading-timer" style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">02:00</div><div class="tp-q-context" style="font-weight:normal;">\${formatRichText(q.visible_text)}</div><div style="font-size:1.5rem; margin-bottom:20px;">\${q.question}</div><div class="tp-opt-grid">\${opts.map((opt, oi) => \`<button class="tp-opt-btn" onclick="handleTpAnswer('\${opt.replace(/'/g, "\\'")}', '\${safeAnswer}')"><span class="tp-opt-letter">\${String.fromCharCode(97 + oi)}</span><span class="tp-opt-text">\${opt}</span></button>\`).join('')}</div></div>\`;
+                 setTimeout(() => window.startActivityTimer(q.timer_seconds || 120, 'tp-reading-timer', 'reading_activity'), 50);
+            }
+            else if (type === 'listening_activity' || type === 'dictation') {
+                 const text = q.text_to_match || q.audio_script;
+                 const safeText = encodeURIComponent(text).replace(/'/g, "%27");
+                 // Randomize options if they exist
+                 const opts = q.options ? shuffleArray([...q.options]) : null;
+                 const safeAnswerL = (q.answer || '').replace(/'/g, "\\\\'");
+                 
+                 html = \`<div class="tp-q-card"><div id="tp-listening-timer" style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">01:30</div><button class="tp-big-btn neutral" style="font-size:1.5rem; margin-bottom:20px;" onclick="playEncodedTTS('\${safeText}')"><i class="fas fa-volume-up"></i> Play Audio</button>\${q.question ? \`<div style="font-size:1.5rem; margin-bottom:20px;">\${q.question}</div>\` : ''}\${opts ? \`<div class="tp-opt-grid">\${opts.map((opt, oi) => \`<button class="tp-opt-btn" onclick="handleTpAnswer('\${opt.replace(/'/g, "\\'")}', '\${safeAnswerL}')"><span class="tp-opt-letter">\${String.fromCharCode(97 + oi)}</span><span class="tp-opt-text">\${opt}</span></button>\`).join('')}</div>\` : \`<div style="margin-top:20px;"><input type="text" class="tp-input" placeholder="Type answer..." id="dict-input"> <button class="tp-big-btn pos" onclick="checkTpDictation('\${safeText}')">Check</button></div>\`}</div>\`;
+                 setTimeout(() => window.startActivityTimer(q.timer_seconds || 90, 'tp-listening-timer', 'listening_activity'), 50);
+            }
+            else if (type === 'jam') {
+                html = \`<div class="tp-q-card"><h2>Just A Minute</h2><h3 style="font-size:2.5rem; color:#0ea5e9;">Topic: \${q.topic}</h3><div class="jam-circle-timer" id="jam-timer-display">60</div><button class="tp-big-btn pos" style="font-size:1.5rem; margin-top:20px;" onclick="window.startActivityTimer(60, 'jam-timer-display', 'jam')">Start Timer</button><div class="tp-scroll-box" style="margin-top:20px; font-size:1.2rem; max-height:200px; overflow-y:auto; text-align:left;"><strong>Checklist:</strong><ul>\${(q.checklist||[]).map(c => \`<li>\${formatRichText(c)}</li>\`).join('')}</ul></div><button class="tp-big-btn secondary" style="font-size:1.5rem; margin-top:20px;" onclick="handleTpAnswer('manual', 'manual')">Finish</button></div>\`;
+            }
+            else if (type === 'cloze') {
+                let rawText = q.text_with_gaps || q.text || q.passage || q.content || q.story || q.dialogue || q.dialog || q.email || (Array.isArray(q.sentences) ? q.sentences.map(s => typeof s === 'string' ? s : (s.sentence || s.text || '')).join('\\n\\n') : '') || "";
+                TP_STATE.clozeAnswers = {};
+                TP_STATE.activeClozeGap = 0;
+                TP_STATE.shuffledClozeOptions = {};
+                
+                let rawGaps = q.gaps || q.blanks || q.items || q.questions || [];
+                if (!Array.isArray(rawGaps)) rawGaps = [];
+                // Enforce 5 to 10 gaps per game
+                let gaps = rawGaps.slice(0, 10);
+
+                // Helper to escape regex special characters without regex literals in template strings
+                function escapeRegExpStr(str) {
+                    return (str || '').toString().split('').map(function(c) {
+                        return '.*+?^$${'\\$'}()|[]\\\\/'.indexOf(c) !== -1 ? ('\\\\' + c) : c;
+                    }).join('');
+                }
+
+                // If text has no gap placeholders, but gaps array has target words/chunks, replace them with ___ in text
+                const testGapRegex = new RegExp('(?:\\\\b\\\\d+[\\\\.\\\\)]\\\\s*)?_{2,}(?:\\\\s*[\\\\(\\\\[]\\\\d+[\\\\)\\\\]])?|\\\\[\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*\\\\]|\\\\(\\\\s*(?:gap|blank)?\\\\s*\\\\d+\\\\s*\\\\)|\\\\(\\\\s*(?:gap|blank)\\\\s*\\\\)|\\\\{\\\\{\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*\\\\}\\\\}|\\\\{\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*\\\\}|<{1,2}\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*>{1,2}|__\\\\d+__|_\\\\d+_|\\\\[\\\\s*\\\\.{2,}\\\\s*\\\\]|\\\\(\\\\s*\\\\.{2,}\\\\s*\\\\)', 'i');
+                
+                if (!testGapRegex.test(rawText) && gaps.length > 0) {
+                    gaps.forEach(g => {
+                        const correct = (g.correct || g.answer || g.target || g.word || g.text || g.chunk || (Array.isArray(g.options) ? g.options[0] : '') || '').toString().trim();
+                        if (correct) {
+                            const bracketRx = new RegExp('\\\\[\\\\s*' + escapeRegExpStr(correct) + '\\\\s*\\\\]', 'i');
+                            if (bracketRx.test(rawText)) {
+                                rawText = rawText.replace(bracketRx, '___');
+                            } else {
+                                const wordRx = new RegExp(escapeRegExpStr(correct), 'i');
+                                if (wordRx.test(rawText)) {
+                                    rawText = rawText.replace(wordRx, '___');
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (!rawText.trim() && gaps.length > 0) {
+                    rawText = gaps.map((g, idx) => (idx + 1) + '. ' + (g.sentence || ('The target chunk for blank ' + (idx + 1) + ' is ___.'))).join('\\n\\n');
+                }
+
+                let formattedText = formatRichText(rawText);
+                
+                // Comprehensive universal Regex for gap placeholders (replaces in exact text order)
+                const masterGapRegex = new RegExp('(?:\\\\b\\\\d+[\\\\.\\\\)]\\\\s*)?_{2,}(?:\\\\s*[\\\\(\\\\[]\\\\d+[\\\\)\\\\]])?|\\\\[\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*\\\\]|\\\\(\\\\s*(?:gap|blank)?\\\\s*\\\\d+\\\\s*\\\\)|\\\\(\\\\s*(?:gap|blank)\\\\s*\\\\)|\\\\{\\\\{\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*\\\\}\\\\}|\\\\{\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*\\\\}|<{1,2}\\\\s*(?:gap|blank)?\\\\s*\\\\d*\\\\s*>{1,2}|__\\\\d+__|_\\\\d+_|\\\\[\\\\s*\\\\.{2,}\\\\s*\\\\]|\\\\(\\\\s*\\\\.{2,}\\\\s*\\\\)', 'gi');
+                
+                let gapIndex = 0;
+                formattedText = formattedText.replace(masterGapRegex, (match) => {
+                    if (gapIndex >= 10) return match;
+                    const i = gapIndex++;
+                    return '<button id="gap-btn-' + i + '" class="tp-cloze-gap-btn ' + (i === 0 ? 'active' : '') + '" onclick="selectClozeGap(' + i + ')" title="Blank ' + (i + 1) + '">[ Blank ' + (i + 1) + ' ]</button>';
+                });
+
+                const totalGapsCount = Math.min(10, Math.max(gapIndex, gaps.length));
+                
+                html = \`<div class="tp-q-card" style="max-width:1050px; width:100%; padding:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:10px; flex-wrap:wrap; gap:10px;">
+                        <span style="font-size:1.15rem; font-weight:900; color:#3b82f6; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-pen-alt"></i> Fill In The Gaps
+                        </span>
+                        
+                        <div style="display:flex; align-items:center; gap:12px; background:#f8fafc; padding:6px 14px; border-radius:20px; border:1px solid #e2e8f0;">
+                            <span id="cloze-progress-text" style="font-size:0.95rem; font-weight:800; color:#475569;">0 / \${totalGapsCount} Filled</span>
+                            <div style="width:100px; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+                                <div id="cloze-progress-bar" style="width:0%; height:100%; background:#22c55e; transition:width 0.3s ease;"></div>
+                            </div>
+                        </div>
+
+                        <div id="tp-cloze-timer" style="font-size:1.3rem; font-weight:900; color:#334155; background:#f1f5f9; padding:4px 14px; border-radius:20px;">01:30</div>
+                    </div>
+                    
+                    <div style="text-align:left; width:100%;">
+                        <div style="font-size:1.35rem; line-height:2.5; background:#f8fafc; padding:22px; border-radius:16px; border:2px dashed #cbd5e1; margin-bottom:16px; color:#0f172a; max-height:360px; overflow-y:auto; word-break:break-word;" id="tp-cloze-passage">
+                            \${formattedText}
+                        </div>
+                        
+                        <!-- Options only: clickable option buttons for the active gap in the text -->
+                        <div style="background:#f8fafc; border-radius:16px; padding:18px; border:2px solid #e2e8f0; margin-bottom:16px;">
+                            <div style="font-size:0.95rem; font-weight:800; color:#64748b; margin-bottom:10px;" id="cloze-gap-title">Choose Option for Blank 1:</div>
+                            <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; max-height:220px; overflow-y:auto; padding:6px;" id="cloze-options-grid"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:center; gap:15px; margin-top:6px;">
+                        <button class="tp-big-btn pos" style="min-width:260px;" onclick="checkTpCloze()"><i class="fas fa-check-circle"></i> Check Answers</button>
+                    </div>
+                </div>\`;
+                
+                setTimeout(() => {
+                    window.startActivityTimer(q.timer_seconds || 120, 'tp-cloze-timer', 'cloze');
+                    if (totalGapsCount > 0) selectClozeGap(0);
+                }, 50);
+            } 
+            else if (type === 'taboo') {
+                 TP_STATE.tabooCards = q.cards || (q.target_word ? [{target_word: q.target_word, forbidden_words: q.forbidden_words}] : []);
+                 TP_STATE.tabooIndex = 0;
+                 TP_STATE.tabooRevealed = false;
+                 
+                 // Updated HTML for Taboo to ensure buttons are safe
+                 html = \`<div class="tp-q-card" id="tp-taboo-ui" style="display:flex; flex-direction:column; height:90%;"></div>\`;
+                 setTimeout(() => {
+                     window.updateTpTabooUI();
+                     const totalTime = q.timer_seconds || (60 * TP_STATE.tabooCards.length);
+                     window.startActivityTimer(totalTime, 'tb-timer-display', 'taboo');
+                 }, 50);
+            }
+            else if (type === 'hot_seat') {
+                 TP_STATE.hotSeatIndex = 0;
+                 const qs = q.questions || q.words || [];
+                 html = \`<div class="tp-q-card"><div class="hs-header-badge">🔥 HOT SEAT CHALLENGE</div><div id="hs-timer-display" style="font-size:3rem; font-weight:900; margin:10px 0; color:#f97316;">05:00</div><div id="hs-question-display" style="width:100%; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center;"><div class="hs-question-card">Ready for the Hot Seat?</div></div><div style="display:flex; gap:15px; margin-top:20px;"><button class="tp-big-btn pos" id="hs-start-btn" onclick="startHotSeat()">Start Round</button><button class="tp-big-btn secondary" id="hs-next-btn" style="display:none;" onclick="nextHotSeatQuestion()">Next Question</button><button class="tp-big-btn neutral" id="hs-done-btn" style="display:none;" onclick="handleTpAnswer('manual', 'manual')">Finish Round</button></div></div>\`;
+            }
+            else if (type === 'conversation' || type === 'conversation_completion') {
+                 TP_STATE.convTurnIndex = 0;
+                 TP_STATE.convScore = 0;
+                 TP_STATE.convAnsweredTurns = {};
+
+                 const defaultChars = [
+                     { name: "Sarah", role: "Key Client / VP", emoji: "👩‍💼", voice: "Microsoft Ava Multilingual Online (Natural)", style: "demanding but fair" },
+                     { name: "David", role: "Project Lead", emoji: "👨‍💻", voice: "en-US-GuyNeural", style: "diplomatic" }
+                 ];
+                 const rawChars = (q.characters && q.characters.length > 0) ? q.characters : defaultChars;
+                 TP_STATE.convChars = rawChars.map(c => ({
+                     ...c,
+                     originalEmoji: c.emoji || '👤',
+                     currentEmoji: c.emoji || '👤',
+                     currentStatus: c.role || c.style || 'Participant'
+                 }));
+
+                 // Randomize options for each missing dialogue turn so they appear in random order
+                 const rawTurns = q.turns || [];
+                 const turns = rawTurns.map(t => {
+                     if (t && Array.isArray(t.options) && t.options.length > 0) {
+                         return {
+                             ...t,
+                             options: shuffleArray([...t.options])
+                         };
+                     }
+                     return t;
+                 });
+                 // 🛡️ GUARANTEE CHOICE POINTS: every missing turn MUST have its own 4 options,
+                 // answered ONE at a time inside the story (never all at the end). If the data
+                 // left a missing turn empty or put options elsewhere, we synthesize a
+                 // level-appropriate option set so the learner is never stuck without choices.
+                 TP_STATE.convTurns = ensureConvChoices(turns, rawChars);
+
+                 // Clean game card: Title and CEFR level headers removed per user directive
+                 html = \`<div class="tp-q-card" id="tp-conv-card" style="width:100%; max-width:940px; text-align:left; padding:24px;">
+                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                         <div style="flex:1; min-width:240px;">
+                             \${q.situation ? ('<p style="margin:0; font-size:1.05rem; font-weight:600; color:#475569; line-height:1.4;"><i class="fas fa-info-circle text-indigo-500" style="margin-right:6px;"></i>' + formatRichText(q.situation) + '</p>') : '<div style="font-size:1.1rem; font-weight:800; color:#4338ca;"><i class="fas fa-comments"></i> Dialogue Scenario</div>'}
+                         </div>
+                         <div style="display:flex; align-items:center; gap:14px;">
+                             <div style="text-align:right;">
+                                 <div style="font-size:0.75rem; font-weight:800; color:#64748b; text-transform:uppercase;">Appropriateness</div>
+                                 <div id="tp-conv-score-badge" style="font-size:1.3rem; font-weight:900; color:#8b5cf6;">0 pts</div>
+                             </div>
+                             <div id="tp-conv-timer" style="font-size:1.5rem; font-weight:900; color:#8b5cf6; background:#f5f3ff; padding:6px 16px; border-radius:14px; border:1px solid #ddd6fe;">03:00</div>
+                         </div>
+                     </div>
+
+                     <!-- Dynamic Characters Roster with Live Reactions -->
+                     <div style="margin-bottom:18px;">
+                         <div style="font-size:0.8rem; font-weight:900; text-transform:uppercase; color:#64748b; letter-spacing:0.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                             <i class="fas fa-users text-indigo-500"></i> Characters & Reaction States:
+                         </div>
+                         <div id="tp-conv-characters-roster" style="display:flex; gap:12px; flex-wrap:wrap;">
+                             \${TP_STATE.convChars.map(c => \`
+                                 <div class="tp-conv-header-card" id="conv-char-card-\${encodeURIComponent(c.name).replace(/[^a-zA-Z0-9]/g, '_')}">
+                                     <span class="tp-conv-emoji-avatar" id="conv-char-emoji-\${encodeURIComponent(c.name).replace(/[^a-zA-Z0-9]/g, '_')}">\${c.currentEmoji}</span>
+                                     <div style="flex:1; min-width:0;">
+                                         <div style="font-weight:900; font-size:1.05rem; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">\${c.name}</div>
+                                         <div style="font-size:0.8rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="conv-char-status-\${encodeURIComponent(c.name).replace(/[^a-zA-Z0-9]/g, '_')}">\${c.currentStatus}</div>
+                                     </div>
+                                 </div>
+                             \`).join('')}
+                         </div>
+                     </div>
+
+                     <!-- Active Conversation Turn Stage -->
+                     <div id="conv-turn-display" style="min-height:220px;"></div>
+
+                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px; padding-top:14px; border-top:2px solid #f1f5f9;">
+                         <span id="conv-turn-counter" style="font-weight:800; font-size:0.95rem; color:#64748b;">Turn 1 of \${turns.length}</span>
+                         <button class="tp-big-btn pos" id="conv-next-btn" style="min-width:180px;" onclick="nextConvTurn()">Next Turn <i class="fas fa-arrow-right"></i></button>
+                     </div>
+                 </div>\`;
+
+                 setTimeout(() => {
+                     window.updateConvTurnUI();
+                     window.startActivityTimer(q.timer_seconds || 180, 'tp-conv-timer', 'conversation_completion');
+                 }, 50);
+            }
+            else if (type === 'true_false') {
+                 const questions = q.questions || [{ statement: q.question || q.statement, answer: q.answer, explanation: q.explanation }];
+                 TP_STATE.tfQuestions = questions;
+                 TP_STATE.tfIndex = 0;
+
+                 html = \`<div class="tp-q-card" id="tp-tf-card" style="width:100%; max-width:700px; text-align:center;">
+                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">
+                         <span style="background:#0284c7; color:white; font-size:0.85rem; font-weight:900; padding:4px 12px; border-radius:20px;">⚡ FAST TRUE / FALSE</span>
+                         <div id="tp-tf-timer" style="font-size:2rem; font-weight:900; color:#ef4444;">00:20</div>
+                     </div>
+
+                     <div id="tf-feedback-banner" style="display:none; padding:10px; border-radius:12px; font-weight:900; font-size:1.3rem; margin-bottom:15px; animation: popIn 0.2s;"></div>
+
+                     <div id="tf-question-display"></div>
+                 </div>\`;
+
+                 setTimeout(() => {
+                     window.updateTrueFalseUI();
+                     window.startActivityTimer(q.timer_seconds || 20, 'tp-tf-timer', 'true_false');
+                 }, 50);
+            }
+            else if (type === 'discussion') {
+                 const prompts = q.prompts || (q.question ? [{ question: q.question, checklist: q.checklist }] : []);
+                 TP_STATE.discPrompts = prompts;
+                 TP_STATE.discIndex = 0;
+
+                 html = \`<div class="tp-q-card" id="tp-disc-card" style="width:100%; max-width:800px; text-align:left;">
+                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">
+                         <span style="background:#0284c7; color:white; font-size:0.85rem; font-weight:900; padding:4px 12px; border-radius:20px;">💬 DISCUSSION LAB</span>
+                         <div id="tp-disc-timer" style="font-size:1.5rem; font-weight:bold; color:#0284c7;">03:00</div>
+                     </div>
+
+                     <div id="disc-prompt-display"></div>
+
+                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; pt-3; border-top:1px solid #e2e8f0;">
+                         <span id="disc-prompt-counter" style="font-weight:800; color:#64748b;">Iteration 1 of \${prompts.length}</span>
+                         <button class="tp-big-btn pos" id="disc-next-btn" onclick="nextDiscPrompt()">Next Discussion Prompt <i class="fas fa-arrow-right"></i></button>
+                     </div>
+                 </div>\`;
+
+                 setTimeout(() => {
+                     window.updateDiscussionUI();
+                     window.startActivityTimer(q.timer_seconds || 180, 'tp-disc-timer', 'discussion');
+                 }, 50);
+            }
+            else if (type === 'would_you_rather' || type === 'wyr') {
+                 let qs = q.questions || q.items || [];
+                 if (!qs.length && q.option_a && q.option_b) {
+                     qs = [q];
+                 }
+                 const defaultWyrBank = [
+                     { scenario: "Which path would you take?", option_a: "Explore the ancient hidden library", option_b: "Climb the highest observation tower", story_a: "chose to explore the ancient hidden library to uncover forgotten secrets", story_b: "chose to climb the highest observation tower to scan the horizon" },
+                     { scenario: "How would you travel?", option_a: "Ride a supersonic express train", option_b: "Sail on a solar-powered airship", story_a: "embarked on a supersonic express train speeding across countries", story_b: "drifted on a solar-powered airship gazing down at the clouds" },
+                     { scenario: "What power would you master?", option_a: "Speak every human language fluently", option_b: "Read books instantly just by touching them", story_a: "mastered speaking every language on Earth with effortless charm", story_b: "gained the supernatural ability to absorb entire books in a single touch" },
+                     { scenario: "Where would you establish your headquarters?", option_a: "In a cozy cabin hidden in the redwood forest", option_b: "In a sleek penthouse overlooking a futuristic metropolis", story_a: "built a secluded retreat deep within the tranquil redwood forest", story_b: "set up a command base in a glowing penthouse overlooking the metropolis" },
+                     { scenario: "What companion would you bring on your journey?", option_a: "A loyal robot with sarcastic humor", option_b: "A wise mythical owl that whispers tactical advice", story_a: "teamed up with a witty robot sidekick who never ran out of jokes", story_b: "was accompanied by a mystical owl offering sage guidance through every obstacle" }
+                 ];
+                 let fIdx = 0;
+                 while (qs.length < 5) {
+                     qs.push(defaultWyrBank[fIdx % defaultWyrBank.length]);
+                     fIdx++;
+                 }
+
+                 TP_STATE.wyrState = {
+                     questions: qs,
+                     currentIndex: 0,
+                     story: [],
+                     total: qs.length
+                 };
+
+                 html = \`<div class="tp-q-card" id="tp-wyr-card" style="width:100%; max-width:900px;">
+                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:12px; margin-bottom:18px;">
+                         <span style="background:linear-gradient(135deg, #8b5cf6, #ec4899); color:white; font-size:1.1rem; font-weight:900; padding:6px 18px; border-radius:20px; text-transform:uppercase; letter-spacing:1px; box-shadow:0 4px 10px rgba(139,92,246,0.3);"><i class="fas fa-scale-balanced"></i> WOULD YOU RATHER?</span>
+                         <div class="tp-dramatic-timer" id="tp-wyr-timer" style="font-size:1.8rem; padding:4px 20px; margin:0;">01:30</div>
+                     </div>
+                     <div id="wyr-stage-container"></div>
+                 </div>\`;
+
+                 setTimeout(() => {
+                     window.updateWouldYouRatherUI();
+                     window.startActivityTimer(q.timer_seconds || 90, 'tp-wyr-timer', 'would_you_rather');
+                 }, 50);
+            }
+            else {
+                // Multiple Choice (5 Questions Round with 3 Lifelines & 3/5 passing requirement)
+                let qs = q.questions || q.items || [];
+                if (!qs.length && q.question) {
+                    qs = [q];
+                }
+                
+                const defaultMcBank = [
+                    { question: "What is the primary function of this concept?", options: ["To optimize performance", "To confuse developers", "To format syntax", "To delete cache"], answer: "To optimize performance", explanation: "This concept is fundamentally used to maximize runtime efficiency.", phone_clue: "I'm 100% sure it is to optimize performance, trust me!", caller_name: "Sherlock", caller_voice: "en-US-GuyNeural" },
+                    { question: "Which term best describes the core mechanism?", options: ["Asynchronous processing", "Synchronous blocking", "Manual execution", "Static compilation"], answer: "Asynchronous processing", explanation: "Asynchronous processing enables non-blocking behavior.", phone_clue: "Haha, definitely go with Asynchronous processing, mate!", caller_name: "Captain Clueless", caller_voice: "en-GB-RyanNeural" },
+                    { question: "How should unexpected exceptions be handled?", options: ["Gracefully with try-catch", "By crashing the server", "By ignoring completely", "By turning off computer"], answer: "Gracefully with try-catch", explanation: "Graceful error handling prevents system crashes.", phone_clue: "Always handle errors gracefully with try-catch!", caller_name: "Professor Spark", caller_voice: "en-US-JennyNeural" },
+                    { question: "Where is state best managed for global access?", options: ["Centralized store", "Hardcoded variables", "Random comments", "Local cookies only"], answer: "Centralized store", explanation: "A centralized store ensures predictable state management across views.", phone_clue: "A centralized store is without a doubt the cleanest approach.", caller_name: "Dr. Logic", caller_voice: "Ava" },
+                    { question: "Why is modularity important in software design?", options: ["Improves maintainability", "Makes code longer", "Slows down execution", "Hides all files"], answer: "Improves maintainability", explanation: "Modularity separates concerns and simplifies maintenance.", phone_clue: "Modularity is all about improving maintainability!", caller_name: "Tech Guru", caller_voice: "en-US-GuyNeural" }
+                ];
+                let fIdx = 0;
+                while (qs.length < 5) {
+                    qs.push(defaultMcBank[fIdx % defaultMcBank.length]);
+                    fIdx++;
+                }
+
+                TP_STATE.lifelines = { fiftyFifty: false, phoneCall: false, askTeacher: false };
+                TP_STATE.mcState = {
+                    questions: qs,
+                    currentIndex: 0,
+                    correctCount: 0,
+                    total: 5,
+                    answers: []
+                };
+
+                html = \`<div class="tp-q-card" style="max-width:850px; width:100%;">
+                    <div style="display:flex; justify-content:flex-end; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:10px; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                        <div class="tp-dramatic-timer" id="tp-mc-timer" style="margin:0; font-size:1.9rem; padding:4px 20px;">01:30</div>
+                    </div>
+
+                    <div class="tp-lifelines-bar">
+                        <span style="font-weight:900; font-size:1rem; color:#64748b; text-transform:uppercase; margin-right:5px;"><i class="fas fa-life-ring"></i> Lifelines:</span>
+                        <button class="tp-lifeline-btn" id="lifeline-5050" onclick="useLifeline5050()"><i class="fas fa-percent" style="color:#8b5cf6;"></i> 50-50</button>
+                        <button class="tp-lifeline-btn" id="lifeline-phone" onclick="useLifelinePhone()"><i class="fas fa-phone-alt" style="color:#22c55e;"></i> Phone a Friend</button>
+                        <button class="tp-lifeline-btn" id="lifeline-teacher" onclick="useLifelineTeacher()"><i class="fas fa-chalkboard-teacher" style="color:#0284c7;"></i> Ask Teacher</button>
+                    </div>
+
+                    <div id="mc-question-stage"></div>
+                </div>\`;
+
+                setTimeout(() => {
+                    window.updateMultipleChoiceUI();
+                    window.startActivityTimer(q.timer_seconds || 90, 'tp-mc-timer', 'multiple_choice');
+                }, 50);
+            }
+
+            area.innerHTML = html;
+        }
+
+        // --- LIFELINES LOGIC ---
+        window.useLifeline5050 = () => {
+            if (TP_STATE.lifelines.fiftyFifty) return;
+            TP_STATE.lifelines.fiftyFifty = true;
+
+            const btn = document.getElementById('lifeline-5050');
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.4';
+            }
+
+            const state = TP_STATE.mcState;
+            if (!state || !state.questions) return;
+            const currentQ = state.questions[state.currentIndex];
+            const correct = (currentQ.answer || '').trim();
+
+            const optBtns = Array.from(document.querySelectorAll('.tp-mc-opt-btn'));
+            const incorrectBtns = optBtns.filter(b => b.dataset.ans.trim() !== correct);
+            
+            const toRemove = shuffleArray(incorrectBtns).slice(0, 2);
+            toRemove.forEach(b => {
+                b.style.opacity = '0.15';
+                b.style.pointerEvents = 'none';
+                b.style.textDecoration = 'line-through';
+                b.style.transform = 'scale(0.92)';
+            });
+
+            playSfx('bonus');
+        };
+
+        window.useLifelinePhone = () => {
+            if (TP_STATE.lifelines.phoneCall) return;
+            TP_STATE.lifelines.phoneCall = true;
+
+            const btn = document.getElementById('lifeline-phone');
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.4';
+            }
+
+            const state = TP_STATE.mcState;
+            const currentQ = (state && state.questions) ? state.questions[state.currentIndex] : {};
+            const correct = currentQ.answer || 'Option A';
+            const callerNames = ["Uncle Bob", "Sherlock", "Professor Spark", "Aunt Lucy", "Captain Clueless"];
+            const callerName = currentQ.caller_name || callerNames[Math.floor(Math.random() * callerNames.length)];
+            const callerVoice = currentQ.caller_voice || "en-US-GuyNeural";
+            
+            let clue = currentQ.phone_clue;
+            if (!clue) {
+                clue = \`Hey! I was just thinking about this. I'm pretty confident the correct answer is "\${correct}". Good luck!\`;
+            }
+
+            document.getElementById('tp-phone-name').innerText = callerName;
+            document.getElementById('tp-phone-voice-tag').innerText = "Voice: " + callerVoice;
+            document.getElementById('tp-phone-clue-text').innerText = \`"\${clue}"\`;
+            
+            TP_STATE.currentPhoneClue = clue;
+            TP_STATE.currentPhoneVoice = callerVoice;
+
+            document.getElementById('tp-phone-modal').style.display = 'flex';
+            playSfx('bonus');
+
+            window.playTTS(clue, callerVoice);
+        };
+
+        window.closePhoneModal = () => {
+            document.getElementById('tp-phone-modal').style.display = 'none';
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        };
+
+        window.replayPhoneClue = () => {
+            if (TP_STATE.currentPhoneClue) {
+                window.playTTS(TP_STATE.currentPhoneClue, TP_STATE.currentPhoneVoice);
+            }
+        };
+
+        window.useLifelineTeacher = () => {
+            if (TP_STATE.lifelines.askTeacher) return;
+            TP_STATE.lifelines.askTeacher = true;
+
+            const btn = document.getElementById('lifeline-teacher');
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.4';
+            }
+
+            document.getElementById('tp-teacher-modal').style.display = 'flex';
+            playSfx('bonus');
+        };
+
+        window.closeTeacherModal = () => {
+            document.getElementById('tp-teacher-modal').style.display = 'none';
+        };
+
+        // --- MULTIPLE CHOICE RUNNER (5 QUESTIONS, PASS WITH >= 3 CORRECT) ---
+        window.updateMultipleChoiceUI = () => {
+            const state = TP_STATE.mcState;
+            if (!state || !state.questions) return;
+            const stage = document.getElementById('mc-question-stage');
+            if (!stage) return;
+
+            if (state.currentIndex >= state.total) {
+                const passed = state.correctCount >= 3;
+                if (passed) {
+                    playSfx('applause');
+                    handleTpAnswer('manual', 'manual');
+                } else {
+                    playSfx('wrong');
+                    handleTpAnswer(\`Passed \${state.correctCount}/\${state.total}\`, \`Need at least 3/\${state.total} to pass\`);
+                }
+                return;
+            }
+
+            const currentQ = state.questions[state.currentIndex];
+            let options = currentQ.options ? [...currentQ.options] : ["Option A", "Option B", "Option C", "Option D"];
+            const isBoolean = options.length === 2 && options.includes("True") && options.includes("False");
+            if (!isBoolean) {
+                options = shuffleArray(options);
+            }
+
+            stage.innerHTML = \`
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <span style="font-size:1.15rem; font-weight:900; color:#3b82f6; background:#eff6ff; padding:4px 16px; border-radius:20px;">
+                        Question \${state.currentIndex + 1} of \${state.total}
+                    </span>
+                    <span style="font-size:1.15rem; font-weight:900; color:\${state.correctCount >= 3 ? '#16a34a' : '#ea580c'}; background:#f8fafc; padding:4px 16px; border-radius:20px; border:2px solid #e2e8f0;">
+                        🏆 Score: \${state.correctCount}/\${state.total} (Need 3 to pass)
+                    </span>
+                </div>
+
+                <div style="font-size:1.6rem; font-weight:800; color:#0f172a; line-height:1.5; margin:15px 0 25px 0; text-align:left;">
+                    \${formatRichText(currentQ.question)}
+                </div>
+
+                <div class="tp-opt-grid">
+                    \${options.map((opt, optIdx) => {
+                        const letter = String.fromCharCode(65 + optIdx);
+                        const safeOpt = opt.replace(/'/g, "\\\\'");
+                        const safeCorrect = (currentQ.answer || '').replace(/'/g, "\\\\'");
+                        return \`<button class="tp-opt-btn tp-mc-opt-btn" data-ans="\${opt}" onclick="handleMCOptionClick('\${safeOpt}', '\${safeCorrect}', this)">
+                            <span class="tp-opt-letter">\${letter}</span>
+                            <span class="tp-opt-text">\${opt}</span>
+                            <span class="tp-opt-status-badge"></span>
+                        </button>\`;
+                    }).join('')}
+                </div>
+            \`;
+        };
+
+        window.handleMCOptionClick = (selected, correct, btnEl) => {
+            const state = TP_STATE.mcState;
+            if (!state) return;
+
+            const allBtns = document.querySelectorAll('.tp-mc-opt-btn');
+            allBtns.forEach(b => {
+                b.style.pointerEvents = 'none';
+                b.classList.add('tp-opt-locked');
+            });
+
+            const isCorrect = tpSameText(selected, correct);
+
+            if (isCorrect) {
+                state.correctCount++;
+                if (btnEl) {
+                    btnEl.classList.add('tp-opt-correct');
+                    const badge = btnEl.querySelector('.tp-opt-status-badge');
+                    if (badge) badge.innerHTML = '<i class="fas fa-check-circle"></i> Correct';
+                }
+                playSfx('correct');
+            } else {
+                if (btnEl) {
+                    btnEl.classList.add('tp-opt-wrong');
+                    const badge = btnEl.querySelector('.tp-opt-status-badge');
+                    if (badge) badge.innerHTML = '<i class="fas fa-times-circle"></i> Your Choice';
+                }
+                allBtns.forEach(b => {
+                    if (b.dataset.ans.trim().toLowerCase() === correct.trim().toLowerCase()) {
+                        b.classList.add('tp-opt-reveal-correct');
+                        const badge = b.querySelector('.tp-opt-status-badge');
+                        if (badge) badge.innerHTML = '<i class="fas fa-check-circle"></i> Correct Answer';
+                    }
+                });
+                playSfx('wrong');
+            }
+
+            setTimeout(() => {
+                state.currentIndex++;
+                window.updateMultipleChoiceUI();
+            }, 1200);
+        };
+
+        // --- WOULD YOU RATHER STORYTELLING ENGINE ---
+        window.updateWouldYouRatherUI = () => {
+            const state = TP_STATE.wyrState;
+            if (!state || !state.questions) return;
+            const container = document.getElementById('wyr-stage-container');
+            if (!container) return;
+
+            const activeP = TP_STATE.players.find(p => p.id == TP_STATE.activePlayerId);
+            const learnerName = activeP ? activeP.name : "Learner";
+
+            if (state.currentIndex >= state.total) {
+                const fullStoryText = state.story.join(' ');
+                const safeStory = encodeURIComponent(fullStoryText).replace(/'/g, "%27");
+
+                container.innerHTML = \`
+                    <div style="text-align:center; animation: popIn 0.3s ease;">
+                        <div style="font-size:3rem; margin-bottom:5px;">📜</div>
+                        <h2 style="font-size:2rem; font-weight:900; color:#451a03; margin:0 0 15px 0;">\${learnerName}'s Epic Adventure Story</h2>
+                        
+                        <div class="wyr-story-scroll" id="wyr-full-story" style="max-height:260px; font-size:1.35rem; line-height:1.8; margin-bottom:20px;">
+                            \${state.story.map(s => \`<p style="margin-bottom:10px;">✨ \${formatRichText(s)}</p>\`).join('')}
+                        </div>
+
+                        <div style="display:flex; justify-content:center; gap:15px; margin-top:20px;">
+                            <button class="tp-big-btn neutral" style="font-size:1.2rem; padding:12px 24px;" onclick="playEncodedTTS('\${safeStory}')">
+                                <i class="fas fa-volume-up"></i> Read Story Aloud
+                            </button>
+                            <button class="tp-big-btn pos" style="font-size:1.2rem; padding:12px 28px;" onclick="handleTpAnswer('manual', 'manual')">
+                                <i class="fas fa-star"></i> Finish Story (+20 pts)
+                            </button>
+                        </div>
+                    </div>
+                \`;
+                playSfx('applause');
+                return;
+            }
+
+            const currentQ = state.questions[state.currentIndex];
+            const optA = currentQ.option_a || "Option A";
+            const optB = currentQ.option_b || "Option B";
+
+            container.innerHTML = \`
+                <div class="wyr-container">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:1.1rem; font-weight:900; color:#8b5cf6; background:#f3e8ff; padding:4px 14px; border-radius:20px;">
+                            Dilemma \${state.currentIndex + 1} of \${state.total}
+                        </span>
+                        <span style="font-size:1rem; font-weight:800; color:#64748b;">
+                            Storyteller: <strong>\${learnerName}</strong>
+                        </span>
+                    </div>
+
+                    <div style="font-size:1.5rem; font-weight:900; color:#0f172a; text-align:center; margin:5px 0 10px 0;">
+                        \${formatRichText(currentQ.scenario || "Which path will you choose?")}
+                    </div>
+
+                    <div class="wyr-options-grid">
+                        <div class="wyr-card card-a" onclick="handleWYRChoice('A')">
+                            <span style="font-size:0.9rem; font-weight:900; background:#8b5cf6; color:white; padding:4px 12px; border-radius:12px; margin-bottom:12px;">OPTION A</span>
+                            <div style="font-size:1.35rem; font-weight:800; color:#1e1b4b; line-height:1.4;">\${optA}</div>
+                        </div>
+
+                        <div class="wyr-card card-b" onclick="handleWYRChoice('B')">
+                            <span style="font-size:0.9rem; font-weight:900; background:#ec4899; color:white; padding:4px 12px; border-radius:12px; margin-bottom:12px;">OPTION B</span>
+                            <div style="font-size:1.35rem; font-weight:800; color:#831843; line-height:1.4;">\${optB}</div>
+                        </div>
+                    </div>
+
+                    \${state.story.length > 0 ? \`
+                        <div style="margin-top:10px;">
+                            <div style="font-size:0.95rem; font-weight:800; color:#78350f; text-transform:uppercase; margin-bottom:6px;"><i class="fas fa-feather-pointed"></i> The Story So Far:</div>
+                            <div class="wyr-story-scroll">
+                                \${state.story.map(s => \`<div style="margin-bottom:6px;">• \${s}</div>\`).join('')}
+                            </div>
+                        </div>
+                    \` : ''}
+                </div>
+            \`;
+        };
+
+        window.handleWYRChoice = (choice) => {
+            const state = TP_STATE.wyrState;
+            if (!state) return;
+            const currentQ = state.questions[state.currentIndex];
+            const activeP = TP_STATE.players.find(p => p.id == TP_STATE.activePlayerId);
+            const learnerName = activeP ? activeP.name : "Learner";
+
+            let sentence = "";
+            if (choice === 'A') {
+                const action = currentQ.story_a || \`decided to \${currentQ.option_a.toLowerCase()}\`;
+                sentence = \`\${learnerName} \${action}\`;
+            } else {
+                const action = currentQ.story_b || \`decided to \${currentQ.option_b.toLowerCase()}\`;
+                sentence = \`\${learnerName} \${action}\`;
+            }
+
+            state.story.push(sentence);
+            playSfx('bonus');
+
+            state.currentIndex++;
+            window.updateWouldYouRatherUI();
+        };
+
+        // --- NEW TABOO UI LOGIC ---
+        window.updateTpTabooUI = () => {
+             const container = document.getElementById('tp-taboo-ui');
+             if(!container) return;
+             if (TP_STATE.tabooIndex >= TP_STATE.tabooCards.length) {
+                 handleTpAnswer('manual', 'manual');
+                 return;
+             }
+             const card = TP_STATE.tabooCards[TP_STATE.tabooIndex];
+             TP_STATE.tabooRevealed = false;
+             const currentTimer = document.getElementById('tb-timer-display')?.innerText || '60';
+
+             container.innerHTML = \`
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+                    <h2 style="color:#ce82ff; margin:0;">TABOO (\${TP_STATE.tabooIndex + 1}/\${TP_STATE.tabooCards.length})</h2>
+                    <div id="tb-timer-display" style="font-size:2rem; font-weight:bold; color:red;">\${currentTimer}</div>
+                </div>
+                
+                <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:20px; z-index:1;">
+                     <div class="taboo-card" onclick="revealTaboo()">
+                        <div class="taboo-inner" id="taboo-inner">
+                            <div class="taboo-front">CLICK TO REVEAL</div>
+                            <div class="taboo-back">
+                                <h1 style="font-size:3rem; margin:10px 0;">\${card.target_word}</h1>
+                                <div style="background:#fff0f0; border:2px solid red; padding:15px; border-radius:10px; width:100%;">
+                                    <h4 style="margin:0 0 10px 0; color:red;">FORBIDDEN:</h4>
+                                    \${(card.forbidden_words || []).map(w => \`<div>\${w}</div>\`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="taboo-controls" style="z-index:20; display:flex; gap:20px; justify-content:center; padding-top:10px;">
+                    <button class="tp-big-btn secondary" onclick="handleTpTabooNext()">Next</button>
+                    <button class="tp-big-btn pos" onclick="handleTpTabooNext()">Got it</button>
+                </div>\`;
+        };
+        
+        window.handleTpTabooNext = () => {
+            TP_STATE.tabooIndex++;
+            window.updateTpTabooUI();
+        };
+
+        // --- NEW TRUTH DARE LOGIC ---
+        window.renderTpTD = () => {
+            const tCount = TP_STATE.tdState.truths.length;
+            const dCount = TP_STATE.tdState.dares.length;
+            
+            if (tCount === 0 && dCount === 0) {
+                 setTimeout(() => handleTpAnswer('manual', 'manual'), 500);
+                 return '<div class="tp-q-card"><h2>Round Complete!</h2></div>';
+            }
+
+            return \`<div class="tp-q-card" id="tp-td-ui">
+                 <h2 style="color:black;">Truth or Dare</h2>
+                 <p>Pick a card...</p>
+                 <div style="display:flex; gap:20px; justify-content:center; margin-top:30px; margin-bottom:20px; flex-wrap:wrap;">
+                    <button class="tp-big-btn neutral" \${tCount === 0 ? 'disabled style="opacity:0.5"' : ''} style="flex:1; max-width:250px;" onclick="pickTD('truth')">TRUTH (\${tCount})</button>
+                    <button class="tp-big-btn neg" \${dCount === 0 ? 'disabled style="opacity:0.5"' : ''} style="flex:1; max-width:250px;" onclick="pickTD('dare')">DARE (\${dCount})</button>
+                 </div>
+                 <div style="margin-top:20px;">
+                    <button class="tp-big-btn secondary" onclick="handleTpAnswer('manual', 'manual')">Finish Early</button>
+                 </div>
+            </div>\`;
+        };
+
+        window.pickTD = (type) => {
+             const list = type === 'truth' ? TP_STATE.tdState.truths : TP_STATE.tdState.dares;
+             if (list.length === 0) return;
+             
+             const idx = Math.floor(Math.random() * list.length);
+             const item = list.splice(idx, 1)[0];
+             const safeText = encodeURIComponent(item).replace(/'/g, "%27");
+             const color = type === 'truth' ? '#3b82f6' : '#ef4444';
+             
+             const container = document.getElementById('tp-td-ui');
+             container.innerHTML = \`
+                 <div class="td-card-display" style="border-color:\${color};">
+                    <h2 style="color:\${color}; margin-bottom:10px;">\${type.toUpperCase()}</h2>
+                    <div class="td-text">\${formatRichText(item)}</div>
+                 </div>
+                 <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+                    <button class="tp-big-btn secondary" onclick="playEncodedTTS('\${safeText}')"><i class="fas fa-volume-up"></i> Read</button>
+                    <button class="tp-big-btn pos" onclick="document.getElementById('tp-question-area').innerHTML = window.renderTpTD()">Next Turn</button>
+                 </div>
+             \`;
+        };
+
+        function initTpMatching(pairs) {
+            const grid = document.getElementById('tp-match-grid');
+            if(!grid) return;
+            const lefts = [];
+            const rights = [];
+            
+            pairs.forEach((p, i) => {
+                lefts.push({ id: i, text: p.left, type: 'left', matchId: i });
+                rights.push({ id: i + 100, text: p.right, type: 'right', matchId: i });
+            });
+            rights.sort(() => Math.random() - 0.5);
+            
+            const leftCol = document.createElement('div');
+            leftCol.className = 'tp-match-col';
+            const rightCol = document.createElement('div');
+            rightCol.className = 'tp-match-col';
+            
+            grid.innerHTML = '';
+            grid.appendChild(leftCol);
+            grid.appendChild(rightCol);
+
+            lefts.forEach(item => {
+                 leftCol.innerHTML += \`<div class="tp-match-card" data-id="\${item.id}" data-match="\${item.matchId}" data-side="\${item.type}" onclick="handleTpMatchClick(this)">\${item.text}</div>\`;
+            });
+            rights.forEach(item => {
+                 rightCol.innerHTML += \`<div class="tp-match-card" data-id="\${item.id}" data-match="\${item.matchId}" data-side="\${item.type}" onclick="handleTpMatchClick(this)">\${item.text}</div>\`;
+            });
+
+            TP_STATE.matchingState = { selected: null, correctCount: 0, total: pairs.length };
+        }
+
+        window.handleTpMatchClick = (el) => {
+            if(el.classList.contains('correct')) return;
+            if (!TP_STATE.matchingState.selected) {
+                el.classList.add('selected');
+                TP_STATE.matchingState.selected = el;
+            } else {
+                const prev = TP_STATE.matchingState.selected;
+                if (prev.dataset.side === el.dataset.side) {
+                     prev.classList.remove('selected');
+                     el.classList.add('selected');
+                     TP_STATE.matchingState.selected = el;
+                     return;
+                }
+                if (prev.dataset.match === el.dataset.match) {
+                    el.classList.add('correct');
+                    prev.classList.add('correct');
+                    prev.classList.remove('selected');
+                    playSfx('correct');
+                    TP_STATE.matchingState.correctCount++;
+                    if(TP_STATE.matchingState.correctCount === TP_STATE.matchingState.total) {
+                        setTimeout(() => handleTpAnswer('manual', 'manual'), 1000);
+                    }
+                } else {
+                    el.classList.add('wrong');
+                    prev.classList.add('wrong');
+                    playSfx('wrong');
+                    setTimeout(() => {
+                        el.classList.remove('wrong', 'selected');
+                        prev.classList.remove('wrong', 'selected');
+                    }, 500);
+                }
+                TP_STATE.matchingState.selected = null;
+            }
+        };
+
+        window.revealTaboo = () => {
+             if(TP_STATE.tabooRevealed) return;
+             TP_STATE.tabooRevealed = true;
+             document.getElementById('taboo-inner').style.transform = 'rotateY(180deg)';
+        };
+
+        window.startHotSeat = () => {
+             document.getElementById('hs-start-btn').style.display = 'none';
+             document.getElementById('hs-next-btn').style.display = 'inline-block';
+             document.getElementById('hs-done-btn').style.display = 'inline-block';
+             window.startActivityTimer(300, 'hs-timer-display', 'hot_seat'); 
+             window.nextHotSeatQuestion();
+        };
+
+        window.selectClozeGap = (gapIndex) => {
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            if (!q) return;
+            const gaps = q.gaps || q.blanks || q.items || q.questions || [];
+            const total = Math.max(gaps.length, document.querySelectorAll('.tp-cloze-gap-btn').length);
+            if (gapIndex < 0 || gapIndex >= total) return;
+            
+            TP_STATE.activeClozeGap = gapIndex;
+            
+            document.querySelectorAll('.tp-cloze-gap-btn').forEach((btn, idx) => {
+                if (idx === gapIndex) {
+                    btn.classList.add('active');
+                    try {
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                    } catch(e) {}
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            const gapTitle = document.getElementById('cloze-gap-title');
+            if (gapTitle) gapTitle.innerText = "Choose Option for Blank " + (gapIndex + 1) + ":";
+            
+            const jumpSelect = document.getElementById('tp-cloze-jump-select');
+            if (jumpSelect) jumpSelect.value = gapIndex;
+
+            const searchInput = document.getElementById('cloze-opt-search');
+            if (searchInput) searchInput.value = '';
+
+            const directInput = document.getElementById('cloze-direct-input');
+            if (directInput) {
+                directInput.value = (TP_STATE.clozeAnswers && TP_STATE.clozeAnswers[gapIndex]) || '';
+            }
+
+            renderClozeOptions('');
+        };
+
+        window.renderClozeOptions = (searchTerm) => {
+            const gapIndex = TP_STATE.activeClozeGap;
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            if (!q || gapIndex === undefined) return;
+            const gaps = q.gaps || q.blanks || q.items || q.questions || [];
+            const currentGap = gaps[gapIndex] || {};
+            const globalWordBank = q.word_bank || q.wordBank || q.words || q.options || q.choices || [];
+            
+            if (!TP_STATE.shuffledClozeOptions) TP_STATE.shuffledClozeOptions = {};
+
+            let options = [];
+            if (TP_STATE.shuffledClozeOptions[gapIndex]) {
+                options = [...TP_STATE.shuffledClozeOptions[gapIndex]];
+            } else {
+                if (Array.isArray(currentGap.options) && currentGap.options.length > 0) {
+                    options = [...currentGap.options];
+                } else if (Array.isArray(currentGap.choices) && currentGap.choices.length > 0) {
+                    options = [...currentGap.choices];
+                } else if (Array.isArray(globalWordBank) && globalWordBank.length > 0) {
+                    options = [...globalWordBank];
+                } else {
+                    options = gaps.map(g => (g.correct || g.answer || g.target || g.word || g.text || (Array.isArray(g.options) ? g.options[0] : '') || '').toString().trim()).filter(Boolean);
+                }
+
+                const correct = (currentGap.correct || currentGap.answer || currentGap.target || currentGap.word || currentGap.text || '').toString().trim();
+                if (correct && !options.some(o => o.toLowerCase() === correct.toLowerCase())) {
+                    options.push(correct);
+                }
+
+                options = Array.from(new Set(options));
+                options = shuffleArray(options);
+                TP_STATE.shuffledClozeOptions[gapIndex] = options;
+            }
+
+            if (searchTerm && searchTerm.trim()) {
+                const s = searchTerm.trim().toLowerCase();
+                options = options.filter(o => o.toLowerCase().includes(s));
+            }
+
+            const grid = document.getElementById('cloze-options-grid');
+            if (grid) {
+                if (options.length === 0) {
+                    grid.innerHTML = '<div style="color:#64748b; font-size:0.95rem; padding:10px;">No options available for this blank.</div>';
+                } else {
+                    const currentSelected = (TP_STATE.clozeAnswers && TP_STATE.clozeAnswers[gapIndex]) || '';
+                    grid.innerHTML = options.map(opt => {
+                        const isSel = currentSelected.toLowerCase() === opt.toLowerCase();
+                        return \`<button class="tp-cloze-opt-btn \${isSel ? 'selected' : ''}" onclick="fillClozeGap('\${opt.replace(/'/g, "\\\\'")}')">\${opt}</button>\`;
+                    }).join('');
+                }
+            }
+        };
+
+        window.filterClozeOptions = (term) => {
+            renderClozeOptions(term);
+        };
+
+        window.fillClozeGap = (opt) => {
+            if (!opt || typeof opt !== 'string' || !opt.trim()) return;
+            const gapIndex = TP_STATE.activeClozeGap;
+            if (gapIndex === undefined || gapIndex === null) return;
+            if (!TP_STATE.clozeAnswers) TP_STATE.clozeAnswers = {};
+            
+            const trimmed = opt.trim();
+            TP_STATE.clozeAnswers[gapIndex] = trimmed;
+            
+            const btn = document.getElementById('gap-btn-' + gapIndex);
+            if (btn) {
+                btn.innerText = \`[ \${gapIndex + 1}: \${trimmed} ]\`;
+                btn.classList.add('filled');
+                btn.classList.remove('wrong-gap', 'correct-gap');
+            }
+            
+            playSfx('correct');
+            updateClozeProgress();
+
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            const gaps = (q && (q.gaps || q.blanks || q.items || q.questions)) || [];
+            const total = Math.max(gaps.length, document.querySelectorAll('.tp-cloze-gap-btn').length);
+            
+            let nextGap = -1;
+            for (let i = gapIndex + 1; i < total; i++) {
+                if (!TP_STATE.clozeAnswers[i]) { nextGap = i; break; }
+            }
+            if (nextGap === -1) {
+                for (let i = 0; i < gapIndex; i++) {
+                    if (!TP_STATE.clozeAnswers[i]) { nextGap = i; break; }
+                }
+            }
+
+            if (nextGap !== -1) {
+                selectClozeGap(nextGap);
+            }
+        };
+
+        window.clearActiveClozeGap = () => {
+            const gapIndex = TP_STATE.activeClozeGap;
+            if (gapIndex === undefined || gapIndex === null) return;
+            if (TP_STATE.clozeAnswers) {
+                delete TP_STATE.clozeAnswers[gapIndex];
+            }
+            const btn = document.getElementById('gap-btn-' + gapIndex);
+            if (btn) {
+                btn.innerText = \`[ Blank \${gapIndex + 1} ]\`;
+                btn.classList.remove('filled', 'wrong-gap', 'correct-gap');
+            }
+            const directInput = document.getElementById('cloze-direct-input');
+            if (directInput) directInput.value = '';
+            updateClozeProgress();
+        };
+
+        window.prevClozeGap = () => {
+            const gapIndex = TP_STATE.activeClozeGap || 0;
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            const gaps = (q && (q.gaps || q.blanks || q.items || q.questions)) || [];
+            const total = Math.max(gaps.length, document.querySelectorAll('.tp-cloze-gap-btn').length);
+            if (total === 0) return;
+            const prev = (gapIndex - 1 + total) % total;
+            selectClozeGap(prev);
+        };
+
+        window.nextClozeGap = () => {
+            const gapIndex = TP_STATE.activeClozeGap || 0;
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            const gaps = (q && (q.gaps || q.blanks || q.items || q.questions)) || [];
+            const total = Math.max(gaps.length, document.querySelectorAll('.tp-cloze-gap-btn').length);
+            if (total === 0) return;
+            const next = (gapIndex + 1) % total;
+            selectClozeGap(next);
+        };
+
+        window.updateClozeProgress = () => {
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            const gaps = (q && (q.gaps || q.blanks || q.items || q.questions)) || [];
+            const total = Math.max(gaps.length, document.querySelectorAll('.tp-cloze-gap-btn').length);
+            const filledCount = Object.keys(TP_STATE.clozeAnswers || {}).length;
+            
+            const textEl = document.getElementById('cloze-progress-text');
+            const barEl = document.getElementById('cloze-progress-bar');
+            if (textEl) textEl.innerText = \`\${filledCount} / \${total} Filled\`;
+            if (barEl) barEl.style.width = \`\${total > 0 ? (filledCount / total) * 100 : 0}%\`;
+
+            const jumpSelect = document.getElementById('tp-cloze-jump-select');
+            if (jumpSelect) {
+                Array.from(jumpSelect.options).forEach((opt, idx) => {
+                    const ans = TP_STATE.clozeAnswers && TP_STATE.clozeAnswers[idx];
+                    opt.innerText = ans ? \`✓ Blank \${idx+1}: \${ans}\` : \`Blank \${idx+1}\`;
+                });
+            }
+        };
+
+        window.checkTpCloze = () => {
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            const gaps = (q && (q.gaps || q.blanks || q.items || q.questions)) || [];
+            const total = Math.max(gaps.length, document.querySelectorAll('.tp-cloze-gap-btn').length);
+            if (!total) {
+                handleTpAnswer('manual', 'manual');
+                return;
+            }
+            
+            let allCorrect = true;
+            let correctCount = 0;
+            let userList = [];
+            let correctList = [];
+            
+            for (let idx = 0; idx < total; idx++) {
+                const g = gaps[idx] || {};
+                const userAns = (TP_STATE.clozeAnswers && TP_STATE.clozeAnswers[idx]) ? TP_STATE.clozeAnswers[idx].trim() : '';
+                const correctAns = (g.correct || g.answer || g.target || g.word || g.text || (Array.isArray(g.options) ? g.options[0] : '') || '').toString().trim();
+                
+                userList.push(\`Blank \${idx+1}: "\${userAns || 'empty'}"\`);
+                correctList.push(\`Blank \${idx+1}: "\${correctAns}"\`);
+                
+                const btn = document.getElementById('gap-btn-' + idx);
+                if (correctAns && userAns.toLowerCase() === correctAns.toLowerCase() && userAns !== '') {
+                    correctCount++;
+                    if (btn) {
+                        btn.classList.remove('wrong-gap');
+                        btn.classList.add('correct-gap');
+                    }
+                } else {
+                    allCorrect = false;
+                    if (btn) {
+                        btn.classList.remove('correct-gap');
+                        btn.classList.add('wrong-gap');
+                    }
+                }
+            }
+            
+            if (allCorrect) {
+                playSfx('correct');
+                setTimeout(() => handleTpAnswer('manual', 'manual'), 700);
+            } else {
+                playSfx('wrong');
+                setTimeout(() => handleTpAnswer(\`Score: \${correctCount}/\${total} correct. \${userList.slice(0, 10).join(', ')}...\`, correctList.slice(0, 10).join(', ')), 900);
+            }
+        };
+
+        window.checkHsProgress = () => {
+             const checkboxes = document.querySelectorAll('.hs-checklist-cb');
+             if (checkboxes.length === 0) return;
+             
+             const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+             const allChecked = checkedCount === checkboxes.length;
+             const nextBtn = document.getElementById('hs-next-btn');
+             const msg = document.getElementById('hs-breakthrough-msg');
+             const countEl = document.getElementById('hs-progress-count');
+             if (countEl) countEl.innerText = checkedCount + "/" + checkboxes.length;
+
+             if (msg) {
+                 msg.style.display = 'block';
+                 playSfx('correct');
+                 setTimeout(() => { if (msg) msg.style.display = 'none'; }, 1500);
+             }
+
+             if (allChecked && nextBtn) {
+                 nextBtn.disabled = false;
+                 nextBtn.style.opacity = '1';
+                 nextBtn.className = "tp-big-btn pos";
+             } else if (nextBtn) {
+                 nextBtn.disabled = true;
+                 nextBtn.style.opacity = '0.5';
+                 nextBtn.className = "tp-big-btn secondary";
+             }
+        };
+
+        window.nextHotSeatQuestion = () => {
+             const q = TP_STATE.queue[TP_STATE.currentIndex];
+             const qs = q.questions || q.words || [];
+             const display = document.getElementById('hs-question-display');
+             const nextBtn = document.getElementById('hs-next-btn');
+             
+             if (TP_STATE.hotSeatIndex < qs.length) {
+                 const item = qs[TP_STATE.hotSeatIndex];
+                 let qText = item;
+                 let checklistHtml = '';
+                 
+                 if (typeof item === 'object') {
+                     qText = item.question || item.word || '';
+                     if (item.checklist && item.checklist.length > 0) {
+                         checklistHtml = \`<div class="hs-checklist-box">
+                             <div class="hs-checklist-title"><span><i class="fas fa-list-check"></i> Checklist</span> <span id="hs-progress-count" style="color:#22c55e;">0/\${item.checklist.length}</span></div>
+                             <div style="display:flex; flex-direction:column; gap:8px;">
+                                 \${item.checklist.map((c, idx) => \`<label class="hs-checklist-item"><input type="checkbox" class="hs-checklist-cb" onchange="checkHsProgress()"> <span>\${formatRichText(c)}</span></label>\`).join('')}
+                             </div>
+                             <div id="hs-breakthrough-msg" style="display:none; color:#22c55e; font-weight:bold; font-size:1.3rem; margin-top:12px; text-align:center; animation: popIn 0.3s;">🎉 Great point! Keep going!</div>
+                         </div>\`;
+                         
+                         if (nextBtn) {
+                             nextBtn.disabled = true;
+                             nextBtn.style.opacity = '0.5';
+                             nextBtn.className = "tp-big-btn secondary";
+                         }
+                     }
+                 }
+                 
+                 display.innerHTML = \`<div class="hs-container"><div class="hs-question-card">\${qText}</div>\${checklistHtml}</div>\`;
+                 TP_STATE.hotSeatIndex++;
+             } else {
+                 display.innerHTML = \`<div class="hs-question-card" style="color:#22c55e;">🎉 All Hot Seat Questions Completed!</div>\`;
+                 if (nextBtn) nextBtn.style.display = 'none';
+                 playSfx('applause');
+             }
+        };
+
+        // --- 60-SECOND SCRAMBLE TIME RACE ENGINE ---
+        window.loadCurrentScrambleSentence = () => {
+            const state = TP_STATE.scrambleState;
+            if (!state || !state.sentences || state.sentenceIndex >= state.sentences.length) {
+                handleTpAnswer('manual', 'manual');
+                return;
+            }
+
+            const current = state.sentences[state.sentenceIndex];
+            const chunks = current.chunks || [];
+            
+            state.targetChunks = [...chunks];
+            state.currentPlacedChunks = [];
+            state.placedIndices = [];
+
+            const progressEl = document.getElementById('scramble-progress-pill');
+            const scoreEl = document.getElementById('scramble-score-num');
+            if (progressEl) progressEl.innerText = \`Sentence \${state.sentenceIndex + 1} of \${state.totalSentences}\`;
+            if (scoreEl) scoreEl.innerText = state.completedCount;
+
+            const zone = document.getElementById('tp-scramble-zone');
+            if (zone) {
+                zone.style.borderColor = "#94a3b8";
+                zone.style.backgroundColor = "#f8fafc";
+                zone.innerHTML = \`<span id="scramble-zone-placeholder" style="color:#94a3b8; font-weight:bold; font-size:1.2rem;">(Click the words/phrases below in the correct sequence)</span>\`;
+            }
+
+            const bank = document.getElementById('tp-scramble-bank');
+            if (bank) {
+                const indexedChunks = chunks.map((text, idx) => ({ text, originalIdx: idx }));
+                const shuffled = shuffleArray(indexedChunks);
+                bank.innerHTML = shuffled.map((item) => {
+                    const safe = item.text.replace(/'/g, "\\\\'");
+                    return \`<div class="tp-scramble-chip" id="scramble-chip-\${item.originalIdx}" onclick="handleTpScrambleClick('\${safe}', \${item.originalIdx})">\${item.text}</div>\`;
+                }).join('');
+            }
+        };
+
+        window.handleTpScrambleClick = (chunkText, originalIdx) => {
+            const state = TP_STATE.scrambleState;
+            if (!state) return;
+
+            const expectedNextIndex = state.currentPlacedChunks.length;
+            const expectedText = state.targetChunks[expectedNextIndex];
+
+            const chip = document.getElementById('scramble-chip-' + originalIdx);
+
+            if (chunkText === expectedText) {
+                // Correct chunk in sequence
+                state.currentPlacedChunks.push(chunkText);
+                state.placedIndices.push(originalIdx);
+
+                if (chip) {
+                    chip.style.opacity = "0.3";
+                    chip.style.pointerEvents = "none";
+                    chip.style.transform = "scale(0.95)";
+                }
+
+                const zone = document.getElementById('tp-scramble-zone');
+                const placeholder = document.getElementById('scramble-zone-placeholder');
+                if (placeholder) placeholder.remove();
+
+                const placedChip = document.createElement('div');
+                placedChip.className = "tp-scramble-chip in-zone";
+                placedChip.style.background = "#22c55e";
+                placedChip.style.color = "white";
+                placedChip.style.borderColor = "#16a34a";
+                placedChip.innerText = chunkText;
+                if (zone) zone.appendChild(placedChip);
+
+                playSfx('bonus');
+
+                // Check if sentence complete
+                if (state.currentPlacedChunks.length === state.targetChunks.length) {
+                    state.completedCount++;
+                    const scoreEl = document.getElementById('scramble-score-num');
+                    if (scoreEl) scoreEl.innerText = state.completedCount;
+
+                    if (zone) {
+                        zone.style.borderColor = "#22c55e";
+                        zone.style.backgroundColor = "#dcfce7";
+                    }
+
+                    playSfx('correct');
+
+                    // Add +10 seconds bonus to race timer
+                    TP_STATE.timer += 10;
+                    const timerEl = document.getElementById('tp-scramble-timer');
+                    if (timerEl) {
+                        const m = Math.floor(TP_STATE.timer / 60).toString().padStart(2, '0');
+                        const s = (TP_STATE.timer % 60).toString().padStart(2, '0');
+                        timerEl.innerText = m + ':' + s;
+                    }
+
+                    const bonusBadge = document.getElementById('scramble-bonus-badge');
+                    if (bonusBadge) {
+                        bonusBadge.style.display = 'block';
+                        setTimeout(() => { if (bonusBadge) bonusBadge.style.display = 'none'; }, 1800);
+                    }
+
+                    setTimeout(() => {
+                        state.sentenceIndex++;
+                        if (state.sentenceIndex < state.sentences.length) {
+                            window.loadCurrentScrambleSentence();
+                        } else {
+                            playSfx('applause');
+                            handleTpAnswer('manual', 'manual');
+                        }
+                    }, 800);
+                }
+            } else {
+                // Wrong chunk clicked
+                playSfx('wrong');
+                if (chip) {
+                    chip.classList.add('wrong-chunk');
+                    setTimeout(() => {
+                        if (chip) chip.classList.remove('wrong-chunk');
+                    }, 600);
+                }
+            }
+        };
+
+        window.resetCurrentScramble = () => {
+            window.loadCurrentScrambleSentence();
+        };
+
+        window.skipScrambleSentence = () => {
+            const state = TP_STATE.scrambleState;
+            if (!state) return;
+            state.sentenceIndex++;
+            if (state.sentenceIndex < state.sentences.length) {
+                window.loadCurrentScrambleSentence();
+            } else {
+                handleTpAnswer('manual', 'manual');
+            }
+        };
+
+        window.moveTpScramble = (el) => {};
+        window.checkTpScramble = () => {};
+        
+        window.checkTpDictation = (correctEncoded) => {
+            const input = document.getElementById('dict-input');
+            const correct = decodeURIComponent(correctEncoded).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            const user = input.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            if(user === correct) handleTpAnswer('manual', 'manual');
+            else { playSfx('wrong'); handleTpAnswer(user, correct); }
+        };
+
+        window.handleTpAnswer = (selected, correct) => {
+            clearInterval(TP_STATE.timerInterval);
+            
+            // --- MUSIC PAUSE LOGIC ---
+            if (TP_STATE.bgAudio && !TP_STATE.bgAudio.paused) {
+                TP_STATE.wasPlaying = true;
+                TP_STATE.bgAudio.pause();
+            }
+
+            const isCorrect = (tpSameText(selected, correct) || selected === 'manual') && selected !== 'timeout_expired';
+            const q = TP_STATE.queue[TP_STATE.currentIndex];
+            const feedback = q.rich_feedback || {};
+
+            // 🎓 Render the color-coded Review mini-lesson (explanation, why-correct, why-wrong, examples, speaking lab)
+            window.renderTpMiniLesson(feedback);
+
+            const card = document.querySelector('.tp-result-card');
+            const icon = document.getElementById('tp-result-icon');
+            const title = document.getElementById('tp-result-title');
+
+            if (isCorrect) {
+                icon.innerHTML = "🎉"; title.innerText = "WELL DONE!"; title.style.color = "#16a34a"; card.style.borderColor = "#22c55e"; window.playSfx('correct');
+            } else {
+                if (selected === 'timeout_expired') {
+                    icon.innerHTML = "⏰"; title.innerText = "OOPS! OUT OF TIME"; title.style.color = "#ef4444"; card.style.borderColor = "#ef4444"; window.playSfx('timeout');
+                } else {
+                    icon.innerHTML = "🤔"; title.innerText = "REVIEW"; title.style.color = "#ef4444"; card.style.borderColor = "#ef4444"; window.playSfx('wrong');
+                }
+            }
+            document.getElementById('tp-result-overlay').style.display = 'flex';
+        };
+
+        // Normalizes option text so answer detection survives letter prefixes like "a.", "b)", "A. "
+        function tpSameText(a, b) {
+            if (a === b) return true;
+            const norm = (s) => String(s || '').trim().replace(/^[a-dA-D]\s*[.)]\s*/, '').trim().toLowerCase();
+            const na = norm(a);
+            const nb = norm(b);
+            return na !== '' && na === nb;
+        }
+
+        // 🎓 Renders an AI explanation as color-coded point boxes (Meaning / Form / Use / Grammar /
+        // Vocabulary / Pronunciation / Examples / Tips / Common mistakes) — never as an unstyled wall of text.
+        function tpMiniLessonHtml(text) {
+            var raw = String(text || '');
+            if (!raw.trim()) return 'Review the material.';
+            // Normalize every flavour of newline to a safe token before the markups run.
+            raw = raw.split(String.fromCharCode(13)).join('');
+            raw = raw.split(String.fromCharCode(10)).join('|BR|');
+            raw = raw.split('\\n').join('|BR|');
+            var html = formatRichText(raw);
+            html = String(html).split('<br>').join('|BR|');
+            var parts = String(html).split('|BR|');
+            var out = [];
+            for (var p = 0; p < parts.length; p++) {
+                var line = String(parts[p] || '');
+                var t = line.replace(/<[^>]*>/g, '').trim();
+                if (!t) continue;
+                var upper = t.toUpperCase();
+                var cls = '';
+                var tag = '';
+                if (upper.indexOf('MEANING') === 0 || upper.indexOf('MEANING:') === 0 || upper.indexOf('WHAT IT MEANS') === 0) { cls = 'tp-pt-meaning'; tag = 'Meaning'; }
+                else if (upper.indexOf('FORM') === 0 || upper.indexOf('STRUCTURE') === 0 || upper.indexOf('HOW TO FORM') === 0 || upper.indexOf('HOW TO BUILD') === 0) { cls = 'tp-pt-form'; tag = 'Form'; }
+                else if (upper.indexOf('USE') === 0 || upper.indexOf('USAGE') === 0 || upper.indexOf('WHEN TO USE') === 0 || upper.indexOf('WHEN WE USE') === 0 || upper.indexOf('CONTEXT') === 0) { cls = 'tp-pt-use'; tag = 'Use'; }
+                else if (upper.indexOf('PRONUNCIATION') === 0 || upper.indexOf('STRESS') === 0 || upper.indexOf('INTONATION') === 0 || upper.indexOf('SOUNDS LIKE') === 0) { cls = 'tp-pt-pron'; tag = 'Pronunciation'; }
+                else if (upper.indexOf('GRAMMAR') === 0) { cls = 'tp-pt-grammar'; tag = 'Grammar'; }
+                else if (upper.indexOf('VOCABULARY') === 0 || upper.indexOf('VOCAB') === 0 || upper.indexOf('KEY WORDS') === 0 || upper.indexOf('KEY PHRASES') === 0) { cls = 'tp-pt-vocab'; tag = 'Vocabulary'; }
+                else if (upper.indexOf('EXAMPLE') === 0 || upper.indexOf('EXAMPLES') === 0 || upper.indexOf('FOR EXAMPLE') === 0 || upper.indexOf('FOR INSTANCE') === 0) { cls = 'tp-pt-example'; tag = 'Example'; }
+                else if (upper.indexOf('NOTE') === 0 || upper.indexOf('TIP') === 0 || upper.indexOf('REMEMBER') === 0 || upper.indexOf('HINT') === 0 || upper.indexOf('PRO TIP') === 0) { cls = 'tp-pt-tip'; tag = 'Tip'; }
+                else if (upper.indexOf('COMMON MISTAKE') === 0 || upper.indexOf('MISTAKE') === 0 || upper.indexOf('WARNING') === 0 || upper.indexOf('AVOID') === 0 || upper.indexOf("DON'T SAY") === 0) { cls = 'tp-pt-warn'; tag = 'Watch out'; }
+                out.push(cls ? '<div class="tp-ml-point ' + cls + '"><span class="tp-ml-point-tag">' + tag + '</span>' + line + '</div>' : '<div class="tp-ml-point tp-pt-plain">' + line + '</div>');
+            }
+            return out.length ? out.join('') : html;
+        }
+
+        // 🎓 REVIEW PAGE — premium color-coded mini lesson with scroller
+        window.renderTpMiniLesson = (fb) => {
+            fb = fb || {};
+            const elFocus = document.getElementById('tp-ml-focus-banner');
+            if (elFocus) {
+                if (fb.language_focus) { elFocus.style.display = 'flex'; elFocus.innerHTML = '🎯 ' + formatRichText(fb.language_focus); }
+                else { elFocus.style.display = 'none'; }
+            }
+
+            // Key language cards — term, MEANING, FORM and USE all shown as real text (no hover-only tooltips)
+            const kl = Array.isArray(fb.key_language) ? fb.key_language : [];
+            const kwEl = document.getElementById('tp-ml-keywords');
+            if (kwEl) {
+                if (kl.length > 0) {
+                    kwEl.style.display = 'flex';
+                    kwEl.innerHTML = kl.map(k => {
+                        const term = k.term || k.word || k.phrase || k.target || '';
+                        const meaning = k.meaning || k.definition || k.explanation || '';
+                        const form = k.form || k.example || '';
+                        const use = k.use || k.usage || k.context || k.when_to_use || '';
+                        const type = (k.type || 'other').toLowerCase();
+                        const typeBadge = (type === 'vocabulary' || type === 'vocab') ? 'VOCAB' : (type === 'grammar') ? 'GRAMMAR' : 'LANGUAGE';
+                        const cls = (type === 'vocabulary' || type === 'vocab') ? 'vocab' : (type === 'grammar') ? 'grammar' : 'other';
+                        return '<div class="tp-ml-keyword ' + cls + '">' +
+                            '<div class="tp-ml-k-head"><span class="tp-ml-k-type">' + typeBadge + '</span><span class="tp-ml-k-term">' + formatRichText(term) + '</span></div>' +
+                            (meaning ? '<div class="tp-ml-k-row"><strong>Meaning</strong><span>' + formatRichText(meaning) + '</span></div>' : '') +
+                            (form ? '<div class="tp-ml-k-row"><strong>Form</strong><span>' + formatRichText(form) + '</span></div>' : '') +
+                            (use ? '<div class="tp-ml-k-row"><strong>Use</strong><span>' + formatRichText(use) + '</span></div>' : '') +
+                        '</div>';
+                    }).join('');
+                } else { kwEl.style.display = 'none'; kwEl.innerHTML = ''; }
+            }
+
+            // Mini lesson body (deep explanation) — color-coded point boxes
+            const elText = document.getElementById('tp-lesson-text');
+            if (elText) elText.innerHTML = tpMiniLessonHtml(fb.explanation || '');
+
+            // ✅ Why the correct answer is right
+            const wcEl = document.getElementById('tp-ml-why-correct');
+            if (wcEl) {
+                if (fb.why_correct) {
+                    wcEl.style.display = 'block';
+                    wcEl.innerHTML = '<div class="tp-ml-why-card tp-ml-why-correct-card"><strong>✅ Why the correct answer is right</strong>' + formatRichText(fb.why_correct) + '</div>';
+                } else { wcEl.style.display = 'none'; wcEl.innerHTML = ''; }
+            }
+
+            // ❌ Why every wrong option is wrong
+            const wwEl = document.getElementById('tp-ml-why-wrong');
+            if (wwEl) {
+                const ww = Array.isArray(fb.why_wrong) ? fb.why_wrong.filter(w => w && (w.option || w.reason)) : [];
+                if (ww.length > 0) {
+                    wwEl.style.display = 'block';
+                    wwEl.innerHTML = ww.map(w => '<div class="tp-ml-why-card tp-ml-why-wrong-card"><strong>❌ Why this option is wrong</strong>' + (w.option ? '<span class="tp-ml-ww-option">' + formatRichText(w.option) + '</span><br>' : '') + formatRichText(w.reason || '') + '</div>').join('');
+                } else { wwEl.style.display = 'none'; wwEl.innerHTML = ''; }
+            }
+
+            // ✍️ Examples — the new language is styled in a different color + bold (mark)
+            const exs = Array.isArray(fb.personalized_examples) ? fb.personalized_examples : [];
+            const exEl = document.getElementById('tp-lesson-examples');
+            if (exEl) exEl.innerHTML = exs.length ? exs.map(e => '<li>' + formatRichText(e) + '</li>').join('') : '<li>No examples provided.</li>';
+
+            // 🎤 Speaking lab — CCQ + personalized follow-up questions
+            const ccqEl = document.getElementById('tp-lesson-ccq');
+            if (ccqEl) ccqEl.innerText = fb.speaking_ccq || '';
+            let fu = Array.isArray(fb.follow_ups) ? fb.follow_ups.slice() : [];
+            if (Array.isArray(fb.followups)) fu = fu.concat(fb.followups);
+            const fuEl = document.getElementById('tp-ml-followups');
+            if (fuEl) {
+                if (fu.length > 0) {
+                    fuEl.style.display = 'flex';
+                    fuEl.innerHTML = fu.map((f, i) => '<div class="tp-ml-followup"><span class="tp-ml-fu-ico">🎙️</span><span>' + (i + 1) + '. ' + formatRichText(f) + '</span></div>').join('');
+                } else { fuEl.style.display = 'none'; fuEl.innerHTML = ''; }
+            }
+        };
+
+        // 🎉 Confetti burst (pure DOM pieces — no external libraries, works offline)
+        function tpConfettiBurst() {
+            const layer = document.getElementById('tp-confetti-layer');
+            if (!layer) return;
+            layer.innerHTML = '';
+            const colors = ['#f43f5e', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#facc15', '#06b6d4', '#ec4899'];
+            for (let i = 0; i < 36; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'tp-confetti-piece';
+                piece.style.left = (6 + Math.random() * 88) + 'vw';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.borderRadius = (Math.random() > 0.5 ? '50%' : '2px');
+                piece.style.width = (7 + Math.random() * 7) + 'px';
+                piece.style.height = (10 + Math.random() * 7) + 'px';
+                piece.style.animationDelay = (Math.random() * 0.4) + 's';
+                layer.appendChild(piece);
+            }
+            setTimeout(() => { if (layer) layer.innerHTML = ''; }, 2800);
+        }
+
+        // 🎬 Celebration sequence: score sound plays first, then a success/fail meme image
+        // shows for ~5 seconds, and only THEN the leaderboard opens (with its own applause)
+        // so the leaderboard sound never cuts the +10 / -10 sound.
+        window.startTpCelebration = (amt) => {
+            const overlay = document.getElementById('tp-celebration-overlay');
+            if (!overlay || typeof TP_MEME_IMAGES === 'undefined') { window.showTpLeaderboard(true); return; }
+            // 🚫 Disable Reactions — skip the meme image + caption celebration after +10 / -10 points.
+            if (TP_STATE.disableReactions) { window.finishTpCelebration(); return; }
+            const isWin = amt > 0;
+            const pool = isWin ? TP_MEME_IMAGES.success : TP_MEME_IMAGES.fail;
+            const pick = pool[Math.floor(Math.random() * pool.length)];
+
+            const pre = new Image();
+            pre.src = pick.url;
+
+            const img = document.getElementById('tp-celebration-img');
+            if (img) { img.src = pick.url; img.onerror = function () { this.style.display = 'none'; }; img.style.display = ''; }
+            const cap = document.getElementById('tp-celebration-caption');
+            if (cap) cap.innerText = pick.caption;
+            const badge = document.getElementById('tp-celebration-badge');
+            if (badge) { badge.innerHTML = (isWin ? '✅ +' : '❌ −') + Math.abs(amt) + ' PTS'; badge.className = 'tp-celebration-badge ' + (isWin ? 'win' : 'lose'); }
+            const card = document.getElementById('tp-celebration-card');
+            if (card) card.classList.toggle('tp-celebration-lose', !isWin);
+
+            overlay.style.display = 'flex';
+            if (isWin) tpConfettiBurst();
+
+            const fill = document.getElementById('tp-celebration-timerbar-fill');
+            if (fill) { fill.style.transition = 'none'; fill.style.width = '100%'; void fill.offsetWidth; fill.style.transition = 'width 5s linear'; fill.style.width = '0%'; }
+
+            clearTimeout(TP_STATE.celebrationTimer);
+            TP_STATE.celebrationTimer = setTimeout(function () { window.finishTpCelebration(); }, 5000);
+        };
+
+        window.finishTpCelebration = () => {
+            clearTimeout(TP_STATE.celebrationTimer);
+            const overlay = document.getElementById('tp-celebration-overlay');
+            if (overlay) overlay.style.display = 'none';
+            const img = document.getElementById('tp-celebration-img');
+            if (img) { img.src = ''; img.onerror = null; }
+            // The leaderboard applause plays ONLY here — after the +10/-10 sound finished
+            window.showTpLeaderboard(true);
+        };
+
+        window.skipTpCelebration = () => {
+            window.finishTpCelebration();
+        };
+
+        window.resolveTpScore = (amt) => {
+            const p = TP_STATE.players.find(pl => pl.id == TP_STATE.activePlayerId);
+            if(p) { 
+                p.score += amt; 
+            }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            renderTpSettingsRoster(); 
+            document.getElementById('tp-result-overlay').style.display = 'none';
+            tpResetSpeakButtons();
+            
+            // --- MUSIC RESUME LOGIC ---
+            if (TP_STATE.wasPlaying && TP_STATE.bgAudio) {
+                TP_STATE.bgAudio.play();
+                TP_STATE.wasPlaying = false;
+            }
+
+            returnToGrid();
+            if(window.tpSaveHook) window.tpSaveHook();
+
+            // 🔔 SOUND SEQUENCING: the +10 chime / -10 fail buzz plays FIRST, then the
+            // meme-image celebration, and the leaderboard (with applause) opens ~5s later.
+            if (amt > 0) {
+                window.playSfx('correct');
+            } else if (amt < 0) {
+                window.playSfx('fail');
+            }
+            window.startTpCelebration(amt);
+        };
+        
+        function tpResetSpeakButtons() {
+            document.querySelectorAll('.tp-section-speak-btn').forEach(b => {
+                b.classList.remove('speaking');
+                if (b.classList.contains('tp-ml-speak-fab')) {
+                    b.innerHTML = '<i class="fas fa-volume-up"></i>';
+                } else {
+                    b.innerHTML = '<i class="fas fa-volume-up"></i> Speak';
+                }
+            });
+        }
+
+        window.speakReviewSection = (section) => {
+            if ('speechSynthesis' in window) {
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    tpResetSpeakButtons();
+                    if (TP_STATE.currentlySpeakingSection === section) {
+                        TP_STATE.currentlySpeakingSection = null;
+                        return;
+                    }
+                }
+            }
+            
+            let textToSpeak = '';
+            let btnIndex = 0;
+            if (section === 'explanation') {
+                const el = document.getElementById('tp-lesson-text');
+                textToSpeak = el ? (el.textContent || el.innerText) : '';
+                btnIndex = 0;
+            } else if (section === 'examples') {
+                const el = document.getElementById('tp-lesson-examples');
+                textToSpeak = el ? (el.textContent || el.innerText) : '';
+                btnIndex = 1;
+            } else if (section === 'ccq') {
+                const el = document.getElementById('tp-lesson-ccq');
+                const fu = document.getElementById('tp-ml-followups');
+                textToSpeak = (el ? (el.textContent || el.innerText) : '') + (fu ? ' ' + (fu.textContent || fu.innerText) : '');
+                btnIndex = 2;
+            }
+
+            if (!textToSpeak.trim()) return;
+
+            TP_STATE.currentlySpeakingSection = section;
+            const btns = document.querySelectorAll('.tp-section-speak-btn');
+            if (btns[btnIndex]) {
+                btns[btnIndex].classList.add('speaking');
+                btns[btnIndex].innerHTML = btns[btnIndex].classList.contains('tp-ml-speak-fab') ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-stop"></i> Stop';
+            }
+
+            window.playTTS(textToSpeak);
+
+            if ('speechSynthesis' in window) {
+                const checkSpeechEnd = setInterval(() => {
+                    if (!window.speechSynthesis.speaking) {
+                        clearInterval(checkSpeechEnd);
+                        TP_STATE.currentlySpeakingSection = null;
+                        tpResetSpeakButtons();
+                    }
+                }, 250);
+            }
+        };
+
+        window.toggleTpFeedbackRead = () => { window.speakReviewSection('explanation'); };
+        window.replayTpFeedbackRead = () => { window.speakReviewSection('explanation'); };
+        window.tpPlayFeedback = window.toggleTpFeedbackRead;
+
+        function tpLbAvatar(p, size) {
+            return tpAvatar(p, size);
+        }
+
+        // Premium SVG podium: 2nd / 1st / 3rd with golden trophy, medals and glass cards
+        function tpRenderPodium(sorted) {
+            const order = [sorted[1], sorted[0], sorted[2]];
+            const orderClass = ['tp-podium-2', 'tp-podium-1', 'tp-podium-3'];
+            const medals = ['🥈', '👑', '🥉'];
+            return order.map((p, i) => {
+                if (!p) return '<div class="tp-podium-card ' + orderClass[i] + '"></div>';
+                let out = '<div class="tp-podium-card ' + orderClass[i] + '">';
+                out += '<div class="tp-podium-rank">' + medals[i] + '</div>';
+                if (i === 1) {
+                    out += '<svg class="tp-lb-trophy" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tpGold" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fef3c7"/><stop offset="45%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#d97706"/></linearGradient></defs><path d="M14 10h36v2a18 18 0 0 1-36 0v-2z" fill="url(#tpGold)"/><path d="M14 10h4v8h-4zM46 10h4v8h-4z" fill="url(#tpGold)"/><path d="M32 30c-9 0-15 5-15 12v4h30v-4c0-7-6-12-15-12z" fill="url(#tpGold)"/><path d="M23 48c0-6 9-9 9-9s9 3 9 9v6H23v-6z" fill="url(#tpGold)"/><rect x="29" y="54" width="6" height="8" fill="url(#tpGold)"/></svg>';
+                } else {
+                    out += '<div style="height:58px;"></div>';
+                }
+                out += tpLbAvatar(p, 92);
+                out += '<div class="tp-podium-name">' + p.name + '</div>';
+                out += '<div class="tp-podium-score">' + (p.score || 0) + ' pts</div>';
+                out += '</div>';
+                return out;
+            }).join('');
+        }
+
+        window.showTpLeaderboard = (interstitial = false) => {
+            document.getElementById('tp-leaderboard-screen').style.display = 'flex';
+            const sorted = [...TP_STATE.players].sort((a, b) => (b.score || 0) - (a.score || 0));
+            const maxScore = Math.max(100, (sorted[0] && sorted[0].score) || 100);
+            const prevScores = TP_STATE.lastScores || {};
+
+            // 🏆 SVG podium (top 3)
+            const podium = document.getElementById('tp-lb-podium');
+            if (podium) podium.innerHTML = tpRenderPodium(sorted);
+
+            // 📊 Animated ranking rows with delta flash (+10 / -10) after scoring
+            const container = document.getElementById('tp-live-scores');
+            if (container) {
+                container.innerHTML = sorted.map((p, i) => {
+                    const delta = (p.score || 0) - (prevScores[p.id] || 0);
+                    const medal = i === 0 ? '👑' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : ''));
+                    const deltaHtml = delta > 0 ? '<span class="tp-lb-delta up">+' + delta + '</span>' : (delta < 0 ? '<span class="tp-lb-delta down">' + delta + '</span>' : '');
+                    const pct = Math.max(4, Math.min(100, ((p.score || 0) / maxScore) * 100));
+                    return '<div class="tp-score-bar-container">' +
+                        '<div class="tp-score-label">' +
+                            (medal ? '<span style="font-size:1.5rem;">' + medal + '</span>' : '<span class="tp-lb-rank-badge">' + (i + 1) + '</span>') +
+                            tpLbAvatar(p, 42) +
+                            '<span style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + p.name + '</span>' +
+                        '</div>' +
+                        '<div class="tp-score-track"><div class="tp-score-fill rank-' + i + '" style="width:' + pct + '%;"></div></div>' +
+                        '<div class="tp-score-val">' + (p.score || 0) + '</div>' +
+                        deltaHtml +
+                    '</div>';
+                }).join('');
+            }
+
+            TP_STATE.lastScores = {};
+            sorted.forEach(p => { TP_STATE.lastScores[p.id] = p.score || 0; });
+
+            const clickList = document.getElementById('tp-leaderboard-players-click');
+            if (clickList) {
+                clickList.innerHTML = sorted.map(p => '<div class="click-player-card" onclick="setTpActivePlayer(' + p.id + '); document.getElementById(\\'tp-leaderboard-screen\\').style.display=\\'none\\'; returnToGrid();"><img src="' + tpAvatar(p) + '"> ' + p.name + '\\'s Turn</div>').join('');
+            }
+            window.playSfx('applause');
+        };
+
+        window.populateTpVoices = () => {
+            const select = document.getElementById('tp-voice-select');
+            if (select) {
+                const voices = window.speechSynthesis.getVoices();
+                // Grouped natural voices: British first (red), then US/AU/CA/IE/NZ/IN..., then all other voices.
+                if (window.__populateGroupedVoiceSelect) {
+                    window.__populateGroupedVoiceSelect(select, voices, TP_STATE.preferredVoice, true);
+                } else {
+                    select.innerHTML = '<option value="">Auto (Natural Neural)</option>';
+                    voices.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.voiceURI;
+                        opt.innerText = v.name + ' (' + v.lang + ')';
+                        select.appendChild(opt);
+                    });
+                }
+                const best = resolveTpVoice(TP_STATE.preferredVoice, voices);
+                if (best) {
+                    select.value = best.voiceURI;
+                    TP_STATE.preferredVoice = best.voiceURI;
+                }
+            }
+        };
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                if (typeof window.populateTpVoices === 'function') window.populateTpVoices();
+            };
+        }
+        window.updateTpVoice = () => { TP_STATE.preferredVoice = document.getElementById('tp-voice-select').value; };
+
+        window.toggleTpLaser = () => {
+            TP_STATE.laserActive = !TP_STATE.laserActive;
+            const btn = document.getElementById('tp-laser-btn');
+            const dot = document.getElementById('tp-laser-dot');
+            if (TP_STATE.laserActive) {
+                btn.classList.add('active'); dot.style.display = 'block'; document.body.classList.add('tp-laser-mode'); document.addEventListener('mousemove', moveTpLaser);
+            } else {
+                btn.classList.remove('active'); dot.style.display = 'none'; document.body.classList.remove('tp-laser-mode'); document.removeEventListener('mousemove', moveTpLaser);
+            }
+        };
+        function moveTpLaser(e) {
+            const dot = document.getElementById('tp-laser-dot'); dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px';
+            const trail = document.createElement('div'); trail.className = 'tp-laser-trail'; trail.style.left = e.clientX + 'px'; trail.style.top = e.clientY + 'px'; document.body.appendChild(trail); setTimeout(() => trail.remove(), 500);
+        }
+
+        // --- CONVERSATION GAME HELPER FUNCTIONS ---
+        function buildFallbackConvOptions(chars, turn) {
+            const reactionsFor = (mode, points) => {
+                const rx = {};
+                (chars || []).forEach(c => {
+                    if (mode === 'optimal') rx[c.name] = { emoji: '😊', status: 'Appreciates your response (+' + points + ' pts)' };
+                    else if (mode === 'ok') rx[c.name] = { emoji: '😐', status: 'Notes your response (+' + points + ' pts)' };
+                    else if (mode === 'poor') rx[c.name] = { emoji: '😠', status: 'Upset by your tone (+' + points + ' pts)' };
+                    else rx[c.name] = { emoji: '😡', status: 'Offended by your response (' + points + ' pts)' };
+                });
+                return rx;
+            };
+            return [
+                { text: "I see what you mean, and I appreciate your perspective. Let's look for a solution that works for both of us.", register: 'Diplomatic & Collaborative', politeness: 'High (Courteous)', directness: 'Balanced & Tactful', perspective: 'Win-Win / Solution Focus', appropriateness: 'optimal', score: 25, feedback: 'The speaker validates the other person\\'s point of view and proposes teamwork. This is the most effective professional register; it keeps relationships healthy and moves the conversation forward.', reactions: reactionsFor('optimal', 25) },
+                { text: "I understand your point, but I think we should stay focused on the main goal and move forward carefully.", register: 'Direct & Professional', politeness: 'Neutral (Polite)', directness: 'Direct & Constructive', perspective: 'Goal-Focused', appropriateness: 'acceptable', score: 12, feedback: 'This is clear and professional, but it does not invite collaboration as strongly as the first option.', reactions: reactionsFor('ok', 12) },
+                { text: "That doesn't sound right to me. We already made our decision, so let's not waste more time on it.", register: 'Blunt & Dismissive', politeness: 'Low (Abrasive)', directness: 'Extremely Direct', perspective: 'Unilateral Refusal', appropriateness: 'poor', score: 3, feedback: 'The tone is dismissive and shuts the other person down. It may win the argument, but it damages trust quickly.', reactions: reactionsFor('poor', 3) },
+                { text: "Honestly, I don't care what you think about this. It is my call, and we are moving ahead whether you like it or not.", register: 'Hostile & Disrespectful', politeness: 'Inappropriate / Hostile', directness: 'Aggressive', perspective: 'Disrespectful / Dominating', appropriateness: 'unacceptable', score: -15, feedback: 'This response is deeply disrespectful. It destroys the relationship and would be unacceptable in any professional setting.', reactions: reactionsFor('bad', -15) }
+            ];
+        }
+
+        // Ensures every missing turn has its own options and that at least one choice point exists.
+        function ensureConvChoices(turns, chars) {
+            if (!Array.isArray(turns)) return [];
+            const out = turns.map((t, i) => {
+                if (!t) return t;
+                if (t.missing && (!Array.isArray(t.options) || t.options.length === 0)) {
+                    const copy = Object.assign({}, t);
+                    copy.options = buildFallbackConvOptions(chars, t);
+                    copy._fallbackOptions = true;
+                    return copy;
+                }
+                return t;
+            });
+            // If absolutely no choice points exist in the data, turn the last dialogue turn
+            // into a choice point so the learner always gets to respond inside the story.
+            const hasChoice = out.some(t => t && Array.isArray(t.options) && t.options.length > 0);
+            if (!hasChoice && out.length > 0) {
+                const last = out[out.length - 1];
+                const copy = Object.assign({}, last);
+                copy.missing = true;
+                copy.prompt = last.prompt || 'How would you respond to what they just said?';
+                copy.options = buildFallbackConvOptions(chars, last);
+                out[out.length - 1] = copy;
+            }
+            return out;
+        }
+
+        window.updateConvTurnUI = () => {
+            const turns = TP_STATE.convTurns || [];
+            const chars = TP_STATE.convChars || [];
+            const idx = TP_STATE.convTurnIndex || 0;
+            const display = document.getElementById('conv-turn-display');
+            const counter = document.getElementById('conv-turn-counter');
+            const nextBtn = document.getElementById('conv-next-btn');
+            const scoreBadge = document.getElementById('tp-conv-score-badge');
+
+            if (!display) return;
+            if (scoreBadge) scoreBadge.innerText = (TP_STATE.convScore || 0) + ' pts';
+
+            if (idx >= turns.length) {
+                const totalScore = TP_STATE.convScore || 0;
+                display.innerHTML = \`<div style="text-align:center; padding:32px; background:linear-gradient(135deg, #f5f3ff, #ede9fe); border:2px solid #8b5cf6; border-radius:20px; animation: popIn 0.3s;">
+                    <div style="font-size:3.5rem; margin-bottom:12px;">🎭</div>
+                    <h2 style="color:#5b21b6; margin:0 0 8px 0; font-size:1.8rem;">Conversation Simulation Complete!</h2>
+                    <div style="font-size:1.3rem; font-weight:900; color:#7c3aed; margin-bottom:12px;">Final Appropriateness Score: \${totalScore} pts</div>
+                    <p style="color:#4c1d95; font-size:1.1rem; max-width:620px; margin:0 auto 16px auto; line-height:1.5;">
+                        You have evaluated communicative registers, politeness levels, directness, and interpersonal perspectives across all conversation turns!
+                    </p>
+                </div>\`;
+                if (counter) counter.innerText = \`Completed all \${turns.length} Turns\`;
+                if (nextBtn) {
+                    nextBtn.innerText = "Finish Conversation Lab";
+                    nextBtn.onclick = () => handleTpAnswer('manual', 'manual');
+                }
+                playSfx('applause');
+                return;
+            }
+
+            const turn = turns[idx];
+            const char = chars.find(c => (c.name || '').toLowerCase() === (turn.speaker || '').toLowerCase()) || chars[idx % chars.length] || { name: turn.speaker, emoji: '💬', voice: 'Microsoft Ava Multilingual Online (Natural)' };
+            const hasOptions = Array.isArray(turn.options) && turn.options.length > 0;
+            const answeredChoice = TP_STATE.convAnsweredTurns && TP_STATE.convAnsweredTurns[idx];
+
+            if (hasOptions) {
+                // Missing dialogue line: User must choose among options of different registers & politeness
+                let optionsHtml = turn.options.map((opt, optIdx) => {
+                    const isChosen = answeredChoice && answeredChoice.optionIndex === optIdx;
+                    let borderCol = '#cbd5e1';
+                    let bgCol = '#ffffff';
+                    let badgeBg = '#f1f5f9';
+                    let badgeCol = '#475569';
+
+                    if (isChosen) {
+                        const app = (opt.appropriateness || 'appropriate').toLowerCase();
+                        if (app === 'inappropriate' || app === 'offensive' || app === 'unacceptable' || opt.perspective === 'racist' || opt.perspective === 'sexist' || (typeof opt.score === 'number' && opt.score < 0)) {
+                            borderCol = '#ef4444';
+                            bgCol = '#fef2f2';
+                            badgeBg = '#fee2e2';
+                            badgeCol = '#991b1b';
+                        } else if (app === 'suboptimal' || app === 'poor' || app === 'too blunt' || app === 'overly informal' || app === 'passive-aggressive') {
+                            borderCol = '#f59e0b';
+                            bgCol = '#fffbeb';
+                            badgeBg = '#fef3c7';
+                            badgeCol = '#92400e';
+                        } else {
+                            borderCol = '#10b981';
+                            bgCol = '#ecfdf5';
+                            badgeBg = '#d1fae5';
+                            badgeCol = '#065f46';
+                        }
+                    }
+
+                    return \`<div class="tp-conv-option-card \${isChosen ? 'chosen' : ''}" style="background:\${bgCol}; border:2px solid \${borderCol}; border-radius:14px; padding:16px; margin-bottom:12px; cursor:pointer; transition:all 0.2s ease; box-shadow:0 2px 6px rgba(0,0,0,0.04);" onclick="selectConvOption(\${idx}, \${optIdx})">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                            <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                                \${isChosen && opt.appropriateness ? ('<span style="font-size:0.75rem; font-weight:900; padding:2px 8px; border-radius:10px; background:' + badgeBg + '; color:' + badgeCol + '; text-transform:uppercase;">' + opt.appropriateness + (answeredChoice && typeof answeredChoice.points === 'number' ? (' (' + (answeredChoice.points > 0 ? '+' : '') + answeredChoice.points + ' pts)') : '') + '</span>') : ''}
+                                \${opt.register ? ('<span style="font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:10px; background:#f1f5f9; color:#475569; text-transform:uppercase;">' + opt.register + '</span>') : ''}
+                                \${opt.politeness ? ('<span style="font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:10px; background:#f5f3ff; color:#6d28d9;">' + opt.politeness + '</span>') : ''}
+                                \${opt.directness ? ('<span style="font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:10px; background:#f0f9ff; color:#0369a1;">' + opt.directness + '</span>') : ''}
+                                \${opt.perspective ? ('<span style="font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:10px; background:#fff1f2; color:#be123c;">' + opt.perspective + '</span>') : ''}
+                            </div>
+                            <span style="font-size:0.8rem; font-weight:900; color:#64748b;">\${isChosen ? '✓ Selected' : 'Click to select'}</span>
+                        </div>
+                        <div style="font-size:1.2rem; font-weight:700; color:#0f172a; line-height:1.5;">
+                            "\${formatRichText(opt.text || opt.line)}"
+                        </div>
+                        \${isChosen && (opt.feedback || opt.explanation) ? ('<div style="margin-top:10px; padding:10px 14px; background:rgba(255,255,255,0.85); border-radius:8px; font-size:0.92rem; color:#334155; border-left:4px solid ' + borderCol + '; line-height:1.4;"><strong>Register Analysis:</strong> ' + formatRichText(opt.feedback || opt.explanation) + '</div>') : ''}
+                    </div>\`;
+                }).join('');
+
+                let reactionBanner = '';
+                if (answeredChoice) {
+                    const opt = turn.options[answeredChoice.optionIndex];
+                    let rxList = [];
+                    if (opt.reactions && typeof opt.reactions === 'object') {
+                        Object.keys(opt.reactions).forEach(charName => {
+                            const r = opt.reactions[charName];
+                            rxList.push({ character: charName, emoji: r.emoji || '💬', text: r.status || r.text || '' });
+                        });
+                    } else if (opt.reaction) {
+                        rxList.push(opt.reaction);
+                    } else if (Array.isArray(opt.character_reactions)) {
+                        rxList = opt.character_reactions;
+                    }
+                    if (rxList.length > 0) {
+                        reactionBanner = \`<div style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">\` +
+                            rxList.map(rx => \`<div style="padding:10px 16px; border-radius:12px; background:#f8fafc; border:2px solid #8b5cf6; display:flex; align-items:center; gap:12px; animation: popIn 0.3s ease-out;">
+                                <span style="font-size:1.8rem;">\${rx.emoji || '💬'}</span>
+                                <div style="flex:1;">
+                                    <div style="font-weight:900; font-size:0.95rem; color:#4c1d95;">Reaction from \${rx.character || 'Others'}:</div>
+                                    <div style="font-size:1.05rem; color:#1e293b; font-style:italic;">"\${formatRichText(rx.text || rx.comment || 'Acknowledged.')}"</div>
+                                </div>
+                            </div>\`).join('') + \`</div>\`;
+                    }
+                }
+
+                display.innerHTML = \`<div style="background:#ffffff; border:3px solid #8b5cf6; border-radius:20px; padding:22px; box-shadow:0 10px 25px rgba(139,92,246,0.12); animation: popIn 0.3s ease-out;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span style="font-size:2.6rem;">\${char.emoji}</span>
+                            <div>
+                                <span style="font-size:1.25rem; font-weight:900; color:#4c1d95;">\${turn.speaker}</span>
+                                <span style="margin-left:8px; font-size:0.8rem; background:#ede9fe; color:#6d28d9; padding:3px 10px; border-radius:12px; font-weight:bold;">Missing Line - Select Response</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    \${turn.context_prompt ? ('<div style="font-size:1.1rem; color:#475569; margin-bottom:14px; background:#f8fafc; padding:10px 14px; border-radius:10px; border-left:4px solid #3b82f6;"><strong>Context:</strong> ' + formatRichText(turn.context_prompt) + '</div>') : ''}
+
+                    <div style="font-size:0.95rem; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:10px;">
+                        Choose the response and observe how register, politeness & perspective affect the dynamic:
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        \${optionsHtml}
+                    </div>
+
+                    \${reactionBanner}
+                </div>\`;
+
+                if (counter) counter.innerText = \`Turn \${idx + 1} of \${turns.length} (Choice Point)\`;
+                if (nextBtn) {
+                    nextBtn.innerText = "Next Turn";
+                    nextBtn.disabled = !answeredChoice;
+                    nextBtn.style.opacity = answeredChoice ? '1' : '0.5';
+                    nextBtn.onclick = () => window.nextConvTurn();
+                }
+            } else {
+                // Standard dialogue turn
+                const safeText = encodeURIComponent(turn.text || '').replace(/'/g, "%27");
+
+                display.innerHTML = \`<div style="background:#ffffff; border:3px solid #8b5cf6; border-radius:20px; padding:22px; box-shadow:0 10px 25px rgba(139,92,246,0.12); animation: popIn 0.3s ease-out;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span style="font-size:2.6rem;">\${char.emoji}</span>
+                            <div>
+                                <span style="font-size:1.25rem; font-weight:900; color:#4c1d95;">\${turn.speaker}</span>
+                                \${char.style ? ('<span style="margin-left:8px; font-size:0.75rem; background:#f3e8ff; color:#7c3aed; padding:2px 8px; border-radius:10px; font-weight:bold;">' + char.style + '</span>') : ''}
+                            </div>
+                        </div>
+                        <button class="tp-big-btn neutral" style="padding:6px 14px; font-size:1rem;" onclick="playEncodedTTS('\${safeText}')">
+                            <i class="fas fa-volume-up"></i> Read Aloud
+                        </button>
+                    </div>
+
+                    <div style="font-size:1.45rem; color:#0f172a; line-height:1.6; font-weight:600; background:#f8fafc; padding:18px; border-radius:12px; border-left:5px solid #8b5cf6; margin-bottom:16px;">
+                        "\${formatRichText(turn.text)}"
+                    </div>
+
+                    \${turn.ccq ? ('<div style="background:#f0f9ff; border:1px solid #bae6fd; padding:12px 16px; border-radius:10px; color:#0369a1; font-weight:bold; margin-bottom:12px;"><i class="fas fa-question-circle"></i> <strong>Concept Check:</strong> ' + turn.ccq + '</div>') : ''}
+
+                    \${turn.checklist && turn.checklist.length > 0 ? ('<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px;"><div style="font-size:0.85rem; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Checklist:</div><div style="display:flex; flex-direction:column; gap:6px;">' + turn.checklist.map(function(item) { return '<label style="display:flex; align-items:center; gap:8px; font-size:1rem; cursor:pointer; color:#334155;"><input type="checkbox" style="width:18px; height:18px;"> <span>' + formatRichText(item) + '</span></label>'; }).join('') + '</div></div>') : ''}
+                </div>\`;
+
+                if (counter) counter.innerText = \`Turn \${idx + 1} of \${turns.length}\`;
+                if (nextBtn) {
+                    nextBtn.disabled = false;
+                    nextBtn.style.opacity = '1';
+                    nextBtn.innerText = "Next Turn";
+                    nextBtn.onclick = () => window.nextConvTurn();
+                }
+            }
+        };
+
+        window.selectConvOption = (turnIdx, optIdx) => {
+            const turns = TP_STATE.convTurns || [];
+            const turn = turns[turnIdx];
+            if (!turn || !turn.options || !turn.options[optIdx]) return;
+            const opt = turn.options[optIdx];
+
+            if (!TP_STATE.convAnsweredTurns) TP_STATE.convAnsweredTurns = {};
+            const prevChoice = TP_STATE.convAnsweredTurns[turnIdx];
+            if (prevChoice) {
+                // Deduct previous score delta
+                TP_STATE.convScore = Math.max(0, (TP_STATE.convScore || 0) - (prevChoice.points || 0));
+            }
+
+            let points = 0;
+            if (typeof opt.score === 'number') {
+                points = opt.score;
+            } else if (typeof opt.points === 'number') {
+                points = opt.points;
+            } else {
+                const app = (opt.appropriateness || 'appropriate').toLowerCase();
+                if (app === 'optimal' || app === 'high' || app === 'appropriate') points = 25;
+                else if (app === 'acceptable' || app === 'medium' || app === 'suboptimal') points = 12;
+                else if (app === 'poor' || app === 'low') points = 3;
+                else if (app === 'unacceptable' || app === 'inappropriate' || app === 'offensive') points = -15;
+                else points = 10;
+            }
+
+            TP_STATE.convAnsweredTurns[turnIdx] = { optionIndex: optIdx, points: points };
+            TP_STATE.convScore = (TP_STATE.convScore || 0) + points;
+
+            // Handle reactions on characters
+            if (TP_STATE.convChars) {
+                const applyReaction = (charIdentifier, emojiVal, statusVal) => {
+                    const cleanTarget = (charIdentifier || '').toLowerCase();
+                    const rxChar = TP_STATE.convChars.find(c => {
+                        const cName = (c.name || '').toLowerCase();
+                        return cName === cleanTarget || cName.includes(cleanTarget) || cleanTarget.includes(cName);
+                    });
+                    if (rxChar) {
+                        rxChar.currentEmoji = emojiVal || rxChar.originalEmoji || '👤';
+                        rxChar.currentStatus = statusVal || (points >= 15 ? 'Reassured (+25)' : points < 0 ? 'Offended (-15)' : 'Reacted');
+
+                        const safeId = encodeURIComponent(rxChar.name).replace(/[^a-zA-Z0-9]/g, '_');
+                        const cardEl = document.getElementById('conv-char-card-' + safeId);
+                        const emojiEl = document.getElementById('conv-char-emoji-' + safeId);
+                        const statusEl = document.getElementById('conv-char-status-' + safeId);
+
+                        if (emojiEl) emojiEl.innerText = rxChar.currentEmoji;
+                        if (statusEl) statusEl.innerText = rxChar.currentStatus;
+                        if (cardEl) {
+                            cardEl.classList.add('reacting');
+                            setTimeout(() => cardEl.classList.remove('reacting'), 1000);
+                        }
+                    }
+                };
+
+                if (opt.reactions && typeof opt.reactions === 'object' && !Array.isArray(opt.reactions)) {
+                    Object.keys(opt.reactions).forEach(charName => {
+                        const r = opt.reactions[charName];
+                        if (typeof r === 'string') {
+                            applyReaction(charName, r, '');
+                        } else if (r && typeof r === 'object') {
+                            applyReaction(charName, r.emoji, r.status || r.mood || r.text || '');
+                        }
+                    });
+                } else if (opt.reaction) {
+                    applyReaction(opt.reaction.character, opt.reaction.emoji, opt.reaction.status || opt.reaction.mood || opt.reaction.text);
+                } else if (Array.isArray(opt.character_reactions)) {
+                    opt.character_reactions.forEach(r => {
+                        applyReaction(r.character, r.emoji, r.status || r.mood || r.text);
+                    });
+                }
+            }
+
+            if (points >= 10) {
+                playSfx('correct');
+            } else if (points < 0) {
+                playSfx('wrong');
+            } else {
+                playSfx('correct');
+            }
+
+            // Speak option using TTS
+            if (opt.text || opt.line) {
+                const safeOpt = encodeURIComponent(opt.text || opt.line).replace(/'/g, "%27");
+                window.playEncodedTTS(safeOpt);
+            }
+
+            window.updateConvTurnUI();
+        };
+
+        window.nextConvTurn = () => {
+            TP_STATE.convTurnIndex = (TP_STATE.convTurnIndex || 0) + 1;
+            window.updateConvTurnUI();
+        };
+
+        // --- TRUE / FALSE HELPER FUNCTIONS ---
+        window.updateTrueFalseUI = () => {
+            const qs = TP_STATE.tfQuestions || [];
+            const idx = TP_STATE.tfIndex || 0;
+            const display = document.getElementById('tf-question-display');
+            if (!display) return;
+
+            if (idx >= qs.length) {
+                handleTpAnswer('manual', 'manual');
+                return;
+            }
+
+            const item = qs[idx];
+            const isTrue = item.answer === true || String(item.answer).toLowerCase() === 'true';
+
+            display.innerHTML = \`<div style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:20px 0; min-height:80px; line-height:1.5;">
+                "\${formatRichText(item.statement || item.question)}"
+            </div>
+
+            <div style="display:flex; gap:20px; justify-content:center; margin-top:30px;">
+                <button class="tp-big-btn pos" style="flex:1; max-width:220px; font-size:1.8rem; padding:20px; background:#22c55e; border-bottom:6px solid #15803d; border-radius:16px; cursor:pointer; color:white; font-weight:900;" onclick="handleTFChoice(true, \${isTrue})">
+                    🟢 TRUE
+                </button>
+                <button class="tp-big-btn neg" style="flex:1; max-width:220px; font-size:1.8rem; padding:20px; background:#ef4444; border-bottom:6px solid #b91c1c; border-radius:16px; cursor:pointer; color:white; font-weight:900;" onclick="handleTFChoice(false, \${isTrue})">
+                    🔴 FALSE
+                </button>
+            </div>\`;
+        };
+
+        window.handleTFChoice = (userChoice, correctChoice) => {
+            const isCorrect = userChoice === correctChoice;
+            const banner = document.getElementById('tf-feedback-banner');
+
+            if (isCorrect) {
+                TP_STATE.timer = (TP_STATE.timer || 0) + 5;
+                playSfx('correct');
+                if (banner) {
+                    banner.style.display = 'block';
+                    banner.style.background = '#dcfce7';
+                    banner.style.color = '#15803d';
+                    banner.style.border = '2px solid #22c55e';
+                    banner.innerHTML = '⚡ CORRECT! +5 SECONDS BONUS!';
+                }
+            } else {
+                TP_STATE.timer = Math.max(1, (TP_STATE.timer || 0) - 10);
+                playSfx('wrong');
+                if (banner) {
+                    banner.style.display = 'block';
+                    banner.style.background = '#fee2e2';
+                    banner.style.color = '#b91c1c';
+                    banner.style.border = '2px solid #ef4444';
+                    banner.innerHTML = '💥 INCORRECT! -10 SECONDS PENALTY!';
+                }
+            }
+
+            setTimeout(() => {
+                if (banner) banner.style.display = 'none';
+                TP_STATE.tfIndex = (TP_STATE.tfIndex || 0) + 1;
+                window.updateTrueFalseUI();
+            }, 800);
+        };
+
+        // --- DISCUSSION HELPER FUNCTIONS ---
+        window.updateDiscussionUI = () => {
+            const prompts = TP_STATE.discPrompts || [];
+            const idx = TP_STATE.discIndex || 0;
+            const display = document.getElementById('disc-prompt-display');
+            const counter = document.getElementById('disc-prompt-counter');
+            const nextBtn = document.getElementById('disc-next-btn');
+            if (!display) return;
+
+            if (idx >= prompts.length) {
+                handleTpAnswer('manual', 'manual');
+                return;
+            }
+
+            const item = prompts[idx];
+            const safeText = encodeURIComponent(item.question || '').replace(/'/g, "%27");
+
+            display.innerHTML = \`<div style="background:#f8fafc; border:2px solid #0284c7; border-radius:20px; padding:20px; box-shadow:0 4px 15px rgba(2,132,199,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <span style="font-size:0.9rem; font-weight:900; color:#0369a1; text-transform:uppercase;">Discussion Prompt #\${idx + 1}</span>
+                    <button class="tp-big-btn neutral" style="padding:6px 14px; font-size:1rem;" onclick="playEncodedTTS('\${safeText}')">
+                        <i class="fas fa-volume-up"></i> Read Prompt
+                    </button>
+                </div>
+
+                <div style="font-size:1.5rem; font-weight:800; color:#0f172a; line-height:1.5; margin-bottom:20px;">
+                    \${formatRichText(item.question)}
+                </div>
+
+                \${item.checklist && item.checklist.length > 0 ? ('<div style="background:white; border:1px solid #cbd5e1; border-radius:12px; padding:15px;"><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span style="font-size:0.9rem; font-weight:800; color:#475569;"><i class="fas fa-list-check"></i> Speaking Checklist</span><span id="disc-cb-count" style="font-size:0.9rem; font-weight:bold; color:#22c55e;">0/' + item.checklist.length + '</span></div><div style="display:flex; flex-direction:column; gap:8px;">' + item.checklist.map(function(c) { return '<label style="display:flex; align-items:center; gap:10px; font-size:1.1rem; cursor:pointer; color:#334155;"><input type="checkbox" class="disc-cb" onchange="updateDiscProgress()"> <span>' + formatRichText(c) + '</span></label>'; }).join('') + '</div><div id="disc-breakthrough" style="display:none; color:#22c55e; font-weight:bold; text-align:center; margin-top:10px; font-size:1.2rem; animation: popIn 0.3s;">🎉 Great speaking points covered!</div></div>') : ''}
+            </div>\`;
+
+            if (counter) counter.innerText = \`Iteration \${idx + 1} of \${prompts.length}\`;
+            if (nextBtn) {
+                nextBtn.innerText = idx === prompts.length - 1 ? "Finish Discussion" : "Next Discussion Prompt";
+            }
+        };
+
+        window.updateDiscProgress = () => {
+            const cbs = document.querySelectorAll('.disc-cb');
+            const checked = Array.from(cbs).filter(cb => cb.checked).length;
+            const countEl = document.getElementById('disc-cb-count');
+            const btMsg = document.getElementById('disc-breakthrough');
+
+            if (countEl) countEl.innerText = \`\${checked}/\${cbs.length}\`;
+            if (checked === cbs.length && btMsg) {
+                btMsg.style.display = 'block';
+                playSfx('correct');
+            }
+        };
+
+        window.nextDiscPrompt = () => {
+            TP_STATE.discIndex = (TP_STATE.discIndex || 0) + 1;
+            playSfx('correct');
+            window.updateDiscussionUI();
+        };
+
+        /* ================= DEDICATED MOBILE SHELL (phones) ================= */
+        window.tpIsMobileLayout = function () {
+            try { return window.matchMedia('(max-width: 820px), (max-width: 1024px) and (pointer: coarse)').matches; }
+            catch (e) { return window.innerWidth <= 820; }
+        };
+
+        window.toggleTpDrawer = function (force) {
+            const overlay = document.getElementById('testing-panel-overlay');
+            if (!overlay) return;
+            const open = (typeof force === 'boolean') ? force : !overlay.classList.contains('tp-drawer-open');
+            overlay.classList.toggle('tp-drawer-open', open);
+        };
+
+        window.closeTpDrawer = function () { window.toggleTpDrawer(false); };
+
+        window.syncTpMobileTabs = function (tab) {
+            let key = tab || '';
+            if (!key) {
+                const activeView = document.querySelector('.tp-view.active');
+                key = (activeView && activeView.id) ? String(activeView.id).replace('tp-tab-', '') : '';
+            }
+            document.querySelectorAll('.tp-mobile-tab').forEach(function (btn) {
+                btn.classList.toggle('active', (btn.getAttribute('data-tp-tab') || '') === key);
+            });
+        };
+
+        window.tpMobileTab = function (tab) {
+            if (typeof window.switchTpTab === 'function') window.switchTpTab(tab);
+            window.closeTpDrawer();
+            window.syncTpMobileTabs(tab);
+        };
+
+        (function initTpMobileShell() {
+            const overlay = document.getElementById('testing-panel-overlay');
+            if (!overlay) return;
+            window.syncTpMobileTabs();
+
+            const closeDrawer = function () { window.closeTpDrawer(); };
+            window.addEventListener('resize', closeDrawer);
+            window.addEventListener('orientationchange', closeDrawer);
+            if (window.visualViewport) window.visualViewport.addEventListener('resize', closeDrawer);
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.closeTpDrawer(); });
+
+            // A tap on the playfield means the drawer is no longer needed.
+            ['tp-lobby-screen', 'tp-game-stage', 'tp-leaderboard-screen'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('click', function (ev) {
+                    if (ev.target && ev.target.closest && ev.target.closest('.tp-sidebar')) return;
+                    if (window.tpIsMobileLayout()) window.closeTpDrawer();
+                });
+            });
+
+            // Edge swipe: right from the left edge opens the drawer, left swipe closes it.
+            let touchStartX = 0, touchStartY = 0;
+            overlay.addEventListener('touchstart', function (e) {
+                if (!window.tpIsMobileLayout() || !e.touches || !e.touches.length) return;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            overlay.addEventListener('touchend', function (e) {
+                if (!window.tpIsMobileLayout() || !e.changedTouches || !e.changedTouches.length) return;
+                const dx = e.changedTouches[0].clientX - touchStartX;
+                const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+                if (dy > 60 || Math.abs(dx) < 60) return;
+                const open = overlay.classList.contains('tp-drawer-open');
+                if (!open && touchStartX <= 32 && dx > 0) window.toggleTpDrawer(true);
+                else if (open && dx < 0) window.toggleTpDrawer(false);
+            }, { passive: true });
+
+            setTimeout(function () { window.syncTpMobileTabs(); }, 400);
+        })();
+    `;
+
+    return { html, css, js };
+};

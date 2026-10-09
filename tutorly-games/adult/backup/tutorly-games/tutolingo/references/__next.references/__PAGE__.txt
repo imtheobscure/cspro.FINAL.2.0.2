@@ -1,0 +1,9 @@
+1:"$Sreact.fragment"
+2:I[97937,["/tutorly-games/tutolingo/_next/static/chunks/0pigp_b-mj~y-.js","/tutorly-games/tutolingo/_next/static/chunks/06r9~8_7c5vd5.js","/tutorly-games/tutolingo/_next/static/chunks/0xfy855a5wad0.js"],"ClientPageRoot"]
+3:I[53100,["/tutorly-games/tutolingo/_next/static/chunks/0pigp_b-mj~y-.js","/tutorly-games/tutolingo/_next/static/chunks/06r9~8_7c5vd5.js","/tutorly-games/tutolingo/_next/static/chunks/0xfy855a5wad0.js","/tutorly-games/tutolingo/_next/static/chunks/0ra1wd26nrt.~.js","/tutorly-games/tutolingo/_next/static/chunks/11.-g4gc3~235.js"],"default"]
+6:I[79702,["/tutorly-games/tutolingo/_next/static/chunks/0pigp_b-mj~y-.js","/tutorly-games/tutolingo/_next/static/chunks/06r9~8_7c5vd5.js","/tutorly-games/tutolingo/_next/static/chunks/0xfy855a5wad0.js"],"OutletBoundary"]
+7:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/tutorly-games/tutolingo/_next/static/chunks/0ra1wd26nrt.~.js","async":true}],["$","script","script-1",{"src":"/tutorly-games/tutolingo/_next/static/chunks/11.-g4gc3~235.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"NiwYZMRPbGWRY-Ic0U15t"}
+4:{}
+5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
+8:null

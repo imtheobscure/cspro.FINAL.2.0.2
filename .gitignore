@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Deployment secrets
+# The REAL cPanel database credentials file, under every name auth.php accepts.
+# `npm run build` deliberately does NOT copy any of these into dist/ — it ships
+# only the *.example.php template, because dist/ is what gets uploaded into the
+# public web root. Listing all the names matters: renaming the file must never be
+# what accidentally puts live credentials into git.
+cs-db_config.php
+cs_db_config.php
+db-config.php
+db_config.php
+dist/db_config.php
+dist/cs-db_config.php
+dist/cs_db_config.php
+dist/db-config.php
+
+# The REAL upload token for upload.php, under every name it accepts. Same rule as
+# the database credentials above: the template (*.example.php) may be committed,
+# the live value may not — and it lives one level ABOVE the web root on the host.
+cs-upload-token.php
+upload-token.php
+dist/cs-upload-token.php
+dist/upload-token.php

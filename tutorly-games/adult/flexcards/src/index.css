@@ -1,0 +1,450 @@
+/*
+ * Fonts, bundled from npm rather than fetched from a CDN.
+ *
+ * The previous build asked for `'Space Grotesk', 'Inter'` in its font stack and declared no
+ * `@font-face` at all — neither package was installed and nothing linked them, so every
+ * visitor silently got `system-ui` and the "premium font" was a wish. These are real,
+ * offline, and hand-declared for the same two reasons they are declared by hand in the
+ * sibling flashcard app: the packages' own `wght.css` ships every subset the family covers
+ * (JetBrains Mono alone pulls six, including Cyrillic and Greek), and in a single-file build
+ * every unused subset is still inlined as base64. Only the Latin face each family renders.
+ *
+ * Fraunces carries an optical-size axis, which is the reason to use it for the words rather
+ * than a static serif: `font-optical-sizing` redraws the joins for a 76px word and thickens
+ * the stems for a 14px caption, instead of scaling one drawing.
+ */
+@import "tailwindcss";
+
+/*
+ * The `dark:` variant is bound to our own `data-theme` attribute rather than to
+ * `prefers-color-scheme`. The app now ships a light stage by default — a projected
+ * classroom is a bright room, and a near-black screen washes out under a projector — so the
+ * OS preference alone would be the wrong default for the main use case.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@font-face {
+  font-family: "Outfit Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Fraunces Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/fraunces/files/fraunces-latin-opsz-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url("@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * ── Design tokens ────────────────────────────────────────────────────────────
+ *
+ * Tailwind 4 reads `@theme`, so each entry becomes a real utility: `--font-display` gives
+ * `font-display`, `--color-fg-1` gives `text-fg-1`.
+ *
+ * The semantic roles below are *references*, not values — each points at a plain custom
+ * property that the two theme blocks re-point. That indirection is the whole reason a theme
+ * switch is one attribute on `<html>` instead of a second set of classes through 1,600 lines
+ * of JSX, and it is why adding the light theme did not mean auditing every component.
+ */
+@theme {
+  --font-sans: "Outfit Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /*
+   * A modular scale at 1.200, with a 13px floor.
+   *
+   * The old build leaned on `text-[10px]` in eleven places and on Tailwind's own scale
+   * elsewhere, which is how a 1,629-line component drifts into fifteen sizes and a caption
+   * nobody can read at arm's length. Every size in the app is now one of these, and the
+   * smallest step is 13px — the meta rows were the first thing to become unreadable on a
+   * projected screen, and they are the reason this scale moves up.
+   */
+  --text-2xs: 0.8125rem; /* 13px — micro labels, chips */
+  --text-xs: 0.875rem; /* 14px — meta, counters */
+  --text-sm: 1rem; /* 16px — secondary copy, buttons, tab labels */
+  --text-base: 1.125rem; /* 18px — body */
+  --text-lg: 1.4375rem; /* 23px — lead-ins */
+  --text-xl: 1.75rem; /* 28px — card subheads */
+  --text-2xl: 2rem; /* 32px — section titles */
+  --text-3xl: 2.5rem; /* 40px — the word on a phone */
+  --text-4xl: 3rem; /* 48px — the word */
+  --text-5xl: 3.75rem; /* 60px — the word, wide */
+  --text-6xl: 4.75rem; /* 76px — the word, full-bleed */
+  --text-7xl: 6rem; /* 96px — the word, projector */
+
+  /* Semantic roles. */
+  --color-fg-1: var(--content-1);
+  --color-fg-2: var(--content-2);
+  --color-fg-3: var(--content-3);
+  --color-fg-4: var(--content-4);
+  --color-panel: var(--surface-panel);
+  --color-inset: var(--surface-inset);
+  --color-control: var(--surface-control);
+  --color-sunken: var(--surface-sunken);
+  --color-line-1: var(--border-subtle);
+  --color-line-2: var(--border-control);
+  --color-accent-good: var(--accent-good);
+  --color-accent-warn: var(--accent-warn);
+  --color-accent-bad: var(--accent-bad);
+  --color-accent-info: var(--accent-info);
+  --color-accent-magic: var(--accent-magic);
+
+  /* Difficulty tiers — the single source of truth for the glow and the badge. */
+  --color-tier-a: #059669;
+  --color-tier-b: #2563eb;
+  --color-tier-c: #7c3aed;
+  --color-tier-l: #b45309;
+
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-back-out: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* The stage: the page behind everything, including the grid and the drifting orbs. */
+  --stage-bg: linear-gradient(160deg, #f5f8fd 0%, #e9eff8 45%, #f2f5fa 100%);
+  --stage-grid: rgba(37, 99, 235, 0.055);
+  --stage-orb-1: rgba(79, 70, 229, 0.10);
+  --stage-orb-2: rgba(147, 51, 234, 0.08);
+  --stage-orb-3: rgba(192, 38, 211, 0.06);
+
+  --surface-panel: #ffffff;
+  --surface-inset: #f2f5fb;
+  --surface-control: #ffffff;
+  --surface-sunken: #e8edf6;
+  --surface-overlay: rgba(255, 255, 255, 0.98);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(15, 23, 42, 0.10);
+  /* Modal scrims and image scrims — opaque enough to read against, in either theme. */
+  --surface-scrim: rgba(15, 23, 42, 0.55);
+  --shadow-panel: 0 4px 20px rgba(15, 23, 42, 0.07);
+  --shadow-card: 0 18px 44px rgba(15, 23, 42, 0.16);
+
+  --border-subtle: rgba(15, 23, 42, 0.10);
+  --border-control: rgba(15, 23, 42, 0.16);
+
+  /*
+   * The ink ramp.
+   *
+   * Four steps, and the faintest is still 4.6:1 on white. The old build's equivalent was
+   * `text-white/20` on a near-black stage, which measured **1.81:1** — the primary
+   * affordance ("← Swipe or tap buttons →") was the least readable text on the screen.
+   * "Faint" is a hierarchy decision, not a licence to be invisible.
+   */
+  --content-1: #0b1220;
+  --content-2: #33415a;
+  --content-3: #5a6b85;
+  --content-4: #5f7288;
+
+  --accent-good: #047857;
+  --accent-warn: #a16207;
+  --accent-bad: #b91c1c;
+  --accent-info: #1d4ed8;
+  --accent-magic: #6d28d9;
+
+  --track: rgba(15, 23, 42, 0.10);
+
+  /* Card face. Follows the theme: white paper in light, slate in dark. */
+  --card-bg: linear-gradient(160deg, #ffffff 0%, #f7fafd 60%, #eef3fa 100%);
+  --card-border: rgba(15, 23, 42, 0.12);
+  --card-scanline: rgba(11, 18, 32, 0.035);
+  --card-sheen: rgba(255, 255, 255, 0.55);
+
+  --panel-shadow: var(--shadow-panel);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --stage-bg: linear-gradient(135deg, #0a0a14 0%, #0f0f1e 40%, #0d0d1a 100%);
+  --stage-grid: rgba(99, 102, 241, 0.8);
+  --stage-orb-1: rgba(79, 70, 229, 0.18);
+  --stage-orb-2: rgba(147, 51, 234, 0.14);
+  --stage-orb-3: rgba(192, 38, 211, 0.10);
+
+  --surface-panel: #131629;
+  --surface-inset: rgba(255, 255, 255, 0.06);
+  --surface-control: rgba(255, 255, 255, 0.10);
+  --surface-sunken: #0a0c18;
+  --surface-overlay: rgba(17, 20, 38, 0.97);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --surface-scrim: rgba(0, 0, 0, 0.72);
+  --shadow-panel: none;
+  --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.55);
+
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-control: rgba(255, 255, 255, 0.20);
+
+  --content-1: #f4f6fb;
+  --content-2: #dbe1ee;
+  --content-3: #a8b2c8;
+  --content-4: #8b96ad;
+
+  --accent-good: #34d399;
+  --accent-warn: #fbbf24;
+  --accent-bad: #f87171;
+  --accent-info: #60a5fa;
+  --accent-magic: #c084fc;
+
+  --track: rgba(255, 255, 255, 0.10);
+
+  --card-bg: linear-gradient(160deg, #16192e 0%, #12152a 55%, #0e1120 100%);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --card-scanline: rgba(255, 255, 255, 0.02);
+  --card-sheen: rgba(255, 255, 255, 0.10);
+
+  --tier-a: #34d399;
+  --tier-b: #60a5fa;
+  --tier-c: #c084fc;
+  --tier-l: #fbbf24;
+
+  --panel-shadow: none;
+}
+
+/* Tier ink, per theme: the dark palette's tiers are tuned to glow on near-black and read
+   as pale smudges on paper, so light gets a deeper ink for the same tier. */
+:root,
+[data-theme="light"] {
+  --tier-a: #047857;
+  --tier-b: #1d4ed8;
+  --tier-c: #6d28d9;
+  --tier-l: #92400e;
+}
+
+/* ─── Custom Animations ─────────────────────────────────────────────── */
+
+@keyframes burst {
+  0%   { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 1; }
+  60%  { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, -80px))) scale(1.4) rotate(var(--rot, 30deg)); opacity: 0; }
+}
+
+@keyframes slide-in {
+  0%   { transform: translateY(12px) scale(0.97); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes spin-slow {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.7; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes card-enter {
+  0%   { transform: translateY(20px) scale(0.95); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes streak-fire {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50%       { transform: scale(1.15) rotate(3deg); }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
+  25%      { transform: rotateY(-3deg) rotateX(2deg); }
+  50%      { transform: rotateY(3deg) rotateX(-1deg); }
+  75%      { transform: rotateY(-2deg) rotateX(1deg); }
+}
+
+@keyframes snap {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes holographic {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Arriving from below, for cards and sheets. */
+@keyframes rise {
+  0%   { transform: translateY(14px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* The rarity reveal: a hard flash that settles. */
+@keyframes reveal-flash {
+  0%   { opacity: 0; transform: scale(0.7); }
+  45%  { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-burst {
+  animation: burst 1s ease-out forwards;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.animate-slide-in {
+  animation: slide-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease forwards;
+}
+
+.animate-rise {
+  animation: rise 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-reveal {
+  animation: reveal-flash 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 4s linear infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-card-enter {
+  animation: card-enter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-streak-fire {
+  animation: streak-fire 0.6s ease-in-out infinite;
+}
+
+.animate-wobble {
+  animation: wobble 0.4s ease-in-out;
+}
+
+.animate-snap {
+  animation: snap 0.2s ease-out;
+}
+
+.animate-holographic {
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0) 0%,
+    var(--card-sheen) 25%,
+    rgba(255,255,255,0) 50%,
+    var(--card-sheen) 75%,
+    rgba(255,255,255,0) 100%
+  );
+  background-size: 400% 400%;
+  animation: holographic 3s ease infinite;
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────── */
+/*
+ * Every animation above is decoration, and three of them loop forever. A learner with
+ * vestibular sensitivity, or a tutor projecting to a room, should be able to stop all of it
+ * with one OS setting rather than picking through the app.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Scrollbar Hide ─────────────────────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── 3D perspective helpers ─────────────────────────────────────────── */
+.perspective-1200 { perspective: 1200px; }
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+
+/* ─── Glass morphism ─────────────────────────────────────────────────── */
+/*
+ * Tokenised rather than hard-coded white-on-white. The old version put a 5%-white fill and
+ * an 8%-white border on *any* background, which is invisible on paper and was the reason
+ * this surface only ever worked on the dark stage.
+ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* ─── Shimmer effect ─────────────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, var(--card-sheen) 50%, transparent 100%);
+  background-size: 200% auto;
+  animation: shimmer 2.5s linear infinite;
+}
+
+/* ─── Type helpers ───────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * The word itself. `font-optical-sizing` is what lets Fraunces' opsz axis do its job — a
+ * 76px word and a 14px caption are genuinely different drawings rather than one outline
+ * scaled, which is the whole reason to carry a variable serif.
+ */
+.word-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 0, "WONK" 1;
+}
+
+/* Tabular figures, for anything that counts up during a session. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Extra breakpoint hint ─────────────────────────────────────────── */
+@media (min-width: 480px) {
+  .xs\:block { display: block; }
+}

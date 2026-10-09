@@ -1,0 +1,8 @@
+{
+  "name": "ESL GeoSeeker: Classroom Edition 3",
+  "description": "An interactive, screen-shared Geoguess game built for English language classrooms. Features browser text-to-speech reading, CEFR levels, vocabulary builders, dynamic prompt builders, and multiplayer scoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

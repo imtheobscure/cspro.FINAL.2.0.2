@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #08080c;
+  color: #f4f4f5;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+@keyframes toastfade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  8% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.hero-glow {
+  background:
+    radial-gradient(60% 80% at 20% 10%, rgba(139, 92, 246, 0.35), transparent 60%),
+    radial-gradient(50% 70% at 90% 20%, rgba(236, 72, 153, 0.25), transparent 60%),
+    radial-gradient(60% 60% at 60% 100%, rgba(34, 211, 238, 0.15), transparent 60%);
+}
+
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

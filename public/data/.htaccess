@@ -1,0 +1,20 @@
+# ============================================================
+# TUTOMY — data directory guard
+# auth.php reads/writes encrypted tutor DBs (tutors_secure_db.php)
+# and JSON mirrors inside this folder. Nothing here may ever be
+# fetched over HTTP — PHP still reads it server-side.
+# ============================================================
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^ - [F,L]
+</IfModule>
+
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

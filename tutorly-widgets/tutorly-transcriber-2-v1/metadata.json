@@ -1,0 +1,12 @@
+{
+  "name": "Remix: Transcriber Pro",
+  "description": "A high-performance web transcription app with auto-translation and long-running optimizations.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

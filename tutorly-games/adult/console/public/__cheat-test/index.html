@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cheat Test Mine — a fixture for the Console's Cheat Engine</title>
+    <!--
+      A deliberately tiny game that behaves like the ones the Cheat Engine is for.
+
+      It exists because both halves of the engine need something deterministic to be
+      tested against, and neither YouTube Playables nor a tutor's uploaded build can be:
+      one needs the network and the other needs a 40 MB folder. This page needs nothing.
+
+      It reproduces the four things the engine has to cope with:
+
+        1. **Money in a live JS variable** (`window.game.state.money`) — the case the
+           Memory Editor is built for: the number really is the game's state, so writing
+           it changes the game on the next frame with no reload.
+        2. **The same number in a decoy place** (`prices`), so a first scan cannot be
+           right by accident and the narrowing step has to actually work.
+        3. **The Playables SDK save** — it loads through `ytgame.game.loadData()` at boot
+           and writes through `saveData()`, which is the key the Save editor rewrites.
+        4. **Its own localStorage key** under a name that names no game, which is what the
+           Cheat Engine's "stores this game wrote" list exists to find.
+
+      Relative `../ytgame-shim.js` on purpose: the page sits beside the shim whatever
+      sub-path the console is deployed under.
+    -->
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        background: radial-gradient(circle at 50% 0%, #16233c, #070b14 70%);
+        color: #e6edf7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .cab {
+        width: min(520px, 92vw);
+        border: 1px solid #2b3a57;
+        border-radius: 18px;
+        padding: 22px;
+        background: rgba(10, 16, 28, 0.85);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      }
+      h1 { font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: #7dd3fc; margin: 0 0 4px; }
+      .sub { font-size: 11px; color: #94a3b8; margin-bottom: 18px; }
+      .wallet { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 18px; }
+      .val { font-size: 46px; font-weight: 800; color: #fbbf24; line-height: 1; }
+      .val.gems { color: #34d399; font-size: 30px; }
+      .lbl { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #94a3b8; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; }
+      button {
+        font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+        padding: 9px 14px; border-radius: 10px;
+        border: 1px solid #3b5a86; background: #17233a; color: #dbeafe;
+      }
+      button:hover { background: #1e2d4a; }
+      button.spend { border-color: #7f1d1d; background: #2a1414; color: #fecaca; }
+      .log { margin-top: 16px; font-size: 11px; color: #94a3b8; min-height: 32px; white-space: pre-wrap; }
+      .warn { border-color: #fbbf24; background: #3a2c05; color: #fde68a; }
+    </style>
+  </head>
+  <body>
+    <div class="cab">
+      <h1>Cheat Test Mine</h1>
+      <div class="sub">A fixture for the Console's Cheat Engine — not a real game.</div>
+
+      <div class="wallet">
+        <div>
+          <div class="lbl">Money</div>
+          <div class="val" id="money">25</div>
+        </div>
+        <div>
+          <div class="lbl">Gems</div>
+          <div class="val gems" id="gems">3</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="mine">⛏️ Mine a coin</button>
+        <button id="spend" class="spend">💸 Spend 5</button>
+        <button id="reload">🔄 Reload the game</button>
+        <button id="save">💾 Save &amp; report</button>
+      </div>
+
+      <div class="log" id="log">Loading…</div>
+    </div>
+
+    <script src="../ytgame-shim.js"></script>
+    <script>
+      /*
+       * The game's whole state, in one reachable object.
+       *
+       * `money` is the value a tutor would search for. `prices` holds the same numbers
+       * on purpose: a first scan for 25 must find more than one candidate, or the
+       * narrowing step would never be exercised and the editor would look cleverer
+       * than it is.
+       */
+      window.game = {
+        state: { money: 25, gems: 3, level: 1 },
+        prices: [25, 25, 100],
+        tick: 0,
+      };
+
+      var el = function (id) { return document.getElementById(id); };
+      var logEl = el("log");
+
+      function say(text) {
+        logEl.textContent = text;
+        console.log("[cheat-test] " + text);
+      }
+
+      /*
+       * The render loop, and the reason it exists.
+       *
+       * A game paints from its state every frame, which is exactly what makes a memory
+       * write visible immediately: change `state.money` and the next frame draws it.
+       * This fixture used to paint only when one of its own buttons was pressed, and the
+       * difference was not cosmetic — the Cheat Engine would change the value correctly
+       * and the screen would still show the old number until the next click, which reads
+       * as the editor failing. Painting on the frame is what a real build does, so this
+       * is what the fixture must do for a test of it to mean anything.
+       */
+      function draw() {
+        // Straight from state, every frame, with no change detection: a value the Cheat
+        // Engine wrote has to appear on the very next frame for the test to be about
+        // the editor rather than about this fixture's caching.
+        el("money").textContent = window.game.state.money;
+        el("gems").textContent = window.game.state.gems;
+      }
+
+      function loop() {
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      /* The save the SDK shim keeps, which is what the Save editor rewrites. */
+      function persist() {
+        var payload = JSON.stringify({ money: window.game.state.money, gems: window.game.state.gems, level: window.game.state.level });
+        // A second, self-named key as well: a Cocos/Phaser build writes one of these and
+        // the SDK never hears about it, so the engine's "stores this game wrote" list
+        // needs a real example to find.
+        try { localStorage.setItem("cheatTestSave", payload); } catch (e) {}
+        if (window.ytgame && window.ytgame.game && window.ytgame.game.saveData) {
+          window.ytgame.game.saveData(payload).catch(function () {});
+        }
+      }
+
+      function boot() {
+        var loaded = "";
+        if (window.ytgame && window.ytgame.game && window.ytgame.game.loadData) {
+          window.ytgame.game
+            .loadData()
+            .then(function (data) {
+              apply(data, "the SDK save");
+            })
+            .catch(function () {});
+        }
+        try { loaded = localStorage.getItem("cheatTestSave") || ""; } catch (e) {}
+        if (loaded) apply(loaded, "its own key");
+
+        say(
+          "Booted. money=" + window.game.state.money +
+            " · SDK save " + (window.ytgame ? "present" : "absent") +
+            "\nSearch 25 in the Cheat Engine, press ⛏️, then search the new number to narrow."
+        );
+        draw();
+      }
+
+      function apply(raw, source) {
+        // An empty save is a new game, not a failure — say nothing about it.
+        if (!raw) return;
+        try {
+          var data = JSON.parse(raw);
+          if (typeof data.money === "number") window.game.state.money = data.money;
+          if (typeof data.gems === "number") window.game.state.gems = data.gems;
+          if (typeof data.level === "number") window.game.state.level = data.level;
+          say("↩︎ Loaded " + JSON.stringify(data) + " from " + source);
+          draw();
+        } catch (e) {
+          say("Could not read " + source + ": " + raw.slice(0, 60));
+        }
+      }
+
+      el("mine").addEventListener("click", function () {
+        window.game.state.money += 1;
+        draw();
+        persist();
+        say("Mined. money=" + window.game.state.money);
+      });
+
+      el("spend").addEventListener("click", function () {
+        window.game.state.money = Math.max(0, window.game.state.money - 5);
+        draw();
+        persist();
+        say("Spent 5. money=" + window.game.state.money + " — now narrow the search on this number.");
+      });
+
+      el("reload").addEventListener("click", function () {
+        location.reload();
+      });
+
+      el("save").addEventListener("click", function () {
+        persist();
+        say("Saved: " + JSON.stringify(window.game.state));
+      });
+
+      // A frame that keeps ticking, so a frozen value can be seen beating the game.
+      setInterval(function () { window.game.tick += 1; }, 1000);
+
+      boot();
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>

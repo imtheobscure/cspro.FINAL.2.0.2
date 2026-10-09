@@ -1,0 +1,635 @@
+@import "tailwindcss";
+
+/*
+ * ⚠️  NOT CURRENTLY IMPORTED — read this before editing.
+ *
+ * Nothing in the app imports this file. The stylesheet Tailwind actually compiles
+ * into `dist/assets/main-*.css` is `pages/video_app/videoApp.css`, because that is
+ * the only file in the bundle's module graph that does `@import "tailwindcss"`.
+ *
+ * So: adding a rule here does NOT ship it. That is how the two unused font
+ * families in `index.html` got declared and never referenced, and why the
+ * `--font-*` tokens below had no effect on any page — Quicksand was never
+ * actually applied to anything either.
+ *
+ * The tokens that DO matter are duplicated in `videoApp.css`, which is where a
+ * change has to go to reach a browser. This file is kept in step because it is
+ * plainly the intended home for the app's token layer. Either import this file
+ * from `index.tsx` (and drop the duplicate `@import "tailwindcss"` from
+ * `videoApp.css` so Tailwind is emitted once) or fold its contents into
+ * `videoApp.css`; until one of those happens, treat everything below as
+ * documentation of intent rather than as live CSS.
+ *
+ * One section has already been moved out for that reason: the PLAN / UPGRADE
+ * MODAL layer now lives in `components/auth/planModal.css`, imported by the modal
+ * that uses it. Its `pm-*` classes were dead here, which is why "Choose your plan"
+ * rendered with no shell, no card fills and no text colour at all.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Google Translate Styling */
+.goog-te-combo {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-weight: 500;
+  color: #374151;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.goog-te-combo:hover {
+  opacity: 0.8;
+}
+
+.goog-te-combo:focus {
+  outline: none;
+}
+
+/* Hide the "Powered by Google" and banner */
+.goog-logo-link {
+   display:none !important;
+} 
+.goog-te-gadget {
+   color: transparent !important;
+   font-size: 0px !important;
+}
+.goog-te-banner-frame.skiptranslate, .VIpgJd-ZVi9od-ORHb-OEVmcd {
+  display: none !important;
+}
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+@theme {
+  --color-brand-purple: #6B46C1;
+  --color-brand-blue: #3182CE;
+  --color-brand-green: #38A169;
+  --color-brand-yellow: #D69E2E;
+  --color-brand-red: #E53E3E;
+  --color-brand-gray-light: #EDF2F7;
+  --color-brand-gray-medium: #A0AEC0;
+  --color-brand-gray-dark: #4A5568;
+  --color-brand-gray-darkest: #1A202C;
+  /*
+   * ONE font does the interface; ONE font does the display headings.
+   *
+   * index.html loads three families, and before this only Quicksand was ever
+   * referenced — so Outfit and Plus Jakarta Sans were downloaded on every visit and
+   * never applied, and headings that asked for `font-sans` got the same rounded
+   * face as body copy. Plus Jakarta Sans holds up at 11–14px (the dock labels, the
+   * drawers and the widget chrome), which Quicksand's wide round letterforms do
+   * not; Outfit stays for the few genuinely large headlines, where its tighter
+   * shapes carry the weight. Anything that is neither a heading nor the kids' area
+   * uses `--font-sans`, so there is no third case to reason about.
+   */
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-heading: "Outfit", "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --animate-slide-up-fade: slideUpFade 0.4s ease-out forwards;
+  --animate-step-transition: stepTransition 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @keyframes slideUpFade {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes stepTransition {
+    from { opacity: 0; transform: scale(0.98) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+}
+
+body {
+    font-family: var(--font-sans);
+}
+
+/* Avatar Rarity Effects */
+.rarity-legendary {
+  background: radial-gradient(circle at 30% 30%, #fef08a, #f59e0b) !important;
+  box-shadow: 0 0 25px rgba(251,191,36,0.8), inset 0 0 15px rgba(255,255,255,0.5) !important;
+}
+
+.rarity-epic {
+  background: radial-gradient(circle at 30% 30%, #e9d5ff, #9333ea) !important;
+  box-shadow: 0 0 25px rgba(168,85,247,0.8), inset 0 0 15px rgba(255,255,255,0.5) !important;
+}
+
+.rarity-rare {
+  background: radial-gradient(circle at 30% 30%, #bfdbfe, #2563eb) !important;
+  box-shadow: 0 0 25px rgba(59,130,246,0.8), inset 0 0 15px rgba(255,255,255,0.5) !important;
+}
+
+.rarity-common {
+  background: radial-gradient(circle at 30% 30%, #f3f4f6, #9ca3af) !important;
+  box-shadow: 0 0 15px rgba(156,163,175,0.5), inset 0 0 10px rgba(255,255,255,0.5) !important;
+}
+
+@keyframes shine-inner {
+  0% { transform: translateX(-100%) rotate(45deg); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(200%) rotate(45deg); opacity: 0; }
+}
+
+.animate-shine-inner {
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background: linear-gradient(rgba(255,255,255,0), rgba(255,255,255,0.4), rgba(255,255,255,0));
+  animation: shine-inner 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.App {
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes slimeFloat {
+  0% { transform: translateY(0) scale(1) rotate(0deg); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  50% { transform: translateY(-30px) scale(1.1) rotate(10deg); border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  100% { transform: translateY(0) scale(1) rotate(0deg); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+}
+
+.animate-slime {
+  animation: slimeFloat 15s ease-in-out infinite;
+}
+.animate-slime-delayed {
+  animation: slimeFloat 18s ease-in-out infinite -7s;
+}
+
+html.dark body {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Base Card & Container Overrides */
+html.dark .bg-white,
+html.dark .bg-gray-50,
+html.dark .bg-gray-100,
+html.dark .bg-slate-50,
+html.dark .bg-slate-100,
+html.dark .bg-zinc-50,
+html.dark .bg-zinc-100,
+html.dark .bg-neutral-50,
+html.dark .bg-neutral-100,
+html.dark .bg-stone-50,
+html.dark .bg-stone-100 {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-50\/45,
+html.dark .bg-slate-100\/50,
+html.dark .bg-slate-100\/80,
+html.dark .bg-gray-50\/50,
+html.dark .bg-gray-100\/50 {
+  background-color: rgba(30, 41, 59, 0.75) !important;
+  color: #f8fafc !important;
+}
+
+html.dark .bg-gray-200,
+html.dark .bg-slate-200,
+html.dark .bg-zinc-200,
+html.dark .bg-neutral-200,
+html.dark .bg-brand-gray-light {
+  background-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .bg-slate-800,
+html.dark .bg-slate-900,
+html.dark .bg-gray-800,
+html.dark .bg-gray-900 {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* Border Overrides */
+html.dark .border,
+html.dark .border-gray-100,
+html.dark .border-gray-150,
+html.dark .border-gray-200,
+html.dark .border-gray-300,
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-250,
+html.dark .border-slate-300,
+html.dark .border-slate-320,
+html.dark .border-purple-200,
+html.dark .border-blue-200,
+html.dark .border-indigo-200 {
+  border-color: #334155 !important;
+}
+
+/* Text Overrides for Contrast & Legibility */
+html.dark .text-black,
+html.dark .text-gray-950,
+html.dark .text-gray-900,
+html.dark .text-gray-850,
+html.dark .text-gray-800,
+html.dark .text-gray-750,
+html.dark .text-gray-700,
+html.dark .text-slate-950,
+html.dark .text-slate-900,
+html.dark .text-slate-850,
+html.dark .text-slate-805,
+html.dark .text-slate-800,
+html.dark .text-slate-750,
+html.dark .text-slate-700,
+html.dark .text-zinc-950,
+html.dark .text-zinc-900,
+html.dark .text-zinc-850,
+html.dark .text-zinc-800,
+html.dark .text-zinc-750,
+html.dark .text-zinc-700,
+html.dark .text-neutral-950,
+html.dark .text-neutral-900,
+html.dark .text-neutral-850,
+html.dark .text-neutral-800,
+html.dark .text-neutral-750,
+html.dark .text-stone-950,
+html.dark .text-stone-900,
+html.dark .text-stone-850,
+html.dark .text-stone-800,
+html.dark .text-stone-750,
+html.dark .text-\[\#0f172a\],
+html.dark .text-\[\#334155\],
+html.dark .text-brand-gray-darkest {
+  color: #f8fafc !important;
+}
+
+html.dark .text-gray-600,
+html.dark .text-gray-500,
+html.dark .text-slate-650,
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-zinc-600,
+html.dark .text-zinc-500,
+html.dark .text-\[\#475569\],
+html.dark .text-brand-gray-dark {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-400,
+html.dark .text-slate-400,
+html.dark .text-zinc-400 {
+  color: #94a3b8 !important;
+}
+
+html.dark .hover\:text-gray-950:hover,
+html.dark .hover\:text-gray-900:hover,
+html.dark .hover\:text-gray-800:hover,
+html.dark .hover\:text-slate-950:hover,
+html.dark .hover\:text-slate-900:hover,
+html.dark .hover\:text-slate-800:hover,
+html.dark .hover\:text-zinc-950:hover,
+html.dark .hover\:text-zinc-900:hover,
+html.dark .hover\:text-zinc-800:hover {
+  color: #f1f5f9 !important;
+}
+
+/* Form inputs, textareas, selects */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Shadows and Hovers */
+html.dark .shadow-sm,
+html.dark .shadow,
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-100:hover,
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover,
+html.dark .hover\:bg-slate-50\/50:hover {
+  background-color: #334155 !important;
+}
+
+/* Brand Colors in Dark Mode */
+html.dark .bg-brand-blue,
+html.dark .bg-brand-purple,
+html.dark .bg-brand-green {
+  color: #ffffff !important;
+}
+
+html.dark .text-brand-blue { color: #60a5fa !important; }
+html.dark .text-brand-purple { color: #c084fc !important; }
+html.dark .text-brand-green { color: #4ade80 !important; }
+
+/* Colored Badges, Tags, Pills & Cards */
+html.dark .bg-blue-50, html.dark .bg-blue-100 { background-color: #1e3a8a !important; color: #93c5fd !important; border-color: #2563eb !important; }
+html.dark .bg-indigo-50, html.dark .bg-indigo-100 { background-color: #1e1b4b !important; color: #c7d2fe !important; border-color: #4338ca !important; }
+html.dark .bg-purple-50, html.dark .bg-purple-100 { background-color: #3b0764 !important; color: #e9d5ff !important; border-color: #7e22ce !important; }
+html.dark .bg-emerald-50, html.dark .bg-emerald-100 { background-color: #064e3b !important; color: #6ee7b7 !important; border-color: #059669 !important; }
+html.dark .bg-amber-50, html.dark .bg-amber-100 { background-color: #451a03 !important; color: #fde68a !important; border-color: #d97706 !important; }
+html.dark .bg-yellow-50, html.dark .bg-yellow-100, html.dark .bg-yellow-105 { background-color: #422006 !important; color: #fef08a !important; border-color: #ca8a04 !important; }
+html.dark .bg-red-50, html.dark .bg-red-100, html.dark .bg-rose-50, html.dark .bg-rose-100 { background-color: #4c0519 !important; color: #fecdd3 !important; border-color: #e11d48 !important; }
+html.dark .bg-sky-50, html.dark .bg-sky-100 { background-color: #0c4a6e !important; color: #7dd3fc !important; border-color: #0284c7 !important; }
+html.dark .bg-orange-50, html.dark .bg-orange-100 { background-color: #431407 !important; color: #fed7aa !important; border-color: #ea580c !important; }
+html.dark .bg-fuchsia-50, html.dark .bg-fuchsia-100 { background-color: #4a044e !important; color: #f5d0fe !important; border-color: #c026d3 !important; }
+html.dark .bg-pink-50, html.dark .bg-pink-100 { background-color: #500724 !important; color: #fbcfe8 !important; border-color: #db2777 !important; }
+
+html.dark .text-indigo-700, html.dark .text-indigo-800, html.dark .text-indigo-900 { color: #c7d2fe !important; }
+html.dark .text-blue-700, html.dark .text-blue-800 { color: #93c5fd !important; }
+html.dark .text-purple-700, html.dark .text-purple-800 { color: #e9d5ff !important; }
+html.dark .text-emerald-700, html.dark .text-emerald-800 { color: #6ee7b7 !important; }
+html.dark .text-amber-700, html.dark .text-amber-800 { color: #fde68a !important; }
+html.dark .text-sky-700, html.dark .text-sky-800 { color: #7dd3fc !important; }
+html.dark .text-rose-700, html.dark .text-rose-800 { color: #fecdd3 !important; }
+html.dark .text-orange-700, html.dark .text-orange-800 { color: #fed7aa !important; }
+
+/* Modal overlays & translucent backgrounds */
+html.dark .bg-black { background-color: rgba(0, 0, 0, 0.8) !important; }
+html.dark .bg-white\/10 { background-color: rgba(255, 255, 255, 0.05) !important; }
+
+/* Recharts Dark Mode Styling */
+html.dark .recharts-polar-angle-axis-text tspan,
+html.dark .recharts-polar-angle-axis-text,
+html.dark .recharts-text,
+html.dark .recharts-cartesian-axis-tick-value,
+html.dark .recharts-polar-radius-axis-tick tspan {
+  fill: #f1f5f9 !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .recharts-polar-grid path,
+html.dark .recharts-polar-grid line,
+html.dark .recharts-cartesian-grid line {
+  stroke: #475569 !important;
+}
+
+html.dark .recharts-legend-item-text {
+  color: #f1f5f9 !important;
+}
+
+html.dark .recharts-default-tooltip,
+html.dark .recharts-tooltip-wrapper {
+  background-color: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .recharts-tooltip-item-list span,
+html.dark .recharts-tooltip-item-name,
+html.dark .recharts-tooltip-item-value {
+  color: #f8fafc !important;
+}
+
+@keyframes gradientBg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-bg-gradient {
+  background-size: 400% 400% !important;
+  animation: gradientBg 20s ease infinite;
+}
+
+@keyframes panImage {
+  0% { transform: scale(1) translate(0, 0); }
+  33% { transform: scale(1.05) translate(1%, 1%); }
+  66% { transform: scale(1.05) translate(-1%, -1%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+.animate-bg-image {
+  animation: panImage 45s ease-in-out infinite;
+}
+
+/* Streak and XP Glow Animations & Ranges */
+@keyframes hue-rotate-loop {
+  0% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(180deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes streak-glow-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 10px currentColor); }
+}
+
+.streak-animate-hue {
+  animation: hue-rotate-loop 6s linear infinite;
+}
+
+.streak-glow-common {
+  color: #94a3b8 !important; /* slate */
+  filter: drop-shadow(0 0 2px rgba(148,163,184,0.3)) !important;
+}
+
+.streak-glow-uncommon {
+  color: #10b981 !important; /* emerald */
+  filter: drop-shadow(0 0 5px rgba(16,185,129,0.5)) !important;
+  animation: streak-glow-pulse 3s ease-in-out infinite !important;
+}
+
+.streak-glow-rare {
+  color: #06b6d4 !important; /* cyan */
+  filter: drop-shadow(0 0 7px rgba(6,182,212,0.65)) !important;
+  animation: streak-glow-pulse 2.5s ease-in-out infinite !important;
+}
+
+.streak-glow-legendary {
+  color: #a855f7 !important; /* purple */
+  filter: drop-shadow(0 0 10px rgba(168,85,247,0.8)) !important;
+  animation: streak-glow-pulse 2s ease-in-out infinite, hue-rotate-loop 8s linear infinite !important;
+}
+
+.streak-glow-epic {
+  color: #f97316 !important; /* orange */
+  filter: drop-shadow(0 0 14px rgba(249,115,22,0.95)) !important;
+  animation: streak-glow-pulse 1.5s ease-in-out infinite, hue-rotate-loop 4s linear infinite !important;
+}
+
+@keyframes xp-float-sparkle {
+  0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 3px #818cf8); }
+  50% { transform: translateY(-2px) scale(1.05); filter: drop-shadow(0 0 8px #f472b6); }
+}
+
+.xp-glowing-gem {
+  animation: xp-float-sparkle 3s ease-in-out infinite !important;
+}
+
+/* ============ SONG STUDIO (Lyrics + AI Karaoke) ============
+   These two widgets are deliberately light "presentation" surfaces in every
+   classroom theme — a lyrics sheet and a karaoke stage read like printed
+   paper. The html.dark remap above would otherwise flip every light utility
+   used inside them, so the light palette is re-asserted for this subtree. */
+/* The wrapper itself also carries a light background utility, and the dark
+   remap uses html.dark + a class, so the override needs the same specificity. */
+.song-studio,
+html.dark .song-studio,
+html.dark .song-studio.bg-white,
+html.dark .song-studio.bg-slate-50 {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.dark .song-studio .bg-white { background-color: #ffffff !important; color: #0f172a !important; border-color: #e2e8f0 !important; }
+html.dark .song-studio .bg-slate-50 { background-color: #f8fafc !important; color: #0f172a !important; border-color: #e2e8f0 !important; }
+html.dark .song-studio .bg-slate-100 { background-color: #f1f5f9 !important; color: #0f172a !important; border-color: #e2e8f0 !important; }
+html.dark .song-studio .bg-slate-200 { background-color: #e2e8f0 !important; }
+html.dark .song-studio .bg-slate-900 { background-color: #0f172a !important; color: #ffffff !important; border-color: #0f172a !important; }
+html.dark .song-studio .bg-black { background-color: #000000 !important; }
+html.dark .song-studio .hover\:bg-slate-50:hover { background-color: #f8fafc !important; }
+html.dark .song-studio .hover\:bg-slate-100:hover { background-color: #f1f5f9 !important; }
+html.dark .song-studio .hover\:bg-slate-800:hover { background-color: #1e293b !important; }
+
+html.dark .song-studio .border-slate-200 { border-color: #e2e8f0 !important; }
+html.dark .song-studio .border-slate-400 { border-color: #94a3b8 !important; }
+html.dark .song-studio .border-slate-900 { border-color: #0f172a !important; }
+html.dark .song-studio .hover\:border-slate-400:hover { border-color: #94a3b8 !important; }
+
+html.dark .song-studio .text-slate-900 { color: #0f172a !important; }
+html.dark .song-studio .text-slate-800 { color: #1e293b !important; }
+html.dark .song-studio .text-slate-700 { color: #334155 !important; }
+html.dark .song-studio .text-slate-600 { color: #475569 !important; }
+html.dark .song-studio .text-slate-500 { color: #64748b !important; }
+html.dark .song-studio .text-slate-400 { color: #94a3b8 !important; }
+html.dark .song-studio .text-slate-300 { color: #cbd5e1 !important; }
+html.dark .song-studio .hover\:text-slate-700:hover { color: #334155 !important; }
+html.dark .song-studio .hover\:text-slate-500:hover { color: #64748b !important; }
+html.dark .song-studio .hover\:text-slate-400:hover { color: #94a3b8 !important; }
+
+html.dark .song-studio .bg-emerald-50 { background-color: #ecfdf5 !important; color: #065f46 !important; border-color: #a7f3d0 !important; }
+html.dark .song-studio .text-emerald-700 { color: #047857 !important; }
+html.dark .song-studio .text-emerald-800 { color: #065f46 !important; }
+html.dark .song-studio .border-emerald-200 { border-color: #a7f3d0 !important; }
+
+html.dark .song-studio .bg-amber-50 { background-color: #fffbeb !important; color: #92400e !important; border-color: #fde68a !important; }
+html.dark .song-studio .text-amber-700 { color: #b45309 !important; }
+html.dark .song-studio .text-amber-800 { color: #92400e !important; }
+html.dark .song-studio .border-amber-200 { border-color: #fde68a !important; }
+
+html.dark .song-studio .bg-rose-50 { background-color: #fff1f2 !important; color: #9f1239 !important; border-color: #fecdd3 !important; }
+html.dark .song-studio .text-rose-700 { color: #be123c !important; }
+html.dark .song-studio .border-rose-200 { border-color: #fecdd3 !important; }
+html.dark .song-studio .border-rose-600 { border-color: #e11d48 !important; }
+html.dark .song-studio .bg-rose-600 { background-color: #e11d48 !important; color: #ffffff !important; }
+
+/* Fields keep their paper look inside the studio. */
+html.dark .song-studio input,
+html.dark .song-studio textarea,
+html.dark .song-studio select {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+html.dark .song-studio input:focus,
+html.dark .song-studio textarea:focus {
+  background-color: #ffffff !important;
+  border-color: #94a3b8 !important;
+}
+html.dark .song-studio input::placeholder,
+html.dark .song-studio textarea::placeholder { color: #94a3b8 !important; }
+
+/* ============ LEARNER CATEGORY THEMES ============ */
+/* Tints the white section cards inside a category-themed profile with the
+   category gradient, so each category colors its sections distinctly. */
+.category-page[data-category]:not([data-category="none"]) .bg-white.rounded-2xl.shadow-lg {
+  background: linear-gradient(180deg, var(--cat-soft) 0%, #ffffff 170px);
+  border: 1px solid color-mix(in srgb, var(--cat-from) 14%, transparent);
+}
+
+.category-page[data-category]:not([data-category="none"]) .bg-white.rounded-xl {
+  border: 1px solid color-mix(in srgb, var(--cat-from) 10%, transparent);
+}
+
+/* Subtle category glow on hover for interactive cards inside the themed profile */
+.category-page[data-category]:not([data-category="none"]) .bg-white.rounded-2xl.shadow-lg:hover {
+  box-shadow: 0 12px 30px -12px color-mix(in srgb, var(--cat-from) 25%, transparent);
+}
+
+/* ============ MUSIC LESSON (Song Lesson Studio) ============ */
+.glass-panel {
+  background: rgba(24, 24, 27, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 999px; }
+
+/*
+ * `.hide-scrollbar` was used in eighteen places — the bottom dock above all — and
+ * was never defined anywhere, so every one of them kept its scrollbar. On the dock
+ * that is a grey bar across a translucent pill that the widget row is meant to
+ * slide inside. Hiding it keeps the row swipeable and keyboard-scrollable on a
+ * narrow screen without advertising the overflow.
+ */
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+.animate-pulse-subtle { animation: pulse-subtle 3s infinite ease-in-out; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(217, 70, 239, 0.4); }
+  50% { box-shadow: 0 0 40px rgba(217, 70, 239, 0.8); }
+}
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.35s ease-out; }
+
+/* Color-coded mini lesson prose (light/dark aware) */
+.mini-lesson-prose { color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; }
+.mini-lesson-prose p { margin-bottom: 0.85rem; line-height: 1.7; padding: 0.85rem 1.1rem; border-radius: 1rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9; }
+.mini-lesson-prose h3, .mini-lesson-prose h4 { font-weight: 800; letter-spacing: -0.02em; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #f0abfc; }
+.mini-lesson-prose strong { color: #67e8f9; font-weight: 700; background: rgba(103, 232, 249, 0.15); padding: 0.15rem 0.4rem; border-radius: 0.4rem; }
+.mini-lesson-prose em { color: #fde047; font-style: italic; font-weight: 600; }
+.mini-lesson-prose ul { margin-top: 0.75rem; margin-bottom: 0.75rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.6rem; list-style-type: none; padding-left: 0; }
+.mini-lesson-prose li { padding: 0.75rem 1rem; border-radius: 0.85rem; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #e0e7ff; font-weight: 600; }
+.mini-lesson-prose blockquote { border-left: 4px solid #d946ef; background: rgba(217, 70, 239, 0.15); padding: 1rem 1.25rem; border-radius: 0 1rem 1rem 0; margin: 1rem 0; font-weight: 600; color: #fae8ff; }
+
+/* ── Music presenter long-form lesson prose ────────────────────────────────
+   The .mini-lesson-prose palette above is tuned for dark cards; the Music
+   Lesson presenter renders light-first, so it gets its own readable scale
+   (large type, high-contrast text) with dark twins for the app's html.dark. */
+.music-prose { color: #334155; font-size: 1.0625rem; line-height: 1.75; }
+.music-prose p { margin-bottom: 0.85rem; line-height: 1.8; padding: 0.9rem 1.15rem; border-radius: 1rem; background: rgba(15, 23, 42, 0.035); border: 1px solid rgba(15, 23, 42, 0.08); color: #334155; }
+.music-prose h1, .music-prose h2, .music-prose h3, .music-prose h4 { font-weight: 800; letter-spacing: -0.02em; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #6d28d9; font-size: 1.15em; }
+.music-prose strong { color: #3730a3; font-weight: 800; background: rgba(99, 102, 241, 0.1); padding: 0.15rem 0.4rem; border-radius: 0.4rem; }
+.music-prose em { color: #b45309; font-style: italic; font-weight: 600; }
+.music-prose ul { margin: 0.75rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.6rem; list-style-type: none; padding-left: 0; }
+.music-prose ol { margin: 0.75rem 0 0.75rem 1.35rem; }
+.music-prose li { padding: 0.8rem 1.05rem; border-radius: 0.85rem; background: rgba(99, 102, 241, 0.07); border: 1px solid rgba(99, 102, 241, 0.2); color: #3f3f6b; font-weight: 600; }
+.music-prose blockquote { border-left: 4px solid #a855f7; background: rgba(168, 85, 247, 0.08); padding: 1rem 1.25rem; border-radius: 0 1rem 1rem 0; margin: 1rem 0; font-weight: 600; color: #4c1d95; }
+.music-prose code { background: rgba(99, 102, 241, 0.12); padding: 0.1rem 0.4rem; border-radius: 0.35rem; font-size: 0.92em; }
+.dark .music-prose { color: #e2e8f0; }
+.dark .music-prose p { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); color: #f1f5f9; }
+.dark .music-prose h1, .dark .music-prose h2, .dark .music-prose h3, .dark .music-prose h4 { color: #f0abfc; }
+.dark .music-prose strong { color: #67e8f9; background: rgba(103, 232, 249, 0.15); }
+.dark .music-prose em { color: #fde047; }
+.dark .music-prose li { background: rgba(99, 102, 241, 0.12); border-color: rgba(99, 102, 241, 0.3); color: #e0e7ff; }
+.dark .music-prose blockquote { background: rgba(217, 70, 239, 0.15); border-color: #d946ef; color: #fae8ff; }
+.dark .music-prose code { background: rgba(99, 102, 241, 0.25); }

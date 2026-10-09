@@ -1,0 +1,14 @@
+{
+ "generatedAt": "2026-09-23T10:16:32.322Z",
+ "platforms": [
+  {
+   "id": "crazygames",
+   "name": "CrazyGames",
+   "count": 4426,
+   "listed": 4426,
+   "kind": "direct",
+   "sample": "12/12",
+   "file": "shared/platforms/crazygames.json"
+  }
+ ]
+}

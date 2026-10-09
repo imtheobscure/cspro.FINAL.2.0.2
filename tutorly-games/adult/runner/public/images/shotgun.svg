@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 140" fill="none">
+<defs><linearGradient id="m" x2="0" y2="1"><stop stop-color="#b4bbb2"/><stop offset=".4" stop-color="#3d4941"/><stop offset=".7" stop-color="#7a8578"/><stop offset="1" stop-color="#242f26"/></linearGradient><linearGradient id="s" x2="0" y2="1"><stop stop-color="#9f9679"/><stop offset=".4" stop-color="#676347"/><stop offset="1" stop-color="#353d2b"/></linearGradient></defs>
+<path d="M14 53 27 48 93 68l45-13 22 20-56 15-52 27-29-4Z" fill="url(#s)" stroke="#a9a78e"/>
+<path d="m19 56 10 53 20 2-8-49Z" fill="#303c2d"/><path d="m52 69 34 12-31 20Z" fill="#46503a"/>
+<path d="M131 47h99v34h-77l-22-13Z" fill="url(#m)" stroke="#919e87"/>
+<path d="M228 49h184v10H228z" fill="url(#m)"/><path d="M232 66h153v10H232z" fill="url(#m)"/>
+<path d="M133 43h279v5H133z" fill="#7f8c77"/><path d="M136 42h261" stroke="#2e3b2c" stroke-width="3" stroke-dasharray="3 6"/>
+<path d="M401 39h5v11h-5z" fill="#87917d"/>
+<path d="M248 62h75l11 8-8 13h-82l-4-13Z" fill="url(#s)" stroke="#aba286"/>
+<path d="M250 65v14m8-14v14m8-14v14m8-14v14m8-14v14m8-14v14m8-14v14m8-14v14m8-14v14m8-14v14" stroke="#3b4430" stroke-width="3"/>
+<path d="M150 81v17h38l8-17m-25 0-2 10h11" stroke="#849178" stroke-width="4"/>
+<path d="M172 53h39v13h-39z" fill="#18251b" stroke="#83947a"/><path d="M174 54h30v3h-30" fill="#9ba58d"/>
+<path d="M150 43V32h10v11m-12-10h15" stroke="#677961" stroke-width="4"/>
+<circle cx="147" cy="65" r="3" fill="#b6b79b"/><circle cx="222" cy="71" r="3" fill="#b6b79b"/>
+<path d="m59 84 29 6-28 13m34-28 10 11M355 64v15m30-30v12" stroke="#a49f81" stroke-width="1.5"/>
+<path d="M135 75h15m-14-22h22" stroke="#a8b09a"/><text x="150" y="76" fill="#b7bba4" font-family="monospace" font-size="5">BREACHER / 12 GA</text>
+</svg>

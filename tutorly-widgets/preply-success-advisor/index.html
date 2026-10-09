@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FF79AC" />
+    <meta
+      name="description"
+      content="A mentor's console for coaching online English tutors across Preply and other platforms: rosters, profile audits, goals, weekly numbers and follow-ups."
+    />
+    <title>Success Advisor · Tutor Mentor Console</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+      }
+    </style>
+    <!--
+      No import map. This file used to carry one pointing at aistudiocdn.com, left over
+      from the template this app started as. Nothing imported the CDN: every bare import
+      resolves through node_modules (Vite rewrites them in dev, bundles them on build), and
+      the one package it named — @google/genai — is imported by nothing. Keeping it would
+      leave a shared-host deployment with a handshake to a third-party CDN that does
+      nothing, so it is gone and `dist/index.html` is now self-contained.
+    -->
+    <link rel="stylesheet" href="./index.css">
+</head>
+  <body class="bg-[#F6F6F8]">
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>

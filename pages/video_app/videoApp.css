@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+  20%, 40%, 60%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+html, body, #root {
+  overflow-x: hidden;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * ════════════════════════════════════════════════════════════════════════════
+ * THIS FILE IS THE APP'S GLOBAL STYLESHEET — despite its name.
+ *
+ * It is the only stylesheet in the shipped bundle's module graph that does
+ * `@import "tailwindcss"`, so everything Tailwind emits for the whole app is
+ * compiled because of this line, and anything global that has to reach the
+ * browser belongs here.
+ *
+ * The repo-root `index.css` carries a much larger, matching token layer (brand
+ * colours, `.pm-*` modal tokens, rarity effects, dark-theme overrides) but is
+ * imported by NOTHING. A rule added only there never ships. That is what had
+ * happened to the two font families `index.html` loads on every visit: declared,
+ * and then never referenced by any compiled CSS.
+ *
+ * One font for the interface, one for display headings — the full reasoning is in
+ * `index.css`. Plus Jakarta Sans survives 11–14px (the dock labels, the drawer and
+ * the widget chrome) where Quicksand's wide round letterforms do not; Outfit is
+ * held back for genuinely large headlines.
+ */
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-heading: "Outfit", "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+
+  /*
+   * The brand palette.
+   *
+   * These were defined only in the root `index.css`, which the app does not
+   * import — so Tailwind never generated the utilities and `bg-brand-blue`
+   * produced NO rule at all. The dashboard header was the visible casualty: its
+   * logo is `bg-brand-blue` around a WHITE icon, and its "Add New Learner"
+   * button is `bg-brand-blue text-white`, so both rendered as white-on-nothing
+   * and looked absent. The `text-brand-*` classes were equally dead, which is
+   * why the header title came out black instead of brand blue.
+   *
+   * Values are copied verbatim from that dead file so nothing shifts shade.
+   */
+  --color-brand-blue: #3182CE;
+  --color-brand-purple: #6B46C1;
+  --color-brand-green: #38A169;
+  --color-brand-yellow: #D69E2E;
+  --color-brand-red: #E53E3E;
+  --color-brand-gray-light: #EDF2F7;
+  --color-brand-gray-medium: #A0AEC0;
+  --color-brand-gray-dark: #4A5568;
+  --color-brand-gray-darkest: #1A202C;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * `.hide-scrollbar` is used in eighteen places — the bottom widget dock above all
+ * — and was defined nowhere, so every one of them kept its scrollbar: a grey bar
+ * across a translucent pill the widget row is meant to glide inside. The dock
+ * still scrolls by swipe and by keyboard.
+ */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}

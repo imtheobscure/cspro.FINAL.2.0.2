@@ -1,0 +1,22 @@
+# Tutorly Console — routing for the Playables proxy (public/play.php).
+#
+# The proxy is addressed by PATH:
+#     /tutorly-games/adult/console/play.php/<buildHost>/<path/inside/build>
+# because a Unity build fetches its parts with relative URLs, and keeping the
+# build host in the path is what makes those relative fetches come back to PHP.
+#
+# Apache passes that path to PHP as PATH_INFO in the default configuration, and
+# play.php reads it. This rule is the safety net for hosts configured with
+# `AcceptPathInfo Off`: it hands PHP the same two values through the query string.
+# The visible URL never changes, so relative references inside the game keep
+# resolving to the proxy either way.
+#
+# Nothing else in the app needs a rewrite — the rest is a plain static export.
+
+Options -MultiViews
+AcceptPathInfo On
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^play\.php/([a-zA-Z0-9-]{1,64})/(.+)$ play.php?proxy_host=$1&proxy_path=$2 [QSA,L]
+</IfModule>

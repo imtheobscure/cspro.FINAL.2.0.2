@@ -1,0 +1,316 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: #07091a;
+  color: #e2e8f0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ===================== Teleprompter themes ===================== */
+.tp-root {
+  --tp-fg: #e2e8f0;
+  --tp-bg: #0a0f1e;
+  --tp-muted: #94a3b8;
+  --tp-primary: #f8fafc;
+  --tp-stress-1: #ef4444;     /* warm: red */
+  --tp-stress-2: #f59e0b;     /* warm: amber */
+  --tp-stress-reduce: #60a5fa; /* cool: blue */
+  --tp-link: #34d399;
+  --tp-pause: #94a3b8;
+  --tp-arrow: #c084fc;
+  --tp-accent-marker: #fb7185;
+  background: color-mix(in srgb, var(--tp-bg) calc(var(--tp-bg-alpha, 1) * 100%), transparent);
+  color: var(--tp-fg);
+}
+
+.tp-theme-dark { --tp-fg: #e2e8f0; --tp-bg: #0a0f1e; }
+.tp-theme-light {
+  --tp-fg: #1e293b; --tp-bg: #ffffff; --tp-muted: #475569; --tp-primary: #0f172a;
+  --tp-stress-1: #dc2626; --tp-link: #047857; --tp-pause: #94a3b8; --tp-arrow: #7c3aed;
+  --tp-accent-marker: #dc2626;
+}
+/* Light theme: fix buttons/tabs for contrast */
+.tp-theme-light .tp-topbar { background: rgba(255,255,255,0.85); border-color: rgba(0,0,0,0.1); color: #1e293b; }
+.tp-theme-light .tp-section-head { color: #334155; border-color: rgba(0,0,0,0.15); }
+.tp-theme-light .tp-meta { color: #475569; }
+.tp-theme-light button { color: #1e293b; }
+.tp-theme-light .tp-sentence { color: #334155; }
+.tp-theme-light .tp-sentence.tp-current { color: #0f172a; }
+
+.tp-theme-hcwb {
+  --tp-fg: #ffffff; --tp-bg: #000000; --tp-muted: #d1d5db; --tp-primary: #ffffff;
+  --tp-stress-1: #ff6b6b; --tp-link: #51cf66; --tp-pause: #9ca3af; --tp-arrow: #d0bfff;
+  --tp-accent-marker: #ff6b6b;
+}
+.tp-theme-hcyb {
+  --tp-fg: #facc15; --tp-bg: #000000; --tp-muted: #fde68a; --tp-primary: #facc15;
+  --tp-stress-1: #fb923c; --tp-link: #facc15; --tp-pause: #fde68a; --tp-arrow: #fde68a;
+  --tp-accent-marker: #fb923c;
+}
+
+.tp-stage {
+  font-size: var(--tp-font-size, 36px);
+  line-height: var(--tp-lh, 1.55);
+  letter-spacing: var(--tp-letter, 0.01em);
+  color: var(--tp-fg);
+  scroll-behavior: auto;
+}
+
+.tp-stage::-webkit-scrollbar { width: 6px; }
+.tp-stage::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.2); border-radius: 3px; }
+
+.tp-sentence {
+  opacity: 0.4;
+  transition: opacity 200ms;
+}
+.tp-sentence.tp-current { opacity: 1; }
+.tp-sentence.tp-current .tp-line { color: var(--tp-primary); }
+
+.tp-line {
+  font-size: 1em;
+}
+
+.tp-word-wrap { white-space: nowrap; }
+.tp-word { display: inline; }
+.tp-stress-primary {
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--tp-stress-1);
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+  color: var(--tp-stress-1);
+}
+/* secondary/reduced: no visual change — render as normal text */
+
+.tp-link { color: var(--tp-link); margin: 0 0.05em; }
+.tp-pause {
+  color: var(--tp-pause);
+  font-size: 0.5em;
+  margin: 0 0.2em;
+  opacity: 0.4;
+  vertical-align: middle;
+}
+.tp-pause-long { margin: 0 0.4em; opacity: 0.5; }
+.tp-arrow { color: var(--tp-arrow); margin: 0 0.1em; font-size: 0.9em; }
+.tp-arrow-up { transform: translateY(-0.1em); display: inline-block; }
+.tp-arrow-down { transform: translateY(0.1em); display: inline-block; }
+
+.tp-placeholder {
+  color: var(--tp-arrow);
+  font-style: italic;
+}
+
+.tp-accent-marker {
+  background: linear-gradient(transparent 60%, color-mix(in srgb, var(--tp-accent-marker) 35%, transparent) 60%);
+  border-radius: 0.1em;
+}
+
+.tp-ipa {
+  display: inline-block;
+  font-size: 0.4em;
+  vertical-align: super;
+  color: var(--tp-muted);
+  margin-left: 0.1em;
+  font-family: "Charis SIL", "Doulos SIL", "DejaVu Sans", serif;
+}
+
+.tp-emotion { font-size: 0.6em; opacity: 0.8; margin: 0 0.15em; }
+
+.tp-meta {
+  font-size: 0.32em;
+  line-height: 1.4;
+  color: var(--tp-muted);
+  margin-top: 0.4em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+.tp-bloom {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.05em 0.4em;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-weight: 600;
+}
+.tp-bloom-slate    { color: #94a3b8; }
+.tp-bloom-blue     { color: #60a5fa; }
+.tp-bloom-emerald  { color: #34d399; }
+.tp-bloom-violet   { color: #c084fc; }
+.tp-bloom-amber    { color: #fbbf24; }
+.tp-bloom-rose     { color: #fb7185; }
+
+.tp-boost, .tp-translation {
+  padding: 0.05em 0.4em;
+  border-radius: 0.3em;
+  background: rgba(148, 163, 184, 0.1);
+}
+.tp-translation { color: #93c5fd; }
+.tp-boost { color: #fcd34d; }
+
+/* Speaker button for TTS per sentence */
+.tp-speak-btn {
+  display: inline-block;
+  font-size: 0.4em;
+  margin-left: 0.3em;
+  opacity: 0;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: opacity 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.tp-sentence:hover .tp-speak-btn,
+.tp-sentence.tp-current .tp-speak-btn { opacity: 0.5; }
+.tp-speak-btn:hover { opacity: 1 !important; }
+
+.tp-pitch {
+  display: block;
+  color: var(--tp-arrow);
+  opacity: 0.7;
+  margin-bottom: 0.2em;
+}
+
+/* Focus mode: blur top and bottom thirds */
+.tp-stage.tp-focus {
+  -webkit-mask-image: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0,0,0,0.4) 10%,
+    rgba(0,0,0,1) 30%,
+    rgba(0,0,0,1) 70%,
+    rgba(0,0,0,0.4) 90%,
+    transparent 100%);
+          mask-image: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0,0,0,0.4) 10%,
+    rgba(0,0,0,1) 30%,
+    rgba(0,0,0,1) 70%,
+    rgba(0,0,0,0.4) 90%,
+    transparent 100%);
+}
+
+/* Lock mode: topbar fades but a thin strip at the top stays interactive
+   so the user can hover to reveal controls and click unlock */
+.tp-locked .tp-topbar {
+  opacity: 0.15;
+  transition: opacity 300ms;
+}
+.tp-locked .tp-topbar:hover {
+  opacity: 1;
+}
+/* Ensure the topbar always receives pointer events so hover works */
+.tp-locked .tp-topbar {
+  pointer-events: auto;
+}
+
+/* Section head smaller in light themes */
+.tp-theme-light .tp-section-head { color: #334155; border-color: rgba(0,0,0,0.1); }
+.tp-theme-light .tp-meta { color: #475569; }
+
+.tp-content {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* Range input styling */
+input[type="range"] {
+  accent-color: #3b82f6;
+}
+
+/* Splash screen particles */
+.splash-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(139, 92, 246, 0.4);
+  border-radius: 50%;
+  animation: splash-float linear infinite;
+  pointer-events: none;
+}
+@keyframes splash-float {
+  0% { transform: translateY(0) scale(0); opacity: 0; }
+  20% { opacity: 0.6; transform: translateY(-10px) scale(1); }
+  80% { opacity: 0.3; transform: translateY(-60px) scale(0.8); }
+  100% { transform: translateY(-90px) scale(0); opacity: 0; }
+}
+
+/* Webcam preview — draggable overlay */
+.tp-webcam-draggable {
+  position: absolute;
+  z-index: 25;
+  border-radius: 12px;
+  overflow: visible;
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  background: #000;
+  cursor: grab;
+  user-select: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.tp-webcam-draggable:active {
+  cursor: grabbing;
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.3);
+}
+.tp-webcam-draggable video {
+  display: block;
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  transform: scaleX(-1);
+  border-radius: 10px;
+}
+.tp-webcam-handle {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.tp-webcam-draggable:hover .tp-webcam-handle {
+  opacity: 1;
+}
+
+/* Legacy static webcam — keep for reference */
+.tp-webcam {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 25;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  background: #000;
+  pointer-events: none;
+}
+.tp-webcam video {
+  display: block;
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  transform: scaleX(-1);
+}

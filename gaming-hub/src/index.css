@@ -1,0 +1,345 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: #0b0820;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* Animated cosmic backdrop layer */
+.cosmic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(168,85,247,0.35), transparent 50%),
+    radial-gradient(circle at 80% 30%, rgba(236,72,153,0.30), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(59,130,246,0.30), transparent 55%),
+    linear-gradient(135deg, #0b0820, #1a0b3d 50%, #0b0820);
+  animation: bgShift 30s ease-in-out infinite alternate;
+}
+
+.cosmic-bg::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(2px 2px at 90% 60%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 10% 60%, rgba(255,255,255,0.6), transparent);
+  background-size: 100% 100%;
+  opacity: 0.6;
+  animation: twinkle 6s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift {
+  0%   { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  100% { background-position: 30% 20%, 70% 30%, 40% 80%, 0 0; }
+}
+@keyframes twinkle {
+  0%   { opacity: 0.4; }
+  100% { opacity: 0.85; }
+}
+
+@keyframes catFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-10px) rotate(2deg); }
+}
+@keyframes catBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-6px) scale(1.05); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.title-shimmer {
+  background: linear-gradient(90deg, #fff, #ffd2f5, #c4b5fd, #fff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Pretty scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+::-webkit-scrollbar-thumb { background: linear-gradient(#a855f7, #ec4899); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(#c084fc, #f472b6); }
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.premium-panel {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1.75rem;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06)),
+    rgba(5, 5, 18, 0.55);
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.22);
+  backdrop-filter: blur(18px);
+}
+
+.glossy-emoji {
+  filter:
+    drop-shadow(0 12px 16px rgba(0,0,0,0.45))
+    drop-shadow(0 3px 5px rgba(255,255,255,0.28));
+  text-shadow: 0 1px 0 rgba(255,255,255,0.55), 0 20px 35px rgba(0,0,0,0.4);
+}
+
+.perspective-scene {
+  perspective: 1000px;
+}
+
+.transform-3d {
+  transform-style: preserve-3d;
+}
+
+.glossy-tile {
+  box-shadow:
+    0 18px 30px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -14px 30px rgba(0,0,0,0.16);
+}
+
+.rotate-y-card {
+  transform: rotateY(8deg) translateZ(12px);
+  box-shadow: 0 22px 45px rgba(255,255,255,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.study-card {
+  transition: transform 250ms ease, box-shadow 250ms ease;
+}
+
+.study-card:hover {
+  transform: translateY(-8px) rotateX(2deg);
+  box-shadow: 0 30px 70px rgba(168,85,247,0.28);
+}
+
+.grid-cols-13 {
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+}
+
+.animate-float-slow {
+  animation: catFloat 4.5s ease-in-out infinite;
+}
+
+.animate-drop-ball {
+  animation: dropBall 1.9s cubic-bezier(.37,.01,.31,1) infinite;
+}
+
+.animate-roll-ball {
+  animation: rollBall 2.4s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spinSlow 1.8s linear infinite;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.ww-pad {
+  min-width: 3rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.25);
+  font-weight: 900;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.ww-pad:hover {
+  transform: scale(1.08);
+  background: rgba(255,255,255,0.25);
+}
+
+.animate-shake {
+  animation: shake 0.45s ease-in-out;
+}
+
+.animate-conveyor {
+  animation: conveyor 5.5s linear infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes conveyor {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-110%); }
+}
+
+.animate-shake-pop {
+  animation: shakePop 0.7s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.animate-shake-fall {
+  animation: shakeFall 0.7s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.animate-float-up {
+  animation: floatUp 1.2s ease-out forwards;
+}
+
+.animate-cash-pop {
+  animation: cashPop 0.8s ease-out;
+}
+
+.animate-zombie-walk {
+  animation: zombieWalk 1.4s ease-in-out infinite;
+}
+
+.animate-barrier-crack {
+  animation: barrierCrack 0.4s ease-out;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes shakePop {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  10%, 30%, 50%, 70% { transform: translate3d(-5px, -3px, 0) scale(1.04); }
+  20%, 40%, 60% { transform: translate3d(5px, 3px, 0) scale(1.06); }
+  80% { transform: translate3d(-2px, 0, 0) scale(1.02); }
+}
+
+@keyframes shakeFall {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  10%, 30%, 50%, 70% { transform: translate3d(-4px, 4px, 0); filter: hue-rotate(15deg); }
+  20%, 40%, 60% { transform: translate3d(4px, -2px, 0); }
+}
+
+@keyframes floatUp {
+  0% { opacity: 0; transform: translateY(0) scale(0.8); }
+  20% { opacity: 1; transform: translateY(-10px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-50px) scale(1); }
+}
+
+@keyframes cashPop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.4) rotate(-5deg); text-shadow: 0 0 30px rgba(34,197,94,0.8); }
+  60% { transform: scale(1.15) rotate(3deg); }
+  100% { transform: scale(1); }
+}
+
+@keyframes zombieWalk {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-6px) rotate(3deg); }
+}
+
+@keyframes barrierCrack {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(0.97); filter: brightness(2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 25px currentColor; }
+  50% { box-shadow: 0 0 60px currentColor, 0 0 100px currentColor; }
+}
+
+@keyframes dropBall {
+  0% { transform: translate(-50%, 0) scale(1); }
+  30% { transform: translate(-38%, 90px) scale(1.03); }
+  55% { transform: translate(-62%, 170px) scale(0.98); }
+  82% { transform: translate(-45%, 245px) scale(1.04); }
+  100% { transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes rollBall {
+  0%, 100% { transform: translateX(-18px) rotate(-18deg); }
+  50% { transform: translateX(18px) rotate(18deg); }
+}
+
+/* ── Kids' Corner ─────────────────────────────────────────────────────────────
+   A brighter, softer skin than the grown-up sections: pastel sky, drifting
+   clouds, floating balloons, chunky rounded tiles and gently bobbing art.
+   Everything here also honours prefers-reduced-motion. */
+.kids-section { position: relative; }
+.kids-sky {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,255,255,0.75) 0 6%, transparent 7%),
+    radial-gradient(circle at 82% 24%, rgba(255,255,255,0.6) 0 5%, transparent 6%),
+    radial-gradient(circle at 46% 88%, rgba(255,255,255,0.45) 0 7%, transparent 8%);
+}
+.kids-cloud {
+  position: absolute;
+  width: 130px;
+  height: 46px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.85);
+  filter: blur(0.4px);
+  box-shadow: 42px 8px 0 -6px rgba(255,255,255,0.8), -38px 10px 0 -8px rgba(255,255,255,0.7);
+  animation: kidsDrift 34s linear infinite;
+  pointer-events: none;
+}
+.kids-cloud-1 { top: 14%; left: -140px; }
+.kids-cloud-2 { top: 58%; left: -180px; animation-duration: 47s; animation-delay: -12s; opacity: .8; }
+@keyframes kidsDrift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(100vw + 260px)); }
+}
+.kids-balloon {
+  position: absolute;
+  font-size: 30px;
+  animation: kidsFloatUp 11s ease-in-out infinite;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+}
+.kids-balloon-1 { left: 8%;  bottom: -10px; }
+.kids-balloon-2 { left: 62%; bottom: -10px; animation-delay: -4s; animation-duration: 14s; }
+.kids-balloon-3 { left: 86%; bottom: -10px; animation-delay: -8s; animation-duration: 12s; }
+@keyframes kidsFloatUp {
+  0%   { transform: translateY(0) rotate(-6deg); opacity: 0; }
+  15%  { opacity: .95; }
+  85%  { opacity: .95; }
+  100% { transform: translateY(-190px) rotate(7deg); opacity: 0; }
+}
+.kids-bob { animation: kidsBob 3.4s ease-in-out infinite; }
+@keyframes kidsBob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-7px) rotate(2deg); }
+}
+.kids-title { text-shadow: 0 3px 0 rgba(0,0,0,0.15), 0 8px 18px rgba(0,0,0,0.3); }
+.kids-soon {
+  background: rgba(255,255,255,0.72);
+  border: 3px dashed rgba(255,255,255,0.95);
+  box-shadow: 0 10px 20px -10px rgba(0,0,0,0.3);
+}
+.kids-soon:hover { background: rgba(255,255,255,0.85); transform: translateY(-3px); transition: all .2s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .kids-cloud, .kids-balloon, .kids-bob { animation: none !important; }
+}

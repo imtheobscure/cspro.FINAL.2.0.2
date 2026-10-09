@@ -1,0 +1,248 @@
+# ============================================================
+# TUTOMY ACADEMY — Apache / LiteSpeed hardening for cspro.tutomy.com
+# Installed by `npm run build` (copied from public/ into dist/).
+# Protects source, data and server files; blocks directory listing,
+# source maps, backup/config files and hotlinking — WITHOUT slowing
+# the site (long-lived cache for hashed assets + compression below).
+# Written with mod_rewrite-based denies so it works on Apache 2.2/2.4
+# and LiteSpeed (the standard cPanel stack).
+# ============================================================
+
+# ── Basic server hardening ─────────────────────────────────────
+Options -Indexes -MultiViews
+ServerSignature Off
+
+# Force HTTPS on the cspro subdomain
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ── Legacy URLs → their new canonical paths (301) ─────────────
+# server.ts performs these redirects on a Node host, but the site runs on Apache
+# (cPanel + .htaccess + PHP), where server.ts never executes — so without this
+# block every bookmarked old URL and every old sitemap entry 404s.
+#
+# Every pattern is anchored with ^, so it can only match the OLD top-level path
+# and can never touch a new /tutorly-widgets/… or /tutorly-games/… URL.
+#
+# The first rule also retires the stale flat /tutorly-transcriber-2-v1/ folder:
+# it redirects before Apache can serve anything out of it, so that hand-uploaded
+# copy does not have to be deleted manually.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Dock widgets — old flat paths → /tutorly-widgets/<app>/
+  RewriteRule ^tutorly-transcriber-2-v1(/.*)?$           /tutorly-widgets/tutorly-transcriber-2-v1/          [R=301,L]
+  RewriteRule ^tutorly-prompter(/.*)?$                   /tutorly-widgets/tutorly-prompter/                  [R=301,L]
+  RewriteRule ^exam-builder(-v1)?(/.*)?$                 /tutorly-widgets/exam-builder/                      [R=301,L]
+  RewriteRule ^whiteboard-application-V2(/.*)?$          /tutorly-widgets/whiteboard-application-V2/         [R=301,L,NC]
+  RewriteRule ^preply-success-advisor(-v1)?(/.*)?$       /tutorly-widgets/preply-success-advisor/           [R=301,L]
+  RewriteRule ^university-management-system(-v1)?(/.*)?$ /tutorly-widgets/university-management-system/      [R=301,L]
+  RewriteRule ^tutorly-lesson-insight(/.*)?$             /tutorly-widgets/tutorly-lesson-insight/            [R=301,L]
+  RewriteRule ^Tutorly-cscreen-v1(/.*)?$                 /tutorly-widgets/Tutorly-cscreen/                   [R=301,L,NC]
+  RewriteRule ^content-creator-v1(/.*)?$                 /tutorly-widgets/content-creator/                   [R=301,L]
+  # Tutor Leaderboard was retired. The rule that forwarded it to
+  # /tutorly-widgets/tutor-leaderboard/ is deliberately gone: that folder no longer
+  # exists, so the redirect could only ever land on a 404. Nothing replaces it —
+  # the app is gone, and the Widget Studio tile that opened it is gone too.
+
+  # Lesson apps — old root paths → /tutorly-lessons/<app>/
+  RewriteRule ^englishlesson2(/.*)?$                     /tutorly-lessons/englishlesson2/                    [R=301,L]
+  RewriteRule ^Video-Lesson-v1(/.*)?$                    /tutorly-lessons/Video-Lesson/                      [R=301,L,NC]
+
+  # Games — pre-rename folder names → /tutorly-games/adult/<game>/
+  # `combat-arena` is the app that was served straight from the web root before it
+  # joined the adult games and took a one-word name, so it is the only game entry
+  # whose old path was a real folder beside index.html rather than a `/tutorly-games/`
+  # sibling.
+  RewriteRule ^combat-arena(/.*)?$                       /tutorly-games/adult/arena/                         [R=301,L]
+  RewriteRule ^tutolingo(/.*)?$                          /tutorly-games/adult/lingo/                         [R=301,L]
+  RewriteRule ^tuto_runner(/.*)?$                        /tutorly-games/adult/runner/                        [R=301,L]
+  RewriteRule ^3d-monopoly-v1(/.*)?$                     /tutorly-games/adult/edupoly/                       [R=301,L]
+  RewriteRule ^3d-millionaire-game-v1(/.*)?$             /tutorly-games/adult/hotseat/                       [R=301,L]
+  RewriteRule ^3d-survival-snake-ladder-v1(/.*)?$        /tutorly-games/adult/ladder/                        [R=301,L]
+  RewriteRule ^3d-werewolf-game-v1(/.*)?$                /tutorly-games/adult/werewolf/                      [R=301,L]
+  RewriteRule ^dd-survival-game-v1(/.*)?$                /tutorly-games/adult/dungeon/                       [R=301,L]
+  RewriteRule ^tutorly-madlibs-v1(/.*)?$                 /tutorly-games/adult/madlibs/                       [R=301,L]
+  RewriteRule ^3d-flashcard-v1(/.*)?$                    /tutorly-games/adult/deck/                          [R=301,L]
+  RewriteRule ^3d-flexcards-v1(/.*)?$                    /tutorly-games/adult/flexcards/                     [R=301,L]
+  RewriteRule ^tutorly-instalesson-v1(/.*)?$             /tutorly-games/adult/feed/                          [R=301,L]
+</IfModule>
+
+# ── Block access to sensitive files (always applied) ──────────
+# Source maps, dev sources, server bundle, backups and configs.
+# Note: dist/assets/*.js|css|woff2 are PUBLIC (the app needs them).
+# Only non-runtime files below are denied.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Source maps + TypeScript/source files + generated server bundle
+  RewriteRule \.(map|ts|tsx|jsx|mts|cts)$ - [F,L,NC]
+
+  # Named runtime/server/config files (exact match, root + any folder)
+  RewriteRule ^server\.cjs$ - [F,L]
+  RewriteRule ^server\.js$ - [F,L]
+  RewriteRule ^(package|package-lock|composer|composer-lock|yarn|pnpm-lock)\.(json|lock)$ - [F,L,NC]
+  # ANY credentials name, not just the one we document. A file saved as
+  # db-config.php (a hyphen — the first thing everyone types) or cs-db_config.php,
+  # or a cPanel-prefixed miydtgmr_cs-db_config.php, was previously served as plain
+  # text if it ever sat in the document root. `.*` swallows any prefix and any
+  # sub-folder, so every spelling is covered by one rule, and the template
+  # (…config.example.php) is denied too. The real fix is to keep the file OUTSIDE
+  # the document root — this is only the second line of defence.
+  RewriteRule ^.*[-_]?db[-_]?config(\.example)?\.php$ - [F,L,NC]
+  RewriteRule ^(db_config|config)\.php$ - [F,L,NC]
+  RewriteRule ^tsconfig.*\.json$ - [F,L]
+  RewriteRule ^vite\.config\..*$ - [F,L]
+  RewriteRule ^\.env(\.|$) - [F,L]
+  RewriteRule ^(README|CHANGELOG|LICENSE).*$ - [F,L]
+  RewriteRule ^\.git - [F,L]
+  RewriteRule ^\.svn - [F,L]
+  RewriteRule ^\.hg - [F,L]
+  RewriteRule ^\.htpasswd$ - [F,L]
+
+  # JSON mirrors that must NEVER be web-accessible (tutor DB, site content).
+  # PWA manifest.json stays public — only DB/content mirrors are denied.
+  RewriteRule (_db|tutors_db|site_content|users|backup[-_]?)\.json$ - [F,L,NC]
+
+  # Setup files that ship beside the deploy for phpMyAdmin (schema.sql) and as a
+  # setup guide (MYSQL_SETUP.md). They belong in cPanel's File Manager, not on
+  # the web: schema.sql carries the admin bcrypt hash, so NEVER serve them.
+  RewriteRule \.(sql|md)$ - [F,L,NC]
+
+  # Half-written atomic-write temp files (e.g. tutors_secure_db.php.ab12cd34.php)
+  RewriteRule \.php\.[0-9a-f]{8}\.php$ - [F,L,NC]
+
+  # The credential vault and the encrypted account store are PHP-guarded: never
+  # serve them as static files if PHP handling is ever disabled.
+  RewriteRule ^(admin_vault_secure|tutors_secure_db)\.php(\..*)?$ - [F,L,NC]
+
+  # /uploads/ holds tutor-generated lesson pages — DATA, never code. Both upload
+  # endpoints (this one and tutorly.ir/cspro/upload.php) write .html there, so any
+  # executable extension showing up is either a mistake or an attack. upload.php
+  # writes the Apache 2.4 equivalent into uploads/.htaccess at runtime; this is the
+  # copy that is already in place before the first upload ever happens.
+  RewriteRule ^uploads/.*\.(?i:php|phtml|phar|cgi|pl|py|sh|shtml)$ - [F,L,NC]
+
+  # Common editor / OS droppings
+  RewriteRule ^\.DS_Store$ - [F,L]
+  RewriteRule ^Thumbs\.db$ - [F,L]
+</IfModule>
+
+# Apache 2.4+ equivalents (belt & braces when mod_rewrite is disabled)
+<IfModule mod_authz_core.c>
+  <FilesMatch "\.(map|ts|tsx|jsx|mts|cts|sql|md)$">
+    Require all denied
+  </FilesMatch>
+  <FilesMatch "^(server\.cjs|server\.js|package\.json|package-lock\.json|composer\.(json|lock)|yarn\.lock|pnpm-lock\.json|tsconfig.*\.json|vite\.config\..*|\.env.*|README.*|CHANGELOG.*|LICENSE.*)$">
+    Require all denied
+  </FilesMatch>
+  <FilesMatch "(_db\.json|tutors_db\.json|site_content\.json|users\.json)$">
+    Require all denied
+  </FilesMatch>
+  # Credentials, under every name auth.php accepts (the Apache 2.4 equivalent of
+  # the mod_rewrite denies above). Keeping the real file outside the web root is
+  # still the fix; this is the fallback for when mod_rewrite is unavailable.
+  <FilesMatch "[-_]?db[-_]?config(\.example)?\.php$">
+    Require all denied
+  </FilesMatch>
+  # The upload token for upload.php, under every name it accepts. It should live
+  # one level ABOVE the web root; this is the fallback for when it does not.
+  <FilesMatch "(cs[-_])?upload[-_]?token(\.example)?\.php$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+
+# ── MIME types the widgets need ───────────────────────────────
+# The Transcriber widget ships a 21 MB WebAssembly model and a Web App Manifest.
+# cPanel's mime.types has no mapping for either on some Apache builds, and here a
+# wrong type is FATAL rather than cosmetic: the `nosniff` header below turns it into
+# a hard load failure, and a manifest served as text/html is simply ignored.
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+# ── Security headers (do NOT break generated lessons) ──────────
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=(self)"
+
+  # index.html and the service worker must always revalidate so updates roll out
+  <FilesMatch "^(index\.html|sw\.js|offline\.html)$">
+    Header always set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # Auth responses carry session/token data and must NEVER be cached — a cached
+  # response is what makes a correct password look wrong after a deploy.
+  <FilesMatch "^auth\.php$">
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header always set Pragma "no-cache"
+  </FilesMatch>
+
+  # Account/tier mirrors are live data, never cache them either.
+  <FilesMatch "\.(json)$">
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  </FilesMatch>
+</IfModule>
+
+# ── Performance: long-lived cache for hashed assets ───────────
+# Vite emits hashed filenames in /assets, so 1 year is safe and fast.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/x-icon "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|woff2)$">
+    Header always set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(png|jpe?g|webp|svg|ico|gif|mp3|mp4|webm)$">
+    Header always set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+
+  # MUST stay last of the cache rules, because it overrides them.
+  # `\.(css|js|woff2)$` above matches by file NAME, so it also matched sw.js and
+  # handed the service worker a one-year `immutable` cache — and a browser that never
+  # re-reads sw.js never notices a deploy. That is the quiet reason an update can look
+  # like it did nothing until the cache is cleared by hand. The Transcriber widget ships
+  # its own sw.js under /tutorly-widgets/, so this covers it too.
+  <FilesMatch "^(sw\.js|registerSW\.js|offline\.html)$">
+    Header always set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# ── Compression (never send big uncompressed bodies) ──────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+# ── Hotlink protection for media ──────────────────────────────
+# Stops other sites embedding/copying your images & video while keeping
+# same-site and direct (empty referer) access working.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_REFERER} !^$
+  RewriteCond %{HTTP_REFERER} !^https?://(www\.)?cspro\.tutomy\.com [NC]
+  RewriteCond %{HTTP_REFERER} !^https?://(www\.)?tutomy\.com [NC]
+  RewriteCond %{HTTP_REFERER} !^https?://localhost [NC]
+  RewriteCond %{HTTP_REFERER} !^https?://127\.0\.0\.1 [NC]
+  RewriteCond %{HTTP_REFERER} !^https?://(www\.)?(cspro\.)?tutomy\.com [NC]
+  RewriteRule \.(jpe?g|png|gif|webp|svg|bmp|ico|mp3|mp4|webm|ogg|wav|woff2?)$ - [F,L]
+</IfModule>
+
+# ── Default document ──────────────────────────────────────────
+DirectoryIndex index.html

@@ -1,0 +1,328 @@
+{
+  "meta": {
+    "app": "Tutolingo",
+    "version": "1.0-mock",
+    "sourceDocument": "Tutolingo demo pack (mock data for testing)",
+    "l1": "es",
+    "l1Name": "Spanish",
+    "targetLanguage": "English",
+    "level": "A2–B1",
+    "learnerProfile": "Mock learner: Lucía, 22, student, likes travel, music and football. Preparing for a trip to Ireland.",
+    "theme": "Everyday English for travel and social life",
+    "createdAt": "2026-09-15",
+    "coverage": {
+      "pagesProcessed": "mock data — no source document",
+      "sectionsCovered": ["Demo Unit 1 · Travel", "Demo Unit 2 · Social life"],
+      "vocabularyCount": 24,
+      "grammarCount": 6,
+      "idiomCount": 10,
+      "conversationCount": 3,
+      "sentenceCount": 20,
+      "omissions": []
+    },
+    "notes": "MOCK DATA — switch it off in Profile → Demo content to go back to your own content/tutolingo-content.json."
+  },
+  "vocabulary": [
+    { "id": "v1", "term": "luggage", "pos": "noun", "level": "A2", "pronunciation": "/ˈlʌɡɪdʒ/", "definition": "the bags and suitcases you take when you travel", "translation": "equipaje", "example": { "target": "Lucía put her luggage in the overhead rack.", "native": "Lucía puso su equipaje en el portaequipajes." }, "collocations": ["hand luggage", "check the luggage"], "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v2", "term": "journey", "pos": "noun", "level": "A2", "pronunciation": "/ˈdʒɜːrni/", "definition": "the act of travelling from one place to another", "translation": "viaje", "example": { "target": "The journey to Galway takes three hours.", "native": "El viaje a Galway tarda tres horas." }, "synonyms": ["trip"], "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v3", "term": "delay", "pos": "noun", "level": "B1", "definition": "a situation in which something happens later than planned", "translation": "retraso", "example": { "target": "There was a delay of forty minutes.", "native": "Hubo un retraso de cuarenta minutos." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v4", "term": "crowded", "pos": "adjective", "level": "A2", "definition": "full of people", "translation": "lleno de gente", "example": { "target": "The bus was crowded in the morning.", "native": "El autobús estaba lleno de gente por la mañana." }, "antonyms": ["empty"], "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v5", "term": "queue", "pos": "noun", "level": "B1", "definition": "a line of people waiting for something", "translation": "cola", "example": { "target": "We waited in a long queue for tickets.", "native": "Esperamos en una cola larga para las entradas." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v6", "term": "receipt", "pos": "noun", "level": "B1", "definition": "a piece of paper that shows you have paid", "translation": "recibo", "example": { "target": "Keep the receipt in case you need a refund.", "native": "Guarda el recibo por si necesitas un reembolso." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v7", "term": "refund", "pos": "noun", "level": "B1", "definition": "money returned to you when you are not happy with something", "translation": "reembolso", "example": { "target": "Lucía asked for a refund for the cancelled tour.", "native": "Lucía pidió un reembolso por el tour cancelado." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v8", "term": "sightseeing", "pos": "noun", "level": "B1", "definition": "visiting interesting places as a tourist", "translation": "hacer turismo", "example": { "target": "We went sightseeing around the old town.", "native": "Hicimos turismo por el casco antiguo." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v9", "term": "landmark", "pos": "noun", "level": "B1", "definition": "a famous building or place that is easy to recognise", "translation": "monumento emblemático", "example": { "target": "The bridge is the city's most photographed landmark.", "native": "El puente es el monumento más fotografiado de la ciudad." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v10", "term": "hire", "pos": "verb", "level": "B1", "definition": "to pay to use something for a short time", "translation": "alquilar", "example": { "target": "They hired bikes for the weekend.", "native": "Alquilaron bicicletas para el fin de semana." }, "synonyms": ["rent"], "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v11", "term": "booking", "pos": "noun", "level": "A2", "definition": "an arrangement you make in advance", "translation": "reserva", "example": { "target": "I have a booking for two nights.", "native": "Tengo una reserva para dos noches." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v12", "term": "suitcase", "pos": "noun", "level": "A2", "definition": "a case with a handle used for carrying clothes when travelling", "translation": "maleta", "example": { "target": "Her suitcase was too heavy to carry upstairs.", "native": "Su maleta era demasiado pesada para subirla." }, "unit": "Demo Unit 1", "sourceRef": "mock" },
+    { "id": "v13", "term": "excited", "pos": "adjective", "level": "A2", "definition": "very happy and interested about something that is going to happen", "translation": "emocionado", "example": { "target": "Lucía is excited about her first trip abroad.", "native": "Lucía está emocionada por su primer viaje al extranjero." }, "antonyms": ["bored"], "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v14", "term": "worried", "pos": "adjective", "level": "A2", "definition": "unhappy because you are thinking about problems", "translation": "preocupado", "example": { "target": "She was worried about missing the train.", "native": "Estaba preocupada por perder el tren." }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v15", "term": "polite", "pos": "adjective", "level": "B1", "definition": "showing good manners towards other people", "translation": "educado", "example": { "target": "It is polite to say thank you.", "native": "Es educado dar las gracias." }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v16", "term": "borrow", "pos": "verb", "level": "B1", "definition": "to take something from someone and give it back later", "translation": "pedir prestado", "example": { "target": "Can I borrow your charger for an hour?", "native": "¿Puedo pedirte prestado tu cargador una hora?" }, "antonyms": ["lend"], "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v17", "term": "invite", "pos": "verb", "level": "A2", "definition": "to ask someone to come to an event", "translation": "invitar", "example": { "target": "They invited me to a birthday party.", "native": "Me invitaron a una fiesta de cumpleaños." }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v18", "term": "chat", "pos": "verb", "level": "A2", "definition": "to talk in a friendly and informal way", "translation": "charlar", "example": { "target": "We chatted about music for an hour.", "native": "Charlamos sobre música durante una hora." }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v19", "term": "recommend", "pos": "verb", "level": "B1", "definition": "to tell someone that something is good and worth trying", "translation": "recomendar", "example": { "target": "Can you recommend a good coffee shop?", "native": "¿Puedes recomendarme una buena cafetería?" }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v20", "term": "comfortable", "pos": "adjective", "level": "A2", "definition": "pleasant to wear, sit in or use", "translation": "cómodo", "example": { "target": "These shoes are comfortable for walking.", "native": "Estos zapatos son cómodos para caminar." }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v21", "term": "available", "pos": "adjective", "level": "B1", "definition": "able to be used or obtained", "translation": "disponible", "example": { "target": "Are there any tickets available for Friday?", "native": "¿Hay entradas disponibles para el viernes?" }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v22", "term": "schedule", "pos": "noun", "level": "B1", "definition": "a plan of times for activities", "translation": "horario", "example": { "target": "The train schedule changes at weekends.", "native": "El horario de trenes cambia los fines de semana." }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v23", "term": "enjoy", "pos": "verb", "level": "A2", "definition": "to get pleasure from something", "translation": "disfrutar", "example": { "target": "I really enjoyed the live music.", "native": "Disfruté mucho de la música en directo." }, "unit": "Demo Unit 2", "sourceRef": "mock" },
+    { "id": "v24", "term": "afford", "pos": "verb", "level": "B1", "definition": "to have enough money for something", "translation": "permitirse", "example": { "target": "We can't afford a hotel in the centre.", "native": "No podemos permitirnos un hotel en el centro." }, "unit": "Demo Unit 2", "sourceRef": "mock" }
+  ],
+  "grammar": [
+    {
+      "id": "g1",
+      "title": "Present Simple",
+      "level": "A2",
+      "rule": "Use the present simple for routines, habits and facts. Add -s or -es with he, she and it.",
+      "nativeRule": "Usamos el presente simple para rutinas y hechos. Con he, she, it el verbo lleva -s o -es.",
+      "structure": "Subject + base verb (+s/es)",
+      "examples": [
+        { "target": "The train leaves at eight.", "native": "El tren sale a las ocho." },
+        { "target": "Lucía studies every evening.",        "native": "Lucía estudia todas las tardes."
+      },
+      {
+        "target": "The hostel costs thirty euros a night.",
+        "native": "El albergue cuesta treinta euros la noche." }
+      ],
+      "commonMistakes": ["Forgetting the -s: «She study» instead of «She studies»."],
+      "exercises": [
+        { "type": "multiple_choice", "prompt": "The museum ___ at nine o'clock.", "options": ["open", "opens", "opening", "opened"], "answer": "opens", "explanation": "Third person singular takes -s.", "nativeExplanation": "Tercera persona singular lleva -s." },
+        { "type": "multiple_choice", "prompt": "They ___ to the coast every summer.", "options": ["goes", "go", "going", "gone"], "answer": "go", "explanation": "Plural subject keeps the base form." },
+        { "type": "multiple_choice", "prompt": "She ___ three languages.", "options": ["speak", "speaks", "speaking", "spoke"], "answer": "speaks", "explanation": "He / she / it + s." },
+        { "type": "multiple_choice", "prompt": "It ___ a lot in November here.", "options": ["rain", "rains", "raining", "rained"], "answer": "rains", "explanation": "A general fact about the weather." }
+      ],
+      "unit": "Demo Unit 1",
+      "sourceRef": "mock g1"
+    },
+    {
+      "id": "g2",
+      "title": "Present Continuous",
+      "level": "A2",
+      "rule": "Use am / is / are + verb-ing for actions happening now or around now.",
+      "nativeRule": "Usamos am / is / are + verbo-ing para acciones que pasan ahora.",
+      "structure": "am/is/are + verb-ing",
+      "examples": [
+        { "target": "We are waiting for the bus.", "native": "Estamos esperando el autobús." },
+        { "target": "She is studying for an exam this week.",        "native": "Esta semana estudia para un examen."
+      },
+      {
+        "target": "They are travelling to Dublin on Friday.",
+        "native": "El viernes viajan a Dublín." }
+      ],
+      "commonMistakes": ["Mixing it with the present simple: «I am go» instead of «I am going»."],
+      "exercises": [
+        { "type": "multiple_choice", "prompt": "Look! The bus ___.", "options": ["comes", "is coming", "come", "came"], "answer": "is coming", "explanation": "Happening right now." },
+        { "type": "multiple_choice", "prompt": "I ___ for my exam this week.", "options": ["study", "am studying", "studies", "studied"], "answer": "am studying", "explanation": "Temporary situation around now." },
+        { "type": "multiple_choice", "prompt": "They ___ dinner at the moment.", "options": ["have", "has", "are having", "had"], "answer": "are having", "explanation": "Are + verb-ing for plural subjects." },
+        { "type": "multiple_choice", "prompt": "Why ___ you laughing?", "options": ["is", "am", "are", "do"], "answer": "are", "explanation": "You always takes are." }
+      ],
+      "unit": "Demo Unit 1",
+      "sourceRef": "mock g2"
+    },
+    {
+      "id": "g3",
+      "title": "Past Simple",
+      "level": "A2",
+      "rule": "Use the past simple for finished actions. Regular verbs add -ed; irregular verbs have their own form.",
+      "nativeRule": "Usamos el pasado simple para acciones terminadas. Los verbos regulares añaden -ed.",
+      "structure": "Subject + verb-ed / irregular form",
+      "examples": [
+        { "target": "We visited the castle yesterday.", "native": "Visitamos el castillo ayer." },
+        { "target": "She caught the early train.",        "native": "Tomó el tren temprano."
+      },
+      {
+        "target": "Lucía booked the hostel last month.",
+        "native": "Lucía reservó el albergue el mes pasado." }
+      ],
+      "exercises": [
+        { "type": "multiple_choice", "prompt": "We ___ the old town last Sunday.", "options": ["visit", "visited", "visiting", "visits"], "answer": "visited", "explanation": "Regular verb + -ed." },
+        { "type": "multiple_choice", "prompt": "She ___ her ticket at the gate.", "options": ["lose", "loses", "lost", "losing"], "answer": "lost", "explanation": "Irregular past of lose." },
+        { "type": "multiple_choice", "prompt": "They ___ to Galway by coach.", "options": ["go", "goed", "went", "going"], "answer": "went", "explanation": "Irregular past of go." },
+        { "type": "multiple_choice", "prompt": "___ you enjoy the concert?", "options": ["Do", "Did", "Does", "Were"], "answer": "Did", "explanation": "Questions in the past use did." }
+      ],
+      "unit": "Demo Unit 1",
+      "sourceRef": "mock g3"
+    },
+    {
+      "id": "g4",
+      "title": "Comparatives & Superlatives",
+      "level": "B1",
+      "rule": "Short adjectives take -er / -est; longer adjectives take more / most. Irregular: good → better → best.",
+      "nativeRule": "Adjetivos cortos: -er / -est. Largos: more / most. Irregulares: good → better → best.",
+      "structure": "adj-er than / the adj-est · more + adj than / the most + adj",
+      "examples": [
+        { "target": "The bus is cheaper than the train.", "native": "El autobús es más barato que el tren." },
+        { "target": "That was the best coffee in town.",        "native": "Ese fue el mejor café de la ciudad."
+      },
+      {
+        "target": "Galway is smaller than Dublin.",
+        "native": "Galway es más pequeño que Dublín." }
+      ],
+      "exercises": [
+        { "type": "multiple_choice", "prompt": "The bus is ___ than the train.", "options": ["cheap", "cheaper", "cheapest", "more cheap"], "answer": "cheaper", "explanation": "Short adjective + -er." },
+        { "type": "multiple_choice", "prompt": "This is the ___ hotel in the city.", "options": ["good", "better", "best", "goodest"], "answer": "best", "explanation": "Irregular superlative of good." },
+        { "type": "multiple_choice", "prompt": "The centre is ___ than the suburbs.", "options": ["crowded", "more crowded", "most crowded", "crowdeder"], "answer": "more crowded", "explanation": "Long adjective uses more." },
+        { "type": "multiple_choice", "prompt": "January is the ___ month of the year here.", "options": ["cold", "colder", "coldest", "most cold"], "answer": "coldest", "explanation": "Superlative of a short adjective." }
+      ],
+      "unit": "Demo Unit 2",
+      "sourceRef": "mock g4"
+    },
+    {
+      "id": "g5",
+      "title": "First Conditional",
+      "level": "B1",
+      "rule": "If + present simple, will + base verb. Use it for real possibilities in the future.",
+      "nativeRule": "If + presente simple, will + verbo base. Para posibilidades reales en el futuro.",
+      "structure": "If + present simple, will + base verb",
+      "examples": [
+        { "target": "If it rains, we will stay inside.", "native": "Si llueve, nos quedaremos dentro." },
+        { "target": "If you book online, you will save money.",        "native": "Si reservas online, ahorrarás dinero."
+      },
+      {
+        "target": "If the weather is good, we will walk to the cliffs.",
+        "native": "Si hace buen tiempo, caminaremos hasta los acantilados." }
+      ],
+      "exercises": [
+        { "type": "multiple_choice", "prompt": "If it ___, we will stay inside.", "options": ["will rain", "rains", "rained", "raining"], "answer": "rains", "explanation": "After if we use the present simple." },
+        { "type": "multiple_choice", "prompt": "If you book online, you ___ money.", "options": ["save", "will save", "saved", "saving"], "answer": "will save", "explanation": "The result uses will." },
+        { "type": "multiple_choice", "prompt": "She ___ happy if you call her.", "options": ["is", "will be", "was", "being"], "answer": "will be", "explanation": "Will + base verb in the result." },
+        { "type": "multiple_choice", "prompt": "If we leave now, we ___ the train.", "options": ["catch", "catched", "will catch", "catching"], "answer": "will catch", "explanation": "Real future possibility." }
+      ],
+      "unit": "Demo Unit 2",
+      "sourceRef": "mock g5"
+    },
+    {
+      "id": "g6",
+      "title": "Prepositions of Time",
+      "level": "A2",
+      "rule": "Use in for months, years and parts of the day; on for days and dates; at for clock times.",
+      "nativeRule": "In para meses/años, on para días, at para horas.",
+      "structure": "at + time · on + day/date · in + month/year",
+      "examples": [
+        { "target": "The tour starts at ten.", "native": "El tour empieza a las diez." },
+        { "target": "We arrived on Friday morning.",        "native": "Llegamos el viernes por la mañana."
+      },
+      {
+        "target": "The museum is closed in January.",
+        "native": "El museo está cerrado en enero." }
+      ],
+      "exercises": [
+        { "type": "multiple_choice", "prompt": "The tour starts ___ ten o'clock.", "options": ["in", "on", "at", "to"], "answer": "at", "explanation": "Clock times take at." },
+        { "type": "multiple_choice", "prompt": "We arrived ___ Friday.", "options": ["at", "on", "in", "by"], "answer": "on", "explanation": "Days take on." },
+        { "type": "multiple_choice", "prompt": "Ireland is beautiful ___ spring.", "options": ["at", "on", "in", "to"], "answer": "in", "explanation": "Seasons take in." },
+        { "type": "multiple_choice", "prompt": "The festival is ___ July.", "options": ["at", "on", "in", "for"], "answer": "in", "explanation": "Months take in." }
+      ],
+      "unit": "Demo Unit 2",
+      "sourceRef": "mock g6"
+    }
+  ],
+  "idioms": [
+    { "id": "i1", "expression": "break the ice", "type": "idiom", "meaning": "to make people feel relaxed when they first meet", "nativeMeaning": "romper el hielo", "literalMeaning": "romper el hielo", "example": { "target": "He told a joke to break the ice at the hostel.", "native": "Contó un chiste para romper el hielo en el hostal." }, "register": "neutral", "usageNotes": "Very common in social and classroom situations." },
+    { "id": "i2", "expression": "get the hang of it", "type": "idiom", "meaning": "to learn how to do something with practice", "nativeMeaning": "cogerle el truco", "example": { "target": "The metro app was confusing, but I got the hang of it.", "native": "La app del metro era confusa, pero le cogí el truco." }, "register": "informal" },
+    { "id": "i3", "expression": "under the weather", "type": "idiom", "meaning": "feeling slightly ill", "nativeMeaning": "sentirse mal, pachucho", "example": { "target": "I'm a bit under the weather today, so I'll rest.", "native": "Hoy estoy un poco pachucha, así que descansaré." }, "register": "informal" },
+    { "id": "i4", "expression": "hit the road", "type": "idiom", "meaning": "to start a journey", "nativeMeaning": "ponerse en camino", "example": { "target": "Let's hit the road before the traffic gets bad.", "native": "Pongámonos en camino antes de que haya tráfico." }, "register": "informal" },
+    { "id": "i5", "expression": "a piece of cake", "type": "idiom", "meaning": "something very easy", "nativeMeaning": "pan comido", "example": { "target": "The online check-in was a piece of cake.", "native": "El check-in online fue pan comido." }, "register": "informal" },
+    { "id": "i6", "expression": "keep an eye on", "type": "phrasal_verb", "meaning": "to watch and take care of something", "nativeMeaning": "vigilar, echar un ojo a", "example": { "target": "Could you keep an eye on my luggage?", "native": "¿Podrías echar un ojo a mi equipaje?" }, "register": "neutral" },
+    { "id": "i7", "expression": "look forward to", "type": "phrasal_verb", "meaning": "to feel happy and excited about something in the future", "nativeMeaning": "tener ganas de", "example": { "target": "I'm looking forward to the weekend trip.", "native": "Tengo ganas de la excursión del fin de semana." }, "register": "neutral", "usageNotes": "Followed by a noun or verb-ing." },
+    { "id": "i8", "expression": "run out of", "type": "phrasal_verb", "meaning": "to use all of something so there is none left", "nativeMeaning": "quedarse sin", "example": { "target": "We ran out of cash on the last day.", "native": "Nos quedamos sin efectivo el último día." }, "register": "neutral" },
+    { "id": "i9", "expression": "take your time", "type": "expression", "meaning": "don't hurry", "nativeMeaning": "tómate tu tiempo", "example": { "target": "Take your time — the train isn't until six.", "native": "Tómate tu tiempo, el tren no sale hasta las seis." }, "register": "informal" },
+    { "id": "i10", "expression": "on the same page", "type": "idiom", "meaning": "in agreement about a plan", "nativeMeaning": "en la misma sintonía", "example": { "target": "Let's make sure we're on the same page about the plan.", "native": "Asegurémonos de estar en la misma sintonía con el plan." }, "register": "neutral" }
+  ],
+  "conversations": [
+    {
+      "id": "c1",
+      "title": "At the train station",
+      "setting": "Buying a ticket at the counter",
+      "level": "A2",
+      "goal": "Buy a ticket and ask about times",
+      "nativeSummary": "Comprar un billete y preguntar por los horarios.",
+      "turns": [
+        { "speaker": "A", "name": "Lucía", "target": "Hello, I'd like a ticket to Galway, please.", "native": "Hola, querría un billete a Galway, por favor." },
+        { "speaker": "B", "name": "Clerk", "target": "Single or return?", "native": "¿Solo ida o ida y vuelta?" },
+        { "speaker": "A", "name": "Lucía", "target": "Return, coming back on Sunday.", "native": "Ida y vuelta, volviendo el domingo." },
+        { "speaker": "B", "name": "Clerk", "target": "That's thirty-two euros. The next train leaves at ten past nine.", "native": "Son treinta y dos euros. El próximo tren sale a las nueve y diez." },
+        { "speaker": "A", "name": "Lucía", "target": "Is there a delay today?", "native": "¿Hay retraso hoy?" },
+        { "speaker": "B", "name": "Clerk", "target": "No, everything is on time. Platform four.", "native": "No, todo va puntual. Andén cuatro." },
+        { "speaker": "A", "name": "Lucía", "target": "Great, could I have a receipt?", "native": "Genial, ¿me da un recibo?" },
+        { "speaker": "B", "name": "Clerk", "target": "Of course. Have a good journey!", "native": "Por supuesto. ¡Buen viaje!" }
+      ],
+      "keyPhrases": [
+        { "target": "Single or return?", "native": "¿Solo ida o ida y vuelta?" },
+        { "target": "Is there a delay today?", "native": "¿Hay retraso hoy?" }
+      ],
+      "sourceRef": "mock c1"
+    },
+    {
+      "id": "c2",
+      "title": "Checking into the hostel",
+      "setting": "Arriving at the reception desk",
+      "level": "A2",
+      "goal": "Check in, ask about facilities",
+      "nativeSummary": "Registrarse en el hostel y preguntar por los servicios.",
+      "turns": [
+        { "speaker": "A", "name": "Lucía", "target": "Hi, I have a booking for two nights.", "native": "Hola, tengo una reserva para dos noches." },
+        { "speaker": "B", "name": "Receptionist", "target": "Welcome! Can I see your passport, please?", "native": "¡Bienvenida! ¿Puedo ver su pasaporte, por favor?" },
+        { "speaker": "A", "name": "Lucía", "target": "Here you are. What time is breakfast?", "native": "Aquí tiene. ¿A qué hora es el desayuno?" },
+        { "speaker": "B", "name": "Receptionist", "target": "From seven to ten in the kitchen downstairs.", "native": "De siete a diez en la cocina de abajo." },
+        { "speaker": "A", "name": "Lucía", "target": "Is there anywhere to leave my luggage after check-out?", "native": "¿Hay algún sitio para dejar el equipaje después del check-out?" },
+        { "speaker": "B", "name": "Receptionist", "target": "Yes, the storage room is free until six.", "native": "Sí, la sala de equipajes es gratis hasta las seis." },
+        { "speaker": "A", "name": "Lucía", "target": "Perfect. Could you recommend a good place for dinner?", "native": "Perfecto. ¿Podría recomendarme un buen sitio para cenar?" },
+        { "speaker": "B", "name": "Receptionist", "target": "The fish place on the corner is excellent.", "native": "El sitio de pescado de la esquina es excelente." }
+      ],
+      "keyPhrases": [
+        { "target": "I have a booking for two nights.", "native": "Tengo una reserva para dos noches." },
+        { "target": "Could you recommend a good place for dinner?", "native": "¿Podría recomendarme un buen sitio para cenar?" }
+      ],
+      "sourceRef": "mock c2"
+    },
+    {
+      "id": "c3",
+      "title": "Small talk about the weekend",
+      "setting": "Chatting with another student",
+      "level": "B1",
+      "goal": "Talk about plans and react naturally",
+      "nativeSummary": "Charlar sobre los planes del fin de semana.",
+      "turns": [
+        { "speaker": "A", "name": "Lucía", "target": "Any plans for the weekend?", "native": "¿Algún plan para el fin de semana?" },
+        { "speaker": "B", "name": "Mark", "target": "I'm going hiking on Saturday if the weather is good.", "native": "Voy a hacer senderismo el sábado si hace buen tiempo." },
+        { "speaker": "A", "name": "Lucía", "target": "Nice! I've never been hiking.", "native": "¡Qué bien! Nunca he hecho senderismo." },
+        { "speaker": "B", "name": "Mark", "target": "You should come. It's not hard — you'll get the hang of it.", "native": "Deberías venir. No es difícil, le cogerás el truco." },
+        { "speaker": "A", "name": "Lucía", "target": "Sounds fun, but I'm a bit under the weather.", "native": "Suena divertido, pero estoy un poco pachucha." },
+        { "speaker": "B", "name": "Mark", "target": "Then take your time and rest. Maybe next weekend?", "native": "Entonces tómate tu tiempo y descansa. ¿Quizá el próximo?" },
+        { "speaker": "A", "name": "Lucía", "target": "Yes, I'd look forward to that.", "native": "Sí, me encantaría." },
+        { "speaker": "B", "name": "Mark", "target": "Great, I'll text you the details.", "native": "Genial, te mando los detalles por mensaje." }
+      ],
+      "keyPhrases": [
+        { "target": "Any plans for the weekend?", "native": "¿Algún plan para el fin de semana?" },
+        { "target": "I'll text you the details.", "native": "Te mando los detalles por mensaje." }
+      ],
+      "sourceRef": "mock c3"
+    }
+  ],
+  "sentences": [
+    { "id": "s1", "target": "I would like a ticket to Galway, please.", "native": "Querría un billete a Galway, por favor." },
+    { "id": "s2", "target": "The train leaves at ten past nine.", "native": "El tren sale a las nueve y diez." },
+    { "id": "s3", "target": "There was a delay because of the storm.", "native": "Hubo un retraso por la tormenta." },
+    { "id": "s4", "target": "The bus was crowded this morning.", "native": "El autobús estaba lleno esta mañana." },
+    { "id": "s5", "target": "We waited in a long queue for tickets.", "native": "Esperamos en una cola larga para las entradas." },
+    { "id": "s6", "target": "Please keep the receipt.", "native": "Por favor, guarda el recibo." },
+    { "id": "s7", "target": "She asked for a refund for the cancelled tour.", "native": "Pidió un reembolso por el tour cancelado." },
+    { "id": "s8", "target": "We spent the afternoon sightseeing.", "native": "Pasamos la tarde haciendo turismo." },
+    { "id": "s9", "target": "That bridge is the city's best-known landmark.", "native": "Ese puente es el monumento más conocido de la ciudad." },
+    { "id": "s10", "target": "They hired bikes for the weekend.", "native": "Alquilaron bicicletas para el fin de semana." },
+    { "id": "s11", "target": "I have a booking for two nights.", "native": "Tengo una reserva para dos noches." },
+    { "id": "s12", "target": "Her suitcase was too heavy to carry upstairs.", "native": "Su maleta era demasiado pesada para subirla." },
+    { "id": "s13", "target": "Lucía is excited about her first trip abroad.", "native": "Lucía está emocionada por su primer viaje al extranjero." },
+    { "id": "s14", "target": "She was worried about missing the train.", "native": "Estaba preocupada por perder el tren." },
+    { "id": "s15", "target": "It is polite to say thank you.", "native": "Es educado dar las gracias." },
+    { "id": "s16", "target": "Can I borrow your charger for an hour?", "native": "¿Puedo pedirte prestado tu cargador una hora?" },
+    { "id": "s17", "target": "They invited me to a birthday party.", "native": "Me invitaron a una fiesta de cumpleaños." },
+    { "id": "s18", "target": "We chatted about music for an hour.", "native": "Charlamos sobre música durante una hora." },
+    { "id": "s19", "target": "Can you recommend a good coffee shop?", "native": "¿Puedes recomendarme una buena cafetería?" },
+    { "id": "s20", "target": "We cannot afford a hotel in the centre.", "native": "No podemos permitirnos un hotel en el centro." }
+  ],
+  "activities": {
+    "matchPairs": [
+      { "pairs": [ { "target": "luggage", "native": "equipaje" }, { "target": "receipt", "native": "recibo" }, { "target": "delay", "native": "retraso" }, { "target": "booking", "native": "reserva" } ], "sourceRef": "mock match 1" }
+    ],
+    "fillBlank": [
+      { "sentence": "There was a ______ of forty minutes because of the storm.", "answer": "delay", "options": ["delay", "refund", "queue", "landmark"], "native": "Hubo un retraso de cuarenta minutos por la tormenta." },
+      { "sentence": "Can I ______ your charger for an hour?", "answer": "borrow", "options": ["borrow", "lend", "hire", "afford"], "native": "¿Puedo pedirte prestado tu cargador una hora?" }
+    ],
+    "reorder": [
+      { "sentence": "The train leaves at ten past nine", "native": "El tren sale a las nueve y diez." }
+    ],
+    "listenSelect": [
+      { "prompt": "refund", "answer": "refund", "options": ["refund", "receipt", "booking", "luggage"], "native": "reembolso" }
+    ],
+    "typeHear": [
+      { "sentence": "The bus was crowded this morning", "native": "El autobús estaba lleno esta mañana." }
+    ],
+    "speak": [
+      { "sentence": "I would like a ticket to Galway please", "native": "Querría un billete a Galway, por favor." }
+    ],
+    "tapComplete": [
+      { "prompt": "If it ___ tomorrow, we will stay inside.", "options": ["rains", "will rain", "rained", "raining"], "answer": "rains", "explanation": "After if we use the present simple.", "native": "Si llueve mañana, nos quedaremos dentro." }
+    ]
+  }
+}

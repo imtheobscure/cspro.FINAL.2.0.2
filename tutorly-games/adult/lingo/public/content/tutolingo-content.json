@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "app": "Tutolingo",
+    "version": "1.0",
+    "sourceDocument": "",
+    "l1": "",
+    "l1Name": "",
+    "targetLanguage": "English",
+    "level": "",
+    "learnerProfile": "",
+    "createdAt": ""
+  },
+  "vocabulary": [],
+  "grammar": [],
+  "idioms": [],
+  "conversations": [],
+  "sentences": [],
+  "activities": {},
+  "readme": "Replace this file with the single JSON file produced by the AI content prompt (see the AI Prompt page in the app). Every section is optional: include only the content types that exist in your source document. All translations go in the 'native' / 'translation' fields, written in the learner's first language declared in meta.l1."
+}

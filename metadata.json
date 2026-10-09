@@ -1,0 +1,12 @@
+{
+  "name": "Remix Remix Classroom Screen Pro 73 (Test lab Perfect)",
+  "description": "Perfect solution for online tutors",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "clipboard-read"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

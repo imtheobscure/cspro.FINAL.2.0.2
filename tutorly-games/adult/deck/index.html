@@ -1,0 +1,36 @@
+<!doctype html>
+<!--
+  `data-theme="light"` is set here rather than by JavaScript because light is the
+  default: the very first paint is already correct, with nothing to undo.
+-->
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deck — 3D flashcards for your own lesson</title>
+    <script>
+      /*
+       * Applies a saved dark choice before the first paint.
+       *
+       * Kept inline and dependency-free on purpose: it has to run before the stylesheet
+       * has anything to paint, and a module would be deferred, which is exactly too late.
+       * The key is the same string as THEME_STORAGE_KEY in src/lib/theme.ts.
+       */
+      try {
+        /* Key from src/lib/theme.ts. The second read is the pre-rename key, kept so an
+           existing dark choice is not lost now that the game is called Deck. */
+        var saved =
+          localStorage.getItem("deck.theme.v1") ?? localStorage.getItem("linguaquest3d.theme.v1");
+        if (saved === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      } catch (error) {
+        /* Private-mode storage throws. Light is already set, so there is nothing to do. */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./src/main.tsx"></script>
+  </body>
+</html>

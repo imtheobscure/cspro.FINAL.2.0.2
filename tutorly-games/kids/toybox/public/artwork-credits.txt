@@ -1,0 +1,10 @@
+Tutorly Playroom artwork credits
+
+Dictionary pictographs: Twemoji by Twitter, Inc. and other contributors.
+Graphics licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://github.com/twitter/twemoji
+https://creativecommons.org/licenses/by/4.0/
+
+Activity scenes, character rigs, letter paths and teaching diagrams: custom Tutorly SVG illustrations.
+Playroom hero image: AI-generated bespoke tactile-toy illustration.
+Fonts: DM Sans, Manrope and Noto Sans SC, distributed by Google Fonts under their respective open-source font licenses.

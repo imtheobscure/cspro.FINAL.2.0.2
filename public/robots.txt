@@ -1,0 +1,15 @@
+# ==========================================
+# Tutorly CSpro Web Crawler Instructions
+# ==========================================
+
+# Target all spider crawlers
+User-agent: *
+Allow: /
+
+# Specifically request friendly spiders to avoid indexing dev environments or temporary binary objects
+Disallow: /api/proxy/calendar
+Disallow: /api/sounds/search
+
+# Sitemap references for the official domains
+Sitemap: https://cspro.tutomy.com/sitemap.xml
+Sitemap: https://cspro.tutorly.ir/sitemap.xml

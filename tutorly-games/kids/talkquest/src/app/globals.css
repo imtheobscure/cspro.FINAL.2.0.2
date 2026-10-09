@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #1e293b;
+  --sun: #fbbf24;
+  --sky: #38bdf8;
+  --mint: #34d399;
+  --coral: #fb7185;
+  --grape: #a78bfa;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(900px 420px at 8% -8%, #fde68a88, transparent 60%),
+    radial-gradient(800px 380px at 100% 0%, #7dd3fc77, transparent 55%),
+    radial-gradient(700px 340px at 50% 110%, #f9a8d477, transparent 50%),
+    #fff7ed;
+}
+
+.btn-3d {
+  box-shadow: 0 5px 0 rgb(15 23 42 / 0.18);
+}
+.btn-3d:hover { filter: brightness(1.05); }
+.btn-3d:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgb(15 23 42 / 0.18);
+}
+
+.card-3d {
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 12px 28px -12px rgb(15 23 42 / 0.25);
+}
+
+.blob {
+  border-radius: 42% 58% 56% 44% / 48% 42% 58% 52%;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 99px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   READABILITY — the same look, a bigger type scale.
+
+   TalkQuest is taught on a shared screen at least as often as it is tapped on a
+   laptop, and the smallest copy (chips, captions, tutor hints) was sized for a
+   close-up. This block raises ONLY the type — not one colour, radius, border,
+   shadow or grid is touched, so the theme is unchanged.
+
+   Tailwind v4 writes every text utility as `font-size: var(\u002d\u002dtext-sm)`, so
+   redefining those theme variables here scales all of them at once. Line heights
+   are unitless ratios in Tailwind, so they follow the font size automatically and
+   nothing can clip. Spacing utilities are deliberately NOT scaled: the layout
+   stays exactly as designed, only the words grow.
+
+   `--ts` is set from the header (Large / Extra large / Huge) and remembered in
+   this browser. The default is Extra large, because a tutor-led lesson on a
+   shared screen is the normal case.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --ts: 1.15;
+  --text-xs: calc(0.75rem * var(--ts));
+  --text-sm: calc(0.875rem * var(--ts));
+  --text-base: calc(1rem * var(--ts));
+  --text-lg: calc(1.125rem * var(--ts));
+  --text-xl: calc(1.25rem * var(--ts));
+  --text-2xl: calc(1.5rem * var(--ts));
+  --text-3xl: calc(1.875rem * var(--ts));
+  --text-4xl: calc(2.25rem * var(--ts));
+  --text-5xl: calc(3rem * var(--ts));
+  --text-6xl: calc(3.75rem * var(--ts));
+}
+
+html[data-textsize="large"]  { --ts: 1; }
+html[data-textsize="xlarge"] { --ts: 1.15; }
+html[data-textsize="huge"]   { --ts: 1.32; }
+
+/* The one thing the smallest labels could never survive: 10–11px chips. */
+.tabular-nums { font-variant-numeric: tabular-nums; }

@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "Lingo — your own language course",
+  "short_name": "Lingo",
+  "description": "A gamified language course built from your own material: lessons, XP, streaks, leagues, references and offline practice.",
+  "start_url": "./?continue=1",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#F7F9FC",
+  "theme_color": "#58CC02",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Continue my lesson", "short_name": "Continue", "url": "./?continue=1" },
+    { "name": "References", "short_name": "References", "url": "./references/" },
+    { "name": "Practice mistakes", "short_name": "Practice", "url": "./practice/" }
+  ]
+}

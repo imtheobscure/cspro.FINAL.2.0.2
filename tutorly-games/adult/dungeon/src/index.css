@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* Base */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: 18px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0c0a09;
+  font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;
+  overflow-x: hidden;
+}
+
+/* Prevent layout shift from scrollbar */
+html { scrollbar-gutter: stable; }
+
+/* Selection */
+::selection {
+  background: #b4530955;
+  color: #fef3c7;
+}
+
+/* Focus outline override for game feel */
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+/* Range input */
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #292524;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f59e0b;
+  cursor: pointer;
+  box-shadow: 0 0 8px #f59e0b66;
+  transition: box-shadow 0.2s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 16px #f59e0b99;
+}
+
+/* Textarea */
+textarea {
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #1c1917; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #78350f; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #b45309; }
+
+/* Prevent text overflow */
+h1, h2, h3, h4, h5 { overflow-wrap: break-word; word-break: break-word; }
